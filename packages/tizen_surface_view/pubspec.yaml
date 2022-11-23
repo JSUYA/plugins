@@ -1,0 +1,26 @@
+name: tizen_surface_view
+description: Tizen implementation of the webview plugin
+homepage: https://github.com/flutter-tizen/plugins
+#repository: https://github.com/flutter-tizen/plugins/tree/master/packages/webview_flutter
+version: 0.6.0
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+  flutter: ">=2.8.0"
+
+flutter:
+  plugin:
+    platforms:
+      tizen:
+        pluginClass: TizenSurfaceViewPlugin
+        fileName: tizen_surface_view_plugin.h
+        dartPluginClass: TizenSurfaceView
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_tizen: ^0.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

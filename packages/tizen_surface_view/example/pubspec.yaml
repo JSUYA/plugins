@@ -1,0 +1,36 @@
+name: tizen_surface_view_example
+description: Demonstrates how to use the webview_flutter_tizen plugin.
+publish_to: none
+
+environment:
+  sdk: ">=2.14.0 <3.0.0"
+  flutter: ">=2.8.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  tizen_surface_view:
+    path: ../
+  tizen_log: ^0.1.2
+  provider: ^6.0.2
+  window_size:
+    git:
+      url: https://github.com/google/flutter-desktop-embedding.git
+      path: plugins/window_size
+
+dev_dependencies:
+  espresso: ^0.1.0+2
+  flutter_driver:
+    sdk: flutter
+  flutter_tizen: ^0.2.0
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  integration_test_tizen:
+    path: ../../integration_test/
+  pedantic: ^1.10.0
+
+flutter:
+  uses-material-design: true
+  
