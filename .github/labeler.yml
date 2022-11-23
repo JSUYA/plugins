@@ -9,6 +9,8 @@
   - packages/connectivity_plus/**/*
 "p: device_info_plus":
   - packages/device_info_plus/**/*
+"p: flutter_app_badger":
+  - packages/flutter_app_badger/**/*
 "p: flutter_secure_storage":
   - packages/flutter_secure_storage/**/*
 "p: flutter_tts":
@@ -65,6 +67,8 @@
   - packages/wearable_rotary/**/*
 "p: webview_flutter":
   - packages/webview_flutter/**/*
+"p: webview_flutter_lwe":
+  - packages/webview_flutter_lwe/**/*
 
 # Tools
 "tools":
