@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:flutter_tizen/widgets.dart';
 import 'package:tizen_surface_view/tizen_surface_view.dart';
 import 'package:tizen_log/tizen_log.dart';
+
+import 'package:flutter/gestures.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,6 +44,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic> creationParams = <String, dynamic>{};
+    // Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
@@ -49,8 +53,18 @@ class _MyAppState extends State<MyApp> {
         body: Center(
           child: TizenSurfaceView(
             viewType: 'plugins.flutter.io/tizen_surface_view',
-
-            //creationParams: creationParams,
+            // onPlatformViewCreated: (int id) {
+            // if (onWebViewPlatformCreated == null) {
+            //   return;
+            // }
+            // onWebViewPlatformCreated(MethodChannelWebViewPlatform(
+            //   id,
+            //   webViewPlatformCallbacksHandler,
+            //   javascriptChannelRegistry,
+            // ));
+            // },
+            // gestureRecognizers: gestureRecognizers,
+            // creationParams: creationParams,
             // creationParamsCodec: const StandardMessageCodec(),
           ),
         ),
@@ -61,5 +75,24 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
+  }
+}
+
+/// A factory interface that also reports the type of the created objects.
+class Factory<T> {
+  /// Creates a new factory.
+  ///
+  /// The `constructor` parameter must not be null.
+  const Factory(this.constructor) : assert(constructor != null);
+
+  /// Creates a new object of type T.
+  final ValueGetter<T> constructor;
+
+  /// The type of the objects created by this factory.
+  Type get type => T;
+
+  @override
+  String toString() {
+    return 'Factory(type: $type)';
   }
 }

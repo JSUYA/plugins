@@ -59,7 +59,7 @@ void BufferUnit::Reset(int32_t width, int32_t height) {
   }
   width_ = width;
   height_ = height;
-
+  LOG_ERROR("CJS check");
   if (tbm_surface_) {
     tbm_surface_destroy(tbm_surface_);
     tbm_surface_ = nullptr;
@@ -68,7 +68,6 @@ void BufferUnit::Reset(int32_t width, int32_t height) {
     delete gpu_surface_;
     gpu_surface_ = nullptr;
   }
-
   tbm_surface_ = tbm_surface_create(width_, height_, TBM_FORMAT_ARGB8888);
   gpu_surface_ = new FlutterDesktopGpuSurfaceDescriptor();
   gpu_surface_->width = width_;

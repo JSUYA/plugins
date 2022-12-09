@@ -81,6 +81,46 @@ TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
       [tizen_surface_view = this](const auto& call, auto result) {
         tizen_surface_view->HandleMethodCall(call, std::move(result));
       });
+
+  TizenSurfaceView* tizen_surface_view = static_cast<TizenSurfaceView*>(this);
+  LOG_ERROR("CJS width : %d height : %d", width, height);
+
+  if (!tizen_surface_view->working_surface_) {
+    tizen_surface_view->working_surface_ =
+        tizen_surface_view->tbm_pool_->GetAvailableBuffer();
+    // tizen_surface_view->working_surface_->Reset(width, height);
+    tizen_surface_view->working_surface_->UseExternalBuffer();
+  }
+  /*
+              tbm_surface_info_s surface_info;
+              tbm_surface_map(tizen_surface_view->working_surface_->Surface(),
+                              TBM_SURF_OPTION_READ, &surface_info);
+              unsigned char* buffer = surface_info.planes[0].ptr;
+              if (buffer) {
+                for (int i = 0; i < width * height; i += 4) {
+                  LOG_ERROR("CJS  : %d %d %d %d", buffer[i], buffer[i
+     + 1], buffer[i + 2], buffer[i + 3]);
+                }
+              } else {
+                LOG_ERROR("CJS  buffer is null");
+              }
+
+              tbm_surface_unmap(tizen_surface_view->working_surface_->Surface());
+  */
+
+  tizen_surface_view->working_surface_->SetExternalBuffer(
+      tizen_surface_view->working_surface_->Surface());
+
+  if (tizen_surface_view->candidate_surface_) {
+    tizen_surface_view->tbm_pool_->Release(
+        tizen_surface_view->candidate_surface_);
+    tizen_surface_view->candidate_surface_ = nullptr;
+  }
+  tizen_surface_view->candidate_surface_ = tizen_surface_view->working_surface_;
+  tizen_surface_view->working_surface_ = nullptr;
+  tizen_surface_view->texture_registrar_->MarkTextureFrameAvailable(
+      tizen_surface_view->GetTextureId());
+  tizen_surface_view->candidate_surface_->DumpToPng(123);
 }
 
 TizenSurfaceView::~TizenSurfaceView() { Dispose(); }
@@ -258,17 +298,23 @@ void TizenSurfaceView::HandleMethodCall(
 FlutterDesktopGpuSurfaceDescriptor* TizenSurfaceView::ObtainGpuSurface(
     size_t width, size_t height) {
   std::lock_guard<std::mutex> lock(mutex_);
+
   if (!candidate_surface_) {
     if (rendered_surface_) {
+      LOG_ERROR("CJS CHECK %d %d", width, height);
       return rendered_surface_->GpuSurface();
     }
+    LOG_ERROR("CJS CHECK");
     return nullptr;
   }
+  LOG_ERROR("CJS CHECK");
   if (rendered_surface_ && rendered_surface_->IsUsed()) {
+    LOG_ERROR("CJS CHECK");
     tbm_pool_->Release(rendered_surface_);
   }
   rendered_surface_ = candidate_surface_;
   candidate_surface_ = nullptr;
+  LOG_ERROR("CJS CHECK");
   return rendered_surface_->GpuSurface();
 }
 
