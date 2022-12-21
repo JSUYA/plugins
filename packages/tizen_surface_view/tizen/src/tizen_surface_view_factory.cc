@@ -15,8 +15,8 @@
 #include "tizen_surface_view.h"
 
 TizenSurfaceViewFactory::TizenSurfaceViewFactory(
-    flutter::PluginRegistrar* registrar, void* win)
-    : PlatformViewFactory(registrar), win_(win) {
+    flutter::PluginRegistrar* registrar, void* win, void* surface)
+    : PlatformViewFactory(registrar), win_(win), surface_(surface) {
   texture_registrar_ = registrar->texture_registrar();
 }
 
@@ -25,7 +25,7 @@ PlatformView* TizenSurfaceViewFactory::Create(int view_id, double width,
                                               const ByteMessage& params) {
   return new TizenSurfaceView(GetPluginRegistrar(), view_id, texture_registrar_,
                               width, height, *GetCodec().DecodeMessage(params),
-                              win_);
+                              win_, surface_);
 }
 
 void TizenSurfaceViewFactory::Dispose() {}

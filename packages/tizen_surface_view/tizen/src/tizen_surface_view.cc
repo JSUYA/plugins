@@ -3,8 +3,8 @@
 // found in the LICENSE file.
 #include "tizen_surface_view.h"
 
-#include <Ecore_Evas.h>
 #include <Elementary.h>
+#include <Evas.h>
 #include <app_common.h>
 #include <flutter/standard_method_codec.h>
 #include <flutter_texture_registrar.h>
@@ -39,38 +39,98 @@ bool GetValueFromEncodableMap(const flutter::EncodableValue* arguments,
 
 }  // namespace
 
+FlutterDesktopPixelBuffer* TizenSurfaceView::CopyPixelBuffer(size_t width,
+                                                             size_t height) {
+  mutex_.lock();
+  //  if (pixel_buffer_.get() && frame_.get()) {
+  //    if (pixel_buffer_->width != frame_->width() ||
+  //        pixel_buffer_->height != frame_->height()) {
+  //      size_t buffer_size =
+  //          (size_t(frame_->width()) * size_t(frame_->height())) * (32 >> 3);
+  //      rgb_buffer_.reset(new uint8_t[buffer_size]);
+  //      pixel_buffer_->width = frame_->width();
+  //      pixel_buffer_->height = frame_->height();
+  //    }
+
+  //   frame_->ConvertToARGB(RTCVideoFrame::Type::kABGR, rgb_buffer_.get(), 0,
+  //                         (int)pixel_buffer_->width,
+  //                         (int)pixel_buffer_->height);
+
+  //   pixel_buffer_->buffer = rgb_buffer_.get();
+  //   mutex_.unlock();
+  //   return pixel_buffer_.get();
+  // }
+  LOG_ERROR("CJS surface_ : %p width : %d height_ : %d", surface_, width,
+            height);
+  /*if (surface_) {
+    void* surface_src =
+        evas_object_image_data_get((Evas_Image*)surface_, EINA_TRUE);
+    if (!surface_src) {
+      LOG_ERROR("CJS surface_src : %p", surface_src);
+      mutex_.unlock();
+      return nullptr;
+    }
+    pixel_buffer_->buffer = (unsigned char*)surface_src;
+
+    mutex_.unlock();
+    return pixel_buffer_.get();
+  }*/
+
+  mutex_.unlock();
+  return nullptr;
+}
+
+void TizenSurfaceView::Evas_Object_Image_Pixels_Get_Cb(void* data,
+                                                       Evas_Object* o) {}
 TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
                                    int view_id,
                                    flutter::TextureRegistrar* texture_registrar,
                                    double width, double height,
                                    const flutter::EncodableValue& params,
-                                   void* win)
+                                   void* win, void* surface)
     : PlatformView(registrar, view_id, nullptr),
       texture_registrar_(texture_registrar),
       width_(width),
       height_(height),
-      win_(win) {
-  LOG_ERROR("CJS win_ : %p view_id: %d width : %d height_ : %d", win_, view_id,
-            width_, height_);
+      win_(win),
+      surface_(surface) {
+  LOG_ERROR("CJS win_ : %p  surface_ : %p view_id: %d width : %f height_ : %f",
+            win_, surface_, view_id, width_, height_);
   // if (!EwkInternalApiBinding::GetInstance().Initialize()) {
   //   LOG_ERROR("Failed to Initialize EWK internal APIs.");
   //   return;
   // }
-  Evas_Object* btn = elm_button_add((Evas_Object*)win_);
-  elm_object_text_set(btn, "Asdasd");
-  evas_object_show(btn);
-  elm_win_resize_object_add((Evas_Object*)win_, btn);
+  // Evas_Object* btn = elm_button_add((Evas_Object*)win_);
+  // evas_object_resize(btn, 100, 100);
+  // elm_object_text_set(btn, "Asdasd");
+  // evas_object_show(btn);
+  // elm_win_resize_object_add((Evas_Object*)win_, btn);
 
-  tbm_pool_ = std::make_unique<SingleBufferPool>(width, height);
+  // tbm_pool_ = std::make_unique<SingleBufferPool>(width, height);
+
+  // evas_object_image_pixels_get_callback_set(
+  //     surface_, Evas_Object_Image_Pixels_Get_Cb, nullptr);
 
   texture_variant_ =
-      std::make_unique<flutter::TextureVariant>(flutter::GpuSurfaceTexture(
-          kFlutterDesktopGpuSurfaceTypeNone,
+      std::make_unique<flutter::TextureVariant>(flutter::PixelBufferTexture(
           [this](size_t width,
-                 size_t height) -> const FlutterDesktopGpuSurfaceDescriptor* {
-            return ObtainGpuSurface(width, height);
+                 size_t height) -> const FlutterDesktopPixelBuffer* {
+            LOG_ERROR("CJS width : %d height_ : %d", width, height);
+            return this->CopyPixelBuffer(width, height);
           }));
+  // texture_id_ = registrar_->RegisterTexture(texture_variant_.get());
   SetTextureId(texture_registrar_->RegisterTexture(texture_variant_.get()));
+
+  // texture_variant_ =
+  //     std::make_unique<flutter::TextureVariant>(flutter::GpuSurfaceTexture(
+  //         kFlutterDesktopGpuSurfaceTypeNone,
+  //         [this](size_t width,
+  //                size_t height) -> const FlutterDesktopGpuSurfaceDescriptor*
+  //                {
+  //           return ObtainGpuSurface(width, height);
+  //         }));
+
+  // SetTextureId(texture_registrar_->RegisterTexture(texture_variant_.get()));
 
   InitTizenSurfaceView();
 
@@ -83,14 +143,14 @@ TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
       });
 
   TizenSurfaceView* tizen_surface_view = static_cast<TizenSurfaceView*>(this);
-  LOG_ERROR("CJS width : %d height : %d", width, height);
+  LOG_ERROR("CJS width : %f height : %f", width, height);
 
-  if (!tizen_surface_view->working_surface_) {
-    tizen_surface_view->working_surface_ =
-        tizen_surface_view->tbm_pool_->GetAvailableBuffer();
-    // tizen_surface_view->working_surface_->Reset(width, height);
-    tizen_surface_view->working_surface_->UseExternalBuffer();
-  }
+  // if (!tizen_surface_view->working_surface_) {
+  //   tizen_surface_view->working_surface_ =
+  //       tizen_surface_view->tbm_pool_->GetAvailableBuffer();
+  //   // tizen_surface_view->working_surface_->Reset(width, height);
+  //   tizen_surface_view->working_surface_->UseExternalBuffer();
+  // }
   /*
               tbm_surface_info_s surface_info;
               tbm_surface_map(tizen_surface_view->working_surface_->Surface(),
@@ -108,19 +168,20 @@ TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
               tbm_surface_unmap(tizen_surface_view->working_surface_->Surface());
   */
 
-  tizen_surface_view->working_surface_->SetExternalBuffer(
-      tizen_surface_view->working_surface_->Surface());
+  // tizen_surface_view->working_surface_->SetExternalBuffer(
+  //     tizen_surface_view->working_surface_->Surface());
 
-  if (tizen_surface_view->candidate_surface_) {
-    tizen_surface_view->tbm_pool_->Release(
-        tizen_surface_view->candidate_surface_);
-    tizen_surface_view->candidate_surface_ = nullptr;
-  }
-  tizen_surface_view->candidate_surface_ = tizen_surface_view->working_surface_;
-  tizen_surface_view->working_surface_ = nullptr;
-  tizen_surface_view->texture_registrar_->MarkTextureFrameAvailable(
-      tizen_surface_view->GetTextureId());
-  tizen_surface_view->candidate_surface_->DumpToPng(123);
+  // if (tizen_surface_view->candidate_surface_) {
+  //   tizen_surface_view->tbm_pool_->Release(
+  //       tizen_surface_view->candidate_surface_);
+  //   tizen_surface_view->candidate_surface_ = nullptr;
+  // }
+  // tizen_surface_view->candidate_surface_ =
+  // tizen_surface_view->working_surface_; tizen_surface_view->working_surface_
+  // = nullptr;
+  // tizen_surface_view->texture_registrar_->MarkTextureFrameAvailable(
+  //     tizen_surface_view->GetTextureId());
+  // tizen_surface_view->candidate_surface_->DumpToPng(123);
 }
 
 TizenSurfaceView::~TizenSurfaceView() { Dispose(); }
@@ -162,6 +223,7 @@ void TizenSurfaceView::Touch(int type, int button, double x, double y,
   } else {
     // TODO: Not implemented
   }
+  LOG_ERROR("CJS Touch %d", type);
   // Eina_List* pointList = 0;
   // // Ewk_Touch_Point* point = new Ewk_Touch_Point;
   // point->id = 0;
@@ -183,20 +245,22 @@ bool TizenSurfaceView::SendKey(const char* key, const char* string,
   }
 
   if (is_down) {
-    Evas_Event_Key_Down downEvent;
+    LOG_ERROR("CJS KEY Down");
+    /*Evas_Event_Key_Down downEvent;
     memset(&downEvent, 0, sizeof(Evas_Event_Key_Down));
     downEvent.key = key;
     downEvent.string = string;
-    void* evasKeyEvent = static_cast<void*>(&downEvent);
+    void* evasKeyEvent = static_cast<void*>(&downEvent);*/
     // EwkInternalApiBinding::GetInstance().view.SendKeyEvent(
     //     tizen_surface_view_instance_, evasKeyEvent, is_down);
     return true;
   } else {
-    Evas_Event_Key_Up upEvent;
+    LOG_ERROR("CJS KEY Up");
+    /*Evas_Event_Key_Up upEvent;
     memset(&upEvent, 0, sizeof(Evas_Event_Key_Up));
     upEvent.key = key;
     upEvent.string = string;
-    void* evasKeyEvent = static_cast<void*>(&upEvent);
+    void* evasKeyEvent = static_cast<void*>(&upEvent);*/
     // EwkInternalApiBinding::GetInstance().view.SendKeyEvent(
     //     tizen_surface_view_instance_, evasKeyEvent, is_down);
     return true;

@@ -5,6 +5,7 @@
 #ifndef FLUTTER_PLUGIN_TIZEN_SURFACE_VIEW_H_
 #define FLUTTER_PLUGIN_TIZEN_SURFACE_VIEW_H_
 
+#include <Elementary.h>
 #include <Evas.h>
 #include <flutter/encodable_value.h>
 #include <flutter/method_channel.h>
@@ -26,7 +27,7 @@ class TizenSurfaceView : public PlatformView {
   TizenSurfaceView(flutter::PluginRegistrar* registrar, int view_id,
                    flutter::TextureRegistrar* texture_registrar, double width,
                    double height, const flutter::EncodableValue& params,
-                   void* win);
+                   void* win, void* surface);
   ~TizenSurfaceView();
 
   virtual void Dispose() override;
@@ -41,6 +42,9 @@ class TizenSurfaceView : public PlatformView {
   virtual bool SendKey(const char* key, const char* string, const char* compose,
                        uint32_t modifiers, uint32_t scan_code,
                        bool is_down) override;
+
+  FlutterDesktopPixelBuffer* CopyPixelBuffer(size_t width, size_t height);
+  void Evas_Object_Image_Pixels_Get_Cb(void* data, Evas_Object* o);
 
   void Resume();
 
@@ -66,6 +70,7 @@ class TizenSurfaceView : public PlatformView {
 
   Evas_Object* tizen_surface_view_instance_ = nullptr;
   void* win_ = nullptr;
+  void* surface_ = nullptr;
   flutter::TextureRegistrar* texture_registrar_;
   double width_ = 0.0;
   double height_ = 0.0;
@@ -78,6 +83,7 @@ class TizenSurfaceView : public PlatformView {
   std::unique_ptr<flutter::TextureVariant> texture_variant_;
   std::mutex mutex_;
   std::unique_ptr<BufferPool> tbm_pool_;
+  std::shared_ptr<FlutterDesktopPixelBuffer> pixel_buffer_;
 };
 
 #endif  // FLUTTER_PLUGIN_TIZEN_SURFACE_VIEW_H_

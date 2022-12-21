@@ -13,7 +13,8 @@
 
 class TizenSurfaceViewFactory : public PlatformViewFactory {
  public:
-  TizenSurfaceViewFactory(flutter::PluginRegistrar* registrar, void* win);
+  TizenSurfaceViewFactory(flutter::PluginRegistrar* registrar, void* win,
+                          void* surface);
 
   virtual PlatformView* Create(int view_id, double width, double height,
                                const ByteMessage& params) override;
@@ -23,6 +24,7 @@ class TizenSurfaceViewFactory : public PlatformViewFactory {
  private:
   flutter::TextureRegistrar* texture_registrar_;
   void* win_ = nullptr;
+  void* surface_ = nullptr;
 };
 
 #endif  // FLUTTER_PLUGIN_TIZEN_SURFACE_VIEW_FACTORY_H_

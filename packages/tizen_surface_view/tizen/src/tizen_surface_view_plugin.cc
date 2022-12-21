@@ -39,6 +39,7 @@ void TizenSurfaceViewPluginRegisterWithRegistrar(
   FlutterDesktopRegisterViewFactory(
       core_registrar, kViewType,
       std::make_unique<TizenSurfaceViewFactory>(
-          registrar, FlutterDesktopViewGetNativeHandle(view)));
+          registrar, FlutterDesktopViewGetNativeHandle(view),
+          FlutterDesktopViewGetPlatformViewSurface(view)));
   TizenSurfaceViewPlugin::RegisterWithRegistrar(registrar);
 }
