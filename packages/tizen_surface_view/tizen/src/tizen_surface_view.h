@@ -84,6 +84,11 @@ class TizenSurfaceView : public PlatformView {
   std::mutex mutex_;
   std::unique_ptr<BufferPool> tbm_pool_;
   std::shared_ptr<FlutterDesktopPixelBuffer> pixel_buffer_;
+
+  unsigned char* pixels_;
+  unsigned char pixels_tmp_[1000000];
+  int w_;
+  int h_;
 };
 
 #endif  // FLUTTER_PLUGIN_TIZEN_SURFACE_VIEW_H_

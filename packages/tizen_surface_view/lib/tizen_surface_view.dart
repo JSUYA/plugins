@@ -20,5 +20,7 @@ class TizenSurfaceView extends TizenView {
           layoutDirection: TextDirection.ltr,
         );
 
+  void _Test() {}
+
   final String viewType;
 }

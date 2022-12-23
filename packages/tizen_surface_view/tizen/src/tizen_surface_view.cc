@@ -42,43 +42,23 @@ bool GetValueFromEncodableMap(const flutter::EncodableValue* arguments,
 FlutterDesktopPixelBuffer* TizenSurfaceView::CopyPixelBuffer(size_t width,
                                                              size_t height) {
   mutex_.lock();
-  //  if (pixel_buffer_.get() && frame_.get()) {
-  //    if (pixel_buffer_->width != frame_->width() ||
-  //        pixel_buffer_->height != frame_->height()) {
-  //      size_t buffer_size =
-  //          (size_t(frame_->width()) * size_t(frame_->height())) * (32 >> 3);
-  //      rgb_buffer_.reset(new uint8_t[buffer_size]);
-  //      pixel_buffer_->width = frame_->width();
-  //      pixel_buffer_->height = frame_->height();
-  //    }
-
-  //   frame_->ConvertToARGB(RTCVideoFrame::Type::kABGR, rgb_buffer_.get(), 0,
-  //                         (int)pixel_buffer_->width,
-  //                         (int)pixel_buffer_->height);
-
-  //   pixel_buffer_->buffer = rgb_buffer_.get();
-  //   mutex_.unlock();
-  //   return pixel_buffer_.get();
-  // }
-  LOG_ERROR("CJS surface_ : %p width : %d height_ : %d", surface_, width,
-            height);
-  /*if (surface_) {
-    void* surface_src =
-        evas_object_image_data_get((Evas_Image*)surface_, EINA_TRUE);
-    if (!surface_src) {
-      LOG_ERROR("CJS surface_src : %p", surface_src);
-      mutex_.unlock();
-      return nullptr;
-    }
-    pixel_buffer_->buffer = (unsigned char*)surface_src;
-
-    mutex_.unlock();
-    return pixel_buffer_.get();
+  pixel_buffer_.reset(new FlutterDesktopPixelBuffer());
+  
+  /*int t = 0;
+  for(int i = 0; i < width*height*4; i+=4)
+  {
+    t = pixels_[i];
+    pixels_[i+3] = pixels_[i];
+    pixels_[i] = t;
   }*/
+  pixel_buffer_->width = width;
+  pixel_buffer_->height = height;
+  pixel_buffer_->buffer = pixels_;//(unsigned char*)pixels_tmp_;
 
   mutex_.unlock();
-  return nullptr;
+  return pixel_buffer_.get();
 }
+
 
 void TizenSurfaceView::Evas_Object_Image_Pixels_Get_Cb(void* data,
                                                        Evas_Object* o) {}
@@ -96,20 +76,26 @@ TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
       surface_(surface) {
   LOG_ERROR("CJS win_ : %p  surface_ : %p view_id: %d width : %f height_ : %f",
             win_, surface_, view_id, width_, height_);
-  // if (!EwkInternalApiBinding::GetInstance().Initialize()) {
-  //   LOG_ERROR("Failed to Initialize EWK internal APIs.");
-  //   return;
-  // }
-  // Evas_Object* btn = elm_button_add((Evas_Object*)win_);
-  // evas_object_resize(btn, 100, 100);
-  // elm_object_text_set(btn, "Asdasd");
-  // evas_object_show(btn);
-  // elm_win_resize_object_add((Evas_Object*)win_, btn);
+  w_ = width_;
+  h_ = height_;
 
-  // tbm_pool_ = std::make_unique<SingleBufferPool>(width, height);
+  pixel_buffer_.reset(new FlutterDesktopPixelBuffer());
+  pixel_buffer_->width = 0;
+  pixel_buffer_->height = 0;
 
-  // evas_object_image_pixels_get_callback_set(
-  //     surface_, Evas_Object_Image_Pixels_Get_Cb, nullptr);
+  
+  Ecore_Evas* ee =
+      ecore_evas_ecore_evas_get(evas_object_evas_get((Evas_Object*)surface_));
+
+  if (!evas_object_evas_get((Evas_Object*)win_)) LOG_ERROR("CJS evas_object_evas_get((Evas_Object*)surface_) is null %p", evas_object_evas_get((Evas_Object*)win_));
+
+  if (!ee) LOG_ERROR("CJS EE is null : %p ", surface_);
+  int x, y, w, h;
+  ecore_evas_geometry_get(ee, &x, &y, &w, &h);
+
+  pixels_ = (unsigned char*)ecore_evas_buffer_pixels_get(ee);
+  LOG_ERROR("CJS surface_src : %p pixels : %p (%d %d)", surface_, pixels_, w, h);
+
 
   texture_variant_ =
       std::make_unique<flutter::TextureVariant>(flutter::PixelBufferTexture(
@@ -118,9 +104,10 @@ TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
             LOG_ERROR("CJS width : %d height_ : %d", width, height);
             return this->CopyPixelBuffer(width, height);
           }));
+          LOG_ERROR("CJS CHECK");
   // texture_id_ = registrar_->RegisterTexture(texture_variant_.get());
   SetTextureId(texture_registrar_->RegisterTexture(texture_variant_.get()));
-
+LOG_ERROR("CJS CHECK");
   // texture_variant_ =
   //     std::make_unique<flutter::TextureVariant>(flutter::GpuSurfaceTexture(
   //         kFlutterDesktopGpuSurfaceTypeNone,
@@ -133,7 +120,7 @@ TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
   // SetTextureId(texture_registrar_->RegisterTexture(texture_variant_.get()));
 
   InitTizenSurfaceView();
-
+LOG_ERROR("CJS CHECK");
   channel_ = std::make_unique<FlMethodChannel>(
       GetPluginRegistrar()->messenger(), GetChannelName(),
       &flutter::StandardMethodCodec::GetInstance());
@@ -141,7 +128,7 @@ TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
       [tizen_surface_view = this](const auto& call, auto result) {
         tizen_surface_view->HandleMethodCall(call, std::move(result));
       });
-
+LOG_ERROR("CJS CHECK");
   TizenSurfaceView* tizen_surface_view = static_cast<TizenSurfaceView*>(this);
   LOG_ERROR("CJS width : %f height : %f", width, height);
 
@@ -179,8 +166,8 @@ TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
   // tizen_surface_view->candidate_surface_ =
   // tizen_surface_view->working_surface_; tizen_surface_view->working_surface_
   // = nullptr;
-  // tizen_surface_view->texture_registrar_->MarkTextureFrameAvailable(
-  //     tizen_surface_view->GetTextureId());
+   tizen_surface_view->texture_registrar_->MarkTextureFrameAvailable(
+       tizen_surface_view->GetTextureId());
   // tizen_surface_view->candidate_surface_->DumpToPng(123);
 }
 
@@ -235,6 +222,9 @@ void TizenSurfaceView::Touch(int type, int button, double x, double y,
   // EwkInternalApiBinding::GetInstance().view.FeedTouchEvent(
   //     tizen_surface_view_instance_, mouse_event_type, pointList, 0);
   // eina_list_free(pointList);
+  TizenSurfaceView* tizen_surface_view = static_cast<TizenSurfaceView*>(this);
+  tizen_surface_view->texture_registrar_->MarkTextureFrameAvailable(
+       tizen_surface_view->GetTextureId());
 }
 
 bool TizenSurfaceView::SendKey(const char* key, const char* string,

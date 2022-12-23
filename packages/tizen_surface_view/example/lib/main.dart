@@ -38,6 +38,7 @@ class _MyAppState extends State<MyApp> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _counter++;
+      Log.error(logTag, 'CJS click counter');
     });
   }
 
@@ -66,6 +67,7 @@ class _MyAppState extends State<MyApp> {
             // gestureRecognizers: gestureRecognizers,
             // creationParams: creationParams,
             // creationParamsCodec: const StandardMessageCodec(),
+            //onPressed: _incrementCounter,
           ),
         ),
         floatingActionButton: FloatingActionButton(
