@@ -44,7 +44,7 @@ class TizenSurfaceView : public PlatformView {
                        bool is_down) override;
 
   FlutterDesktopPixelBuffer* CopyPixelBuffer(size_t width, size_t height);
-  void Evas_Object_Image_Pixels_Get_Cb(void* data, Evas_Object* o);
+  static void _frame_update_cb(void* data, Evas* e, void* event_info);
 
   void Resume();
 
@@ -70,7 +70,7 @@ class TizenSurfaceView : public PlatformView {
 
   Evas_Object* tizen_surface_view_instance_ = nullptr;
   void* win_ = nullptr;
-  void* surface_ = nullptr;
+  Evas_Object* surface_ = nullptr;
   flutter::TextureRegistrar* texture_registrar_;
   double width_ = 0.0;
   double height_ = 0.0;
@@ -86,7 +86,9 @@ class TizenSurfaceView : public PlatformView {
   std::shared_ptr<FlutterDesktopPixelBuffer> pixel_buffer_;
 
   unsigned char* pixels_;
-  unsigned char pixels_tmp_[1000000];
+  // unsigned char pixels_tmp_[1000000];
+  Ecore_Evas* ee_;
+  Evas_Object* image_;
   int w_;
   int h_;
 };
