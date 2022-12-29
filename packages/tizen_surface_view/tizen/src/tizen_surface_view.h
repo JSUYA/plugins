@@ -44,7 +44,7 @@ class TizenSurfaceView : public PlatformView {
                        bool is_down) override;
 
   FlutterDesktopPixelBuffer* CopyPixelBuffer(size_t width, size_t height);
-  static void _frame_update_cb(void* data, Evas* e, void* event_info);
+  static void frame_update_cb(void* data, Evas* e, void* event_info);
 
   void Resume();
 
@@ -53,9 +53,18 @@ class TizenSurfaceView : public PlatformView {
   Evas_Object* GetTizenSurfaceViewInstance() {
     return tizen_surface_view_instance_;
   }
-
-  FlutterDesktopGpuSurfaceDescriptor* ObtainGpuSurface(size_t width,
-                                                       size_t height);
+  const std::vector<std::string> kBindableSystemKeys = {
+      "XF86Menu",           "XF86Back",         "XF86AudioPlay",
+      "XF86AudioPause",     "XF86AudioStop",    "XF86AudioNext",
+      "XF86AudioPrev",      "XF86AudioRewind",  "XF86AudioForward",
+      "XF86AudioPlayPause", "XF86AudioRecord",  "XF86LowerChannel",
+      "XF86RaiseChannel",   "XF86ChannelList",  "XF86PreviousChannel",
+      "XF86SimpleMenu",     "XF86History",      "XF86Favorites",
+      "XF86Info",           "XF86Red",          "XF86Green",
+      "XF86Yellow",         "XF86Blue",         "XF86Subtitle",
+      "XF86PlayBack",       "XF86ChannelGuide", "XF86Caption",
+      "XF86Exit",
+  };
 
  private:
   void HandleMethodCall(
@@ -65,8 +74,6 @@ class TizenSurfaceView : public PlatformView {
   std::string GetChannelName();
 
   void InitTizenSurfaceView();
-
-  static void OnFrameRendered(void* data, Evas_Object* obj, void* event_info);
 
   Evas_Object* tizen_surface_view_instance_ = nullptr;
   void* win_ = nullptr;
@@ -86,11 +93,12 @@ class TizenSurfaceView : public PlatformView {
   std::shared_ptr<FlutterDesktopPixelBuffer> pixel_buffer_;
 
   unsigned char* pixels_;
-  // unsigned char pixels_tmp_[1000000];
+  unsigned char pixels2_[2000 * 2000];
   Ecore_Evas* ee_;
   Evas_Object* image_;
   int w_;
   int h_;
+  bool pixel_converted = false;
 };
 
 #endif  // FLUTTER_PLUGIN_TIZEN_SURFACE_VIEW_H_
