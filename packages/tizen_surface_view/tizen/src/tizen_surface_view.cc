@@ -82,14 +82,14 @@ FlutterDesktopPixelBuffer* TizenSurfaceView::CopyPixelBuffer(size_t width,
 void TizenSurfaceView::frame_update_cb(void* data, Evas* e, void* event_info) {
   TizenSurfaceView* tizen_surface_view = static_cast<TizenSurfaceView*>(data);
   LOG_ERROR("CJS CHECK %");
-  tizen_surface_view->mutex_.lock();
+  // tizen_surface_view->mutex_.lock();
   if (tizen_surface_view && tizen_surface_view->pixel_buffer_ &&
       tizen_surface_view->texture_registrar_) {
     //  if (tizen_surface_view->pixel_converted) {
-    for (int i = 0; i < tizen_surface_view->w_ * tizen_surface_view->h_ * 4;
+    /*for (int i = 0; i < tizen_surface_view->w_ * tizen_surface_view->h_ * 4;
          i++) {
       tizen_surface_view->pixels2_[i] = 0;
-    }
+    }*/
 
     LOG_ERROR("CJS CHECK %");
     tizen_surface_view->pixel_converted = false;
@@ -99,7 +99,7 @@ void TizenSurfaceView::frame_update_cb(void* data, Evas* e, void* event_info) {
     tizen_surface_view->texture_registrar_->MarkTextureFrameAvailable(
         tizen_surface_view->GetTextureId());
   }
-  tizen_surface_view->mutex_.unlock();
+  // tizen_surface_view->mutex_.unlock();
 }
 
 TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
@@ -198,8 +198,6 @@ void TizenSurfaceView::Touch(int type, int button, double x, double y,
     //
 
     Evas_Event_Mouse_Down event_down;
-    event_down.output.x = static_cast<int>(x);
-    event_down.output.y = static_cast<int>(y);
     event_down.canvas.x = static_cast<int>(x);
     event_down.canvas.y = static_cast<int>(y);
     // event_down.flags = EVAS_BUTTON_NONE;
@@ -217,12 +215,8 @@ void TizenSurfaceView::Touch(int type, int button, double x, double y,
     Evas_Event_Mouse_Move event;
     event.cur.canvas.x = static_cast<int>(x);
     event.cur.canvas.y = static_cast<int>(y);
-    event.cur.output.x = static_cast<int>(x);
-    event.cur.output.y = static_cast<int>(y);
     event.prev.canvas.x = static_cast<int>(dx);
     event.prev.canvas.y = static_cast<int>(dy);
-    event.prev.output.x = static_cast<int>(dx);
-    event.prev.output.y = static_cast<int>(dy);
     event.timestamp =
         (unsigned int)((unsigned long long)(ecore_time_get() * 1000.0) &
                        0xffffffff);
@@ -237,12 +231,8 @@ void TizenSurfaceView::Touch(int type, int button, double x, double y,
     Evas_Event_Mouse_Move event;
     event.cur.canvas.x = static_cast<int>(x);
     event.cur.canvas.y = static_cast<int>(y);
-    event.cur.output.x = static_cast<int>(x);
-    event.cur.output.y = static_cast<int>(y);
     event.prev.canvas.x = static_cast<int>(dx);
     event.prev.canvas.y = static_cast<int>(dy);
-    event.prev.output.x = static_cast<int>(dx);
-    event.prev.output.y = static_cast<int>(dy);
     event.timestamp =
         (unsigned int)((unsigned long long)(ecore_time_get() * 1000.0) &
                        0xffffffff);
@@ -252,8 +242,6 @@ void TizenSurfaceView::Touch(int type, int button, double x, double y,
     //
 
     Evas_Event_Mouse_Up event_up;
-    event_up.output.x = static_cast<int>(x);
-    event_up.output.y = static_cast<int>(y);
     event_up.canvas.x = static_cast<int>(x);
     event_up.canvas.y = static_cast<int>(y);
     // event_up.flags = EVAS_BUTTON_NONE;
