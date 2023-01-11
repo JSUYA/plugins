@@ -18,18 +18,18 @@
 
 namespace {
 
-const std::vector<std::string> kBindableSystemKeys = {
-    "XF86Menu",           "XF86Back",         "XF86AudioPlay",
-    "XF86AudioPause",     "XF86AudioStop",    "XF86AudioNext",
-    "XF86AudioPrev",      "XF86AudioRewind",  "XF86AudioForward",
-    "XF86AudioPlayPause", "XF86AudioRecord",  "XF86LowerChannel",
-    "XF86RaiseChannel",   "XF86ChannelList",  "XF86PreviousChannel",
-    "XF86SimpleMenu",     "XF86History",      "XF86Favorites",
-    "XF86Info",           "XF86Red",          "XF86Green",
-    "XF86Yellow",         "XF86Blue",         "XF86Subtitle",
-    "XF86PlayBack",       "XF86ChannelGuide", "XF86Caption",
-    "XF86Exit",
-};
+// const std::vector<std::string> kBindableSystemKeys = {
+//     "XF86Menu",           "XF86Back",         "XF86AudioPlay",
+//     "XF86AudioPause",     "XF86AudioStop",    "XF86AudioNext",
+//     "XF86AudioPrev",      "XF86AudioRewind",  "XF86AudioForward",
+//     "XF86AudioPlayPause", "XF86AudioRecord",  "XF86LowerChannel",
+//     "XF86RaiseChannel",   "XF86ChannelList",  "XF86PreviousChannel",
+//     "XF86SimpleMenu",     "XF86History",      "XF86Favorites",
+//     "XF86Info",           "XF86Red",          "XF86Green",
+//     "XF86Yellow",         "XF86Blue",         "XF86Subtitle",
+//     "XF86PlayBack",       "XF86ChannelGuide", "XF86Caption",
+//     "XF86Exit",
+// };
 
 typedef flutter::MethodCall<flutter::EncodableValue> FlMethodCall;
 typedef flutter::MethodResult<flutter::EncodableValue> FlMethodResult;
@@ -93,11 +93,7 @@ void TizenSurfaceView::frame_update_cb(void* data, Evas* e, void* event_info) {
 
   if (tizen_surface_view && tizen_surface_view->pixel_buffer_ &&
       tizen_surface_view->texture_registrar_) {
-    // tizen_surface_view->pixel_converted = false;
     tizen_surface_view->pixel_buffer_.reset(new FlutterDesktopPixelBuffer());
-    // tizen_surface_view->pixels_ =
-    //     (unsigned
-    //     char*)ecore_evas_buffer_pixels_get(tizen_surface_view->ee_);
 
     if (!tizen_surface_view->pixel_converted) {
       unsigned char t = 0;
@@ -142,8 +138,6 @@ TizenSurfaceView::TizenSurfaceView(flutter::PluginRegistrar* registrar,
       height_(height),
       win_(win),
       surface_(static_cast<Evas_Object*>(surface)) {
-  LOG_ERROR("CJS CHECK");
-
   InitTizenSurfaceView();
 
   texture_variant_ =
@@ -173,7 +167,6 @@ std::string TizenSurfaceView::GetChannelName() {
 }
 
 void TizenSurfaceView::Dispose() {
-  LOG_ERROR("CJS Dispose");
   evas_event_callback_del(evas_object_evas_get(surface_),
                           EVAS_CALLBACK_RENDER_POST, frame_update_cb);
   texture_registrar_->UnregisterTexture(GetTextureId());
@@ -274,7 +267,7 @@ bool TizenSurfaceView::SendKey(const char* key, const char* string,
       evas_object_focus_set(surface_, EINA_TRUE);
       evas_event_feed_key_down(
           evas_object_evas_get(surface_), (char*)key, key, string, compose,
-          (unsigned int)((unsigned long long)(ecore_time_get() * 1000.0) 
+          (unsigned int)((unsigned long long)(ecore_time_get() * 1000.0) &
                          0xffffffff),
           nullptr);
     }
@@ -300,9 +293,9 @@ bool TizenSurfaceView::SendKey(const char* key, const char* string,
   return false;
 }
 
-void TizenSurfaceView::Resume() { LOG_ERROR("CJS Resume"); }
+void TizenSurfaceView::Resume() {}
 
-void TizenSurfaceView::Stop() { LOG_ERROR("CJS STOP"); }
+void TizenSurfaceView::Stop() {}
 
 void TizenSurfaceView::SetDirection(int direction) {
   // TODO: Implement if necessary.
@@ -326,8 +319,6 @@ void TizenSurfaceView::InitTizenSurfaceView() {
     // for (const std::string& key : kBindableSystemKeys) {
     //   eext_win_keygrab_set(surface_, key.c_str());
     // }
-  } else {
-    LOG_ERROR("CJS EE is null");
   }
 }
 
