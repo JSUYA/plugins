@@ -32,7 +32,7 @@ class App : public FlutterApp {
     Evas_Object *win = static_cast<Evas_Object *>(data);
 
     LOG_ERROR("CJS TIZEN Entry  Evas : %p", evas_object_evas_get(entry));
-    elm_object_focus_set(entry, EINA_TRUE);
+    // elm_object_focus_set(entry, EINA_TRUE);
   }
 
   static void _btn_cb(void *data, Evas_Object *btn, void *ev EINA_UNUSED)
@@ -41,7 +41,7 @@ class App : public FlutterApp {
     Evas_Object *win = static_cast<Evas_Object *>(data);
 
     LOG_ERROR("CJS TIZEN BUTTON  Evas : %p", evas_object_evas_get(btn));
-    elm_object_focus_set(btn, EINA_TRUE);
+    // elm_object_focus_set(btn, EINA_TRUE);
   }
 
   static void _btn_options_cb(void *data, Evas_Object *btn,
@@ -50,6 +50,7 @@ class App : public FlutterApp {
   {
     elm_object_text_set(btn, "TEST");
     LOG_ERROR("CJS TIZEN BUTTON  ");
+    // elm_object_focus_set(btn, EINA_TRUE);
   }
 
   static void _btn_options2_cb(void *data, Evas_Object *btn,
@@ -57,23 +58,34 @@ class App : public FlutterApp {
 
   {
     int *count = (int *)data;
+
+    char buf[252];
     (*count)++;
-    char buf[255];
+
     sprintf(buf, "%d", (*count));
+
     elm_object_text_set(btn, buf);
-    LOG_ERROR("CJS TIZEN BUTTON PRESSED!!!!!!!!!!! ");
+    LOG_ERROR(" CJS TIZEN BUTTON PRESSED!!!!!!!!!!! ");
+    // elm_object_focus_set(btn, EINA_TRUE);
   }
 
   static void key_down_cb(void *data, Evas *e EINA_UNUSED, Evas_Object *obj,
                           void *event_info EINA_UNUSED) {
     LOG_ERROR("CJS Down!!!!!!!!!!!!!");
-    elm_object_focus_set(obj, EINA_TRUE);
+    Evas_Object *entry = (Evas_Object *)data;
+
+    // Evas_Event_Key_Down *event = (Evas_Event_Key_Down *)event_info;
+    // evas_event_refeed_event(evas_object_evas_get(entry), &event,
+    //                         EVAS_CALLBACK_KEY_DOWN);
+
+    // evas_object_smart_callback_call(entry, "clicked", NULL);
   }
 
   static void key_up_cb(void *data, Evas *e EINA_UNUSED, Evas_Object *obj,
                         void *event_info EINA_UNUSED) {
     LOG_ERROR("CJS Up!!!!!!!!!");
-    elm_object_focus_set(obj, EINA_TRUE);
+    //  elm_object_focus_set(obj, EINA_TRUE);
+    // elm_object_focus_set(obj, EINA_TRUE);
   }
 
   Evas_Object *add_content(Evas_Object *parent) {
@@ -82,27 +94,49 @@ class App : public FlutterApp {
                                      EVAS_HINT_EXPAND);
     evas_object_color_set(background_, 255, 255, 255, 255);
     elm_win_resize_object_add(parent, background_);
+    LOG_ERROR("CJS background %p", background_);
     Evas_Object *scr = elm_scroller_add(parent);
     elm_scroller_bounce_set(scr, EINA_FALSE, EINA_FALSE);
     elm_scroller_policy_set(scr, ELM_SCROLLER_POLICY_OFF,
                             ELM_SCROLLER_POLICY_AUTO);
     evas_object_size_hint_weight_set(scr, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    elm_win_resize_object_add(parent, scr);
+
     evas_object_show(scr);
     evas_object_show(background_);
     evas_object_show(parent);
     Evas_Object *box = elm_box_add(parent);
+    LOG_ERROR("CJS box %p", box);
     evas_object_size_hint_weight_set(box, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+
+    evas_object_size_hint_align_set(box, EVAS_HINT_FILL, EVAS_HINT_FILL);
     elm_object_content_set(scr, box);
+    elm_win_resize_object_add(parent, scr);
     Evas_Object *boxsub = elm_box_add(box);
+    LOG_ERROR("CJS boxsub %p", boxsub);
     evas_object_size_hint_weight_set(boxsub, EVAS_HINT_EXPAND, EVAS_HINT_FILL);
     evas_object_size_hint_align_set(boxsub, EVAS_HINT_FILL, EVAS_HINT_FILL);
     elm_box_horizontal_set(boxsub, EINA_TRUE);
     evas_object_show(boxsub);
     elm_box_pack_end(box, boxsub);
+    // elm_object_focus_allow_set(box, EINA_FALSE);
+    // elm_object_focus_allow_set(boxsub, EINA_FALSE);
+
+    Evas_Object *button;
+    button = elm_button_add(boxsub);
+    elm_object_text_set(button, "Tizen Button");
+    LOG_ERROR("CJS button %p", button);
+    // elm_object_focus_allow_set(button, EINA_TRUE);
+    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND,
+                                     EVAS_HINT_EXPAND);
+    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, EVAS_HINT_FILL);
+    evas_object_smart_callback_add(button, "clicked", _btn_cb, parent);
+    evas_object_show(button);
+    elm_box_pack_end(boxsub, button);
 
     Evas_Object *entry = elm_entry_add(boxsub);
     elm_entry_entry_set(entry, "Entry");
+    LOG_ERROR("CJS entry %p", entry);
+
     evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
     evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
     elm_entry_editable_set(entry, EINA_TRUE);
@@ -112,28 +146,20 @@ class App : public FlutterApp {
     evas_object_show(entry);
     elm_box_pack_end(boxsub, entry);
 
-    Evas_Object *button;
-    button = elm_button_add(boxsub);
-    elm_object_text_set(button, "Tizen Button");
-    elm_object_focus_allow_set(button, EINA_TRUE);
-    evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND,
-                                     EVAS_HINT_EXPAND);
-    evas_object_size_hint_align_set(button, EVAS_HINT_FILL, EVAS_HINT_FILL);
-    evas_object_smart_callback_add(button, "clicked", _btn_cb, parent);
-    evas_object_show(button);
-    elm_box_pack_end(boxsub, button);
-
-    Evas_Object *button2 = elm_check_add(boxsub);
-    elm_object_text_set(button2, "Tizen CheckBox");
-    evas_object_size_hint_weight_set(button2, EVAS_HINT_EXPAND,
-                                     EVAS_HINT_EXPAND);
-    evas_object_size_hint_align_set(button2, EVAS_HINT_FILL, EVAS_HINT_FILL);
-    evas_object_smart_callback_add(button2, "clicked", _btn_options_cb, &count);
-    evas_object_show(button2);
-    elm_box_pack_end(box, button2);
+    Evas_Object *check = elm_check_add(boxsub);
+    // elm_object_focus_allow_set(check, EINA_TRUE);
+    LOG_ERROR("CJS check %p", check);
+    elm_object_text_set(check, "Tizen CheckBox");
+    evas_object_size_hint_weight_set(check, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+    evas_object_size_hint_align_set(check, EVAS_HINT_FILL, EVAS_HINT_FILL);
+    evas_object_smart_callback_add(check, "clicked", _btn_options_cb, &count);
+    evas_object_show(check);
+    elm_box_pack_end(box, check);
 
     Evas_Object *button3 = elm_button_add(boxsub);
     elm_object_text_set(button3, "Tizen Button3");
+    // elm_object_focus_allow_set(button3, EINA_TRUE);
+    LOG_ERROR("CJS button3 %p", button3);
     evas_object_size_hint_weight_set(button3, EVAS_HINT_EXPAND,
                                      EVAS_HINT_EXPAND);
     evas_object_size_hint_align_set(button3, EVAS_HINT_FILL, EVAS_HINT_FILL);
@@ -142,33 +168,49 @@ class App : public FlutterApp {
 
     evas_object_smart_callback_add(button3, "clicked", _btn_options2_cb,
                                    &count);
-
-    // SimpleHome code
-    Eina_List *it = NULL;
-    app_info_h *app_info = NULL;
-    s_info.win = parent;
-    s_info.gengrid = _create_gengrid(s_info.win);
-    s_info.app_list = get_all_apps();
-    for (it = s_info.app_list, app_info = (app_info_h *)eina_list_data_get(it);
-         it; it = eina_list_next(it),
-        app_info = (app_info_h *)eina_list_data_get(it)) {
-      _append_item(s_info.gengrid, app_info);
-    }
-    elm_box_pack_end(box, s_info.gengrid);
-
-    return button2;
+    /*
+        // SimpleHome code
+        Eina_List *it = NULL;
+        app_info_h *app_info = NULL;
+        s_info.win = parent;
+        s_info.gengrid = _create_gengrid(s_info.win);
+        s_info.app_list = get_all_apps();
+        for (it = s_info.app_list, app_info = (app_info_h
+       *)eina_list_data_get(it); it; it = eina_list_next(it), app_info =
+       (app_info_h *)eina_list_data_get(it)) { _append_item(s_info.gengrid,
+       app_info);
+        }
+        elm_box_pack_end(box, s_info.gengrid);
+    */
+    return entry;
   }
 
   bool OnCreate() {
-    renderer_type_ = FlutterRendererType::kEvasGL;
+    // renderer_type_ = FlutterRendererType::kEvasGL;
 
-    create_tizen_view_ = [=](Evas_Object *win) {
-      add_content(win);
-      evas_object_event_callback_add(win, EVAS_CALLBACK_KEY_DOWN, key_down_cb,
-                                     this);
-      evas_object_event_callback_add(win, EVAS_CALLBACK_KEY_UP, key_up_cb,
-                                     this);
-      LOG_ERROR("CJS surface_win %p %p", win, evas_object_evas_get(win));
+    // Evas_Object *window_ = elm_win_add(NULL, NULL, ELM_WIN_BASIC);
+    // elm_win_autodel_set(window_, EINA_TRUE);
+    // elm_win_alpha_set(window_, EINA_TRUE);
+    // add_content(window_);
+    // evas_event_callback_add(evas_object_evas_get(window_),
+    //                         EVAS_CALLBACK_KEY_DOWN, key_down_cb, this);
+    // evas_event_callback_add(evas_object_evas_get(window_),
+    // EVAS_CALLBACK_KEY_UP,
+    //                         key_up_cb, this);
+    // window_offset_x_ = 100;
+    // window_offset_y_ = 100;
+    // window_width_ = 500;
+    // window_height_ = 500;
+    // window_width_ = 600;
+    // window_height_ = 800;
+    build_tizen_platform_view_ = [=](Evas_Object *container) {
+      Evas_Object *entry = add_content(container);
+      evas_object_event_callback_add(container, EVAS_CALLBACK_KEY_DOWN,
+                                     key_down_cb, entry);
+      evas_object_event_callback_add(container, EVAS_CALLBACK_KEY_UP, key_up_cb,
+                                     entry);
+      LOG_ERROR("CJS container(win) %p %p", container,
+                evas_object_evas_get(container));
     };
 
     if (FlutterApp::OnCreate()) {

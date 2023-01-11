@@ -4,6 +4,7 @@
 
 #ifndef FLUTTER_PLUGIN_TIZEN_SURFACE_VIEW_H_
 #define FLUTTER_PLUGIN_TIZEN_SURFACE_VIEW_H_
+#define EFL_UI_FOCUS_OBJECT_PROTECTED
 
 #include <Elementary.h>
 #include <Evas.h>
@@ -71,7 +72,7 @@ class TizenSurfaceView : public PlatformView {
   std::shared_ptr<FlutterDesktopPixelBuffer> pixel_buffer_;
 
   unsigned char* pixels_;
-  unsigned char temporay_pixel_buffer_[1000 * 1000];
+  unsigned char temporay_pixel_buffer_[1920 * 1080 * 4];
   Ecore_Evas* ee_;
   bool pixel_converted = false;
 };
