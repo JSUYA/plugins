@@ -14,11 +14,14 @@ flutter:
       tizen:
         pluginClass: WebviewFlutterTizenPlugin
         fileName: webview_flutter_tizen_plugin.h
-        dartPluginClass: TizenWebView
+        dartPluginClass: TizenWebViewPlatform
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_tizen: ^0.2.0
-  webview_flutter: ^3.0.4
-  webview_flutter_platform_interface: ^1.8.0
+  #flutter_tizen: ^0.2.0
+  flutter_tizen:
+    path: /home/junsu/dev/os/f-project/flutter-tizen/packages/flutter_tizen/
+  webview_flutter: ^4.0.2
+  webview_flutter_platform_interface: ^2.0.1
+  # webview_flutter_platform_interface: ^1.8.0
