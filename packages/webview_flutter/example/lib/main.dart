@@ -17,6 +17,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 // ignore: unused_import
 import 'package:webview_flutter_tizen/webview_flutter_tizen.dart';
 // #enddocregion platform_imports
+import 'package:tizen_log/tizen_log.dart';
 
 void main() => runApp(const MaterialApp(home: WebViewExample()));
 
@@ -133,6 +134,8 @@ Page resource error:
       ..addJavaScriptChannel(
         'Toaster',
         onMessageReceived: (JavaScriptMessage message) {
+          Log.error('WebviewFlutterTizen',
+              'CJS JavaScriptMessage ${message.message}');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(message.message)),
           );
@@ -308,6 +311,7 @@ class SampleMenu extends StatelessWidget {
   Future<void> _onShowUserAgent() {
     // Send a message with the user agent string to the Toaster JavaScript channel we registered
     // with the WebView.
+    Log.error('WebviewFlutterTizen', 'CJS Show User');
     return webViewController.runJavaScript(
       'Toaster.postMessage("User Agent: " + navigator.userAgent);',
     );

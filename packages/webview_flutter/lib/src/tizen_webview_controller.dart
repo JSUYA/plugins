@@ -10,21 +10,26 @@ import 'package:flutter/services.dart';
 import 'package:flutter_tizen/widgets.dart';
 import 'package:tizen_log/tizen_log.dart';
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
+import 'tizen_webview.dart' as tizen_webview;
 
 /// An implementation of [PlatformWebViewController] using Flutter for Web API.
 class TizenWebViewController extends PlatformWebViewController {
   /// Constructs a [TizenWebViewController].
   TizenWebViewController(super.params)
-      : _controllerChannel =
-            const MethodChannel('plugins.flutter.io/tizen_webview_controller'),
+      :
+        //  _controllerChannel =
+        // const MethodChannel('plugins.flutter.io/tizen_webview_controller'),
+        _webview = tizen_webview.TizenWebview(),
         super.implementation() {
-    _controllerChannel.setMethodCallHandler(_onMethodCall);
+    // _controllerChannel.setMethodCallHandler(_onMethodCall);
   }
+
+  final tizen_webview.TizenWebview _webview;
 
   final Map<String, JavaScriptChannelParams> _javaScriptChannelParams =
       <String, JavaScriptChannelParams>{};
 
-  final MethodChannel _controllerChannel;
+  // final MethodChannel _controllerChannel;
   JavaScriptMode? _javaScriptMode;
   Color? _backgroundColor;
   bool _hasNavigationDelegate = false;
@@ -51,46 +56,50 @@ class TizenWebViewController extends PlatformWebViewController {
     );
   }
 
-  /// Applies the requested settings before [TizenView] is created.
-  void applySettings() {
-    _isViewCreated = true;
-
-    _controllerChannel.invokeMethod<void>(
-        'setNavigationDelegate', _hasNavigationDelegate);
-
-    _controllerChannel.invokeMethod<void>(
-        'loadRequest', <String, String>{'url': _initialUrl});
-
-    if (_javaScriptMode != null) {
-      _controllerChannel.invokeMethod<void>(
-          'javaScriptMode', _javaScriptMode?.index);
-    }
-    if (_backgroundColor != null) {
-      _controllerChannel.invokeMethod<void>(
-          'backgroundColor', _backgroundColor?.value);
-    }
-
-    if (_userAgent != null) {
-      _controllerChannel.invokeMethod<void>('userAgent', _userAgent);
-    }
-
-    _javaScriptChannelParams.forEach(
-        (String channel, JavaScriptChannelParams javaScriptChannelParams) {
-      _controllerChannel.invokeMethod<void>(
-          'addJavascriptChannel', javaScriptChannelParams.name);
-    });
+  void OnCreate() {
+    _webview.OnCreate();
   }
+
+  /// Applies the requested settings before [TizenView] is created.
+  // void applySettings() {
+  //   _isViewCreated = true;
+
+  //   _controllerChannel.invokeMethod<void>(
+  //       'setNavigationDelegate', _hasNavigationDelegate);
+
+  //   _controllerChannel.invokeMethod<void>(
+  //       'loadRequest', <String, String>{'url': _initialUrl});
+
+  //   if (_javaScriptMode != null) {
+  //     _controllerChannel.invokeMethod<void>(
+  //         'javaScriptMode', _javaScriptMode?.index);
+  //   }
+  //   if (_backgroundColor != null) {
+  //     _controllerChannel.invokeMethod<void>(
+  //         'backgroundColor', _backgroundColor?.value);
+  //   }
+
+  //   if (_userAgent != null) {
+  //     _controllerChannel.invokeMethod<void>('userAgent', _userAgent);
+  //   }
+
+  //   _javaScriptChannelParams.forEach(
+  //       (String channel, JavaScriptChannelParams javaScriptChannelParams) {
+  //     _controllerChannel.invokeMethod<void>(
+  //         'addJavascriptChannel', javaScriptChannelParams.name);
+  //   });
+  // }
 
   @override
   Future<void> loadFile(String absoluteFilePath) async {
     assert(absoluteFilePath != null);
-    _controllerChannel.invokeMethod<void>('loadFile', absoluteFilePath);
+    _webview.loadFile(absoluteFilePath);
   }
 
   @override
   Future<void> loadFlutterAsset(String key) async {
     assert(key.isNotEmpty);
-    _controllerChannel.invokeMethod<void>('loadFlutterAsset', key);
+    _webview.loadFlutterAsset(key);
   }
 
   @override
@@ -99,10 +108,7 @@ class TizenWebViewController extends PlatformWebViewController {
     String? baseUrl,
   }) async {
     assert(html != null);
-    _controllerChannel.invokeMethod<void>('loadHtmlString', <String, dynamic>{
-      'html': html,
-      'baseUrl': baseUrl,
-    });
+    _webview.loadHtmlString(html, baseUrl: baseUrl);
   }
 
   @override
@@ -114,12 +120,7 @@ class TizenWebViewController extends PlatformWebViewController {
 
     switch (params.method) {
       case LoadRequestMethod.get:
-        if (_isViewCreated) {
-          _controllerChannel.invokeMethod<void>(
-              'loadRequest', <String?, String?>{'url': params.uri.toString()});
-        } else {
-          _initialUrl = params.uri.toString();
-        }
+        _webview.loadRequestPost(params.uri.toString());
         return;
       case LoadRequestMethod.post:
         break;
@@ -137,39 +138,27 @@ class TizenWebViewController extends PlatformWebViewController {
   }
 
   @override
-  Future<String?> currentUrl() =>
-      _controllerChannel.invokeMethod<String>('currentUrl');
+  Future<String?> currentUrl() => _webview.currentUrl();
 
   @override
-  Future<bool> canGoBack() => _controllerChannel
-      .invokeMethod<bool>('canGoBack')
-      .then((bool? result) => result!);
+  Future<bool> canGoBack() =>
+      _webview.canGoBack().then((bool? result) => result!);
 
   @override
-  Future<bool> canGoForward() => _controllerChannel
-      .invokeMethod<bool>('canGoForward')
-      .then((bool? result) => result!);
+  Future<bool> canGoForward() =>
+      _webview.canGoForward().then((bool? result) => result!);
 
   @override
-  Future<void> goBack() => _controllerChannel.invokeMethod<void>('goBack');
+  Future<void> goBack() => _webview.goBack();
 
   @override
-  Future<void> goForward() =>
-      _controllerChannel.invokeMethod<void>('goForward');
+  Future<void> goForward() => _webview.goForward();
 
   @override
-  Future<void> reload() async {
-    if (_isViewCreated) {
-      _controllerChannel.invokeMethod<void>('reload');
-    }
-  }
+  Future<void> reload() => _webview.reload();
 
   @override
-  Future<void> clearCache() async {
-    if (_isViewCreated) {
-      _controllerChannel.invokeMethod<void>('clearCache');
-    }
-  }
+  Future<void> clearCache() => _webview.clearCache();
 
   @override
   Future<void> clearLocalStorage() async {
@@ -177,60 +166,32 @@ class TizenWebViewController extends PlatformWebViewController {
   }
 
   @override
-  Future<void> setJavaScriptMode(JavaScriptMode javaScriptMode) async {
-    if (_isViewCreated) {
-      _controllerChannel.invokeMethod<void>(
-          'javaScriptMode', javaScriptMode.index);
-    } else {
-      _javaScriptMode = javaScriptMode;
-    }
-  }
+  Future<void> setJavaScriptMode(JavaScriptMode javaScriptMode) =>
+      _webview.setJavaScriptMode(javaScriptMode.index);
 
   @override
-  Future<String?> getTitle() {
-    return _controllerChannel.invokeMethod<String>('getTitle');
-  }
+  Future<String?> getTitle() =>
+      _webview.getTitle().then((String? result) => result!);
 
   @override
-  Future<void> scrollTo(int x, int y) async {
-    _controllerChannel.invokeMethod<void>('scrollTo', <String, int>{
-      'x': x,
-      'y': y,
-    });
-  }
+  Future<void> scrollTo(int x, int y) => _webview.scrollTo(x, y);
 
   @override
-  Future<void> scrollBy(int x, int y) {
-    return _controllerChannel.invokeMethod<void>('scrollBy', <String, int>{
-      'x': x,
-      'y': y,
-    });
-  }
+  Future<void> scrollBy(int x, int y) => _webview.scrollBy(x, y);
 
   @override
-  Future<Offset> getScrollPosition() async {
-    final dynamic position =
-        await _controllerChannel.invokeMethod<dynamic>('getScrollPosition');
-    if (position == null) {
-      return Offset.zero;
-    }
-    return Offset(position['x'] as double, position['y'] as double);
-  }
+  Future<Offset> getScrollPosition() =>
+      _webview.getScrollPosition().then((Offset? result) => result!);
 
   @override
-  Future<void> setBackgroundColor(Color color) async {
-    if (_isViewCreated) {
-      _controllerChannel.invokeMethod<void>('backgroundColor', color.value);
-    } else {
-      _backgroundColor = color;
-    }
-  }
+  Future<void> setBackgroundColor(Color color) =>
+      _webview.setBackgroundColor(color);
 
   @override
   Future<void> setPlatformNavigationDelegate(
       covariant TizenNavigationDelegate handler) async {
     handler.setOnLoadRequest(loadRequest);
-    _hasNavigationDelegate = true;
+    _webview.setHasNavigationDelegate(true);
   }
 
   @override
@@ -246,39 +207,21 @@ class TizenWebViewController extends PlatformWebViewController {
     _javaScriptChannelParams[javaScriptChannelParams.name] =
         javaScriptChannelParams;
 
-    if (_isViewCreated) {
-      _controllerChannel.invokeMethod<void>(
-          'addJavascriptChannel', javaScriptChannelParams.name);
-    }
+    _webview.addJavaScriptChannel(javaScriptChannelParams);
   }
 
   @override
-  Future<void> runJavaScript(String javaScript) {
-    return _controllerChannel.invokeMethod<void>('runJavascript', javaScript);
-  }
+  Future<void> runJavaScript(String javaScript) =>
+      _webview.runJavaScript(javaScript);
 
   @override
-  Future<Object> runJavaScriptReturningResult(String javaScript) async {
-    final String? result = await _controllerChannel.invokeMethod<String?>(
-        'runJavascriptReturningResult', javaScript);
-    if (result == null) {
-      return '';
-    } else if (result == 'true') {
-      return true;
-    } else if (result == 'false') {
-      return false;
-    }
-    return num.tryParse(result) ?? result;
-  }
+  Future<Object> runJavaScriptReturningResult(String javaScript) => _webview
+      .runJavaScriptReturningResult(javaScript)
+      .then((Object? result) => result!);
 
   @override
-  Future<void> setUserAgent(String? userAgent) async {
-    if (_isViewCreated) {
-      _controllerChannel.invokeMethod<void>('userAgent', userAgent);
-    } else {
-      _userAgent = userAgent;
-    }
-  }
+  Future<void> setUserAgent(String? userAgent) =>
+      _webview.setUserAgent(userAgent);
 }
 
 /// An implementation of [PlatformWebViewWidget] with the WebKit api.
@@ -294,7 +237,7 @@ class TizenWebViewWidget extends PlatformWebViewWidget {
       onPlatformViewCreated: (_) {
         final TizenWebViewController controller =
             params.controller as TizenWebViewController;
-        controller.applySettings();
+        controller.OnCreate();
       },
       layoutDirection: params.layoutDirection,
       gestureRecognizers: params.gestureRecognizers,
