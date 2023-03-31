@@ -132,7 +132,7 @@ class TizenWebView {
 
   /// Sets the JavaScript execution mode to be used by the webview.
   Future<void> setJavaScriptMode(int javaScriptMode) =>
-      _invokeChannelMethod<void>('javaScriptMode', javaScriptMode);
+      _invokeChannelMethod<void>('setJavaScriptMode', javaScriptMode);
 
   /// Returns the title of the currently loaded page.
   Future<String?> getTitle() => _invokeChannelMethod<String>('getTitle');
@@ -164,7 +164,7 @@ class TizenWebView {
 
   /// Sets the background color of this WebView.
   Future<void> setBackgroundColor(Color color) =>
-      _invokeChannelMethod<void>('backgroundColor', color.value);
+      _invokeChannelMethod<void>('setBackgroundColor', color.value);
 
   /// Adds a new JavaScript channel to the set of enabled channels.
   Future<void> addJavaScriptChannel(
@@ -195,5 +195,5 @@ class TizenWebView {
 
   /// Sets the value used for the HTTP `User-Agent:` request header.
   Future<void> setUserAgent(String? userAgent) =>
-      _invokeChannelMethod<void>('userAgent', userAgent);
+      _invokeChannelMethod<void>('setUserAgent', userAgent);
 }

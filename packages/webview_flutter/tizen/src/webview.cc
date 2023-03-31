@@ -345,7 +345,7 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
   const std::string& method_name = method_call.method_name();
   const flutter::EncodableValue* arguments = method_call.arguments();
 
-  if (method_name == "javaScriptMode") {
+  if (method_name == "setJavaScriptMode") {
     const auto* mode = std::get_if<int32_t>(arguments);
     if (mode) {
       bool enabled = (*mode == 1);
@@ -385,8 +385,7 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
   } else if (method_name == "currentUrl") {
     result->Success(
         flutter::EncodableValue(ewk_view_url_get(webview_instance_)));
-  } else if (method_name == "evaluateJavaScript" ||
-             method_name == "runJavaScriptReturningResult" ||
+  } else if (method_name == "runJavaScriptReturningResult" ||
              method_name == "runJavaScript") {
     const auto* javascript = std::get_if<std::string>(arguments);
     if (javascript) {
@@ -475,7 +474,7 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
     } else {
       result->Error("Invalid argument", "The argument must be a string.");
     }
-  } else if (method_name == "backgroundColor") {
+  } else if (method_name == "setBackgroundColor") {
     const auto* color = std::get_if<int32_t>(arguments);
     if (color) {
       EwkInternalApiBinding::GetInstance().view.SetBackgroundColor(
@@ -483,7 +482,7 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
           *color & 0xff, *color >> 24 & 0xff);
       result->Success();
     }
-  } else if (method_name == "userAgent") {
+  } else if (method_name == "setUserAgent") {
     const auto* userAgent = std::get_if<std::string>(arguments);
     if (userAgent) {
       ewk_view_user_agent_set(webview_instance_, userAgent->c_str());

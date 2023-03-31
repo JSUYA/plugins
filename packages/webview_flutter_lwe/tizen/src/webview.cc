@@ -573,7 +573,7 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
   const std::string& method_name = method_call.method_name();
   const flutter::EncodableValue* arguments = method_call.arguments();
 
-  if (method_name == "javaScriptMode") {
+  if (method_name == "setJavaScriptMode") {
     // NOTE: Not supported by LWE on Tizen.
     result->Success();
   } else if (method_name == "hasNavigationDelegate") {
@@ -605,8 +605,7 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
     result->Success();
   } else if (method_name == "currentUrl") {
     result->Success(flutter::EncodableValue(webview_instance_->GetURL()));
-  } else if (method_name == "evaluateJavaScript" ||
-             method_name == "runJavaScriptReturningResult" ||
+  } else if (method_name == "runJavaScriptReturningResult" ||
              method_name == "runJavaScript") {
     const auto* javascript = std::get_if<std::string>(arguments);
     if (javascript) {
@@ -701,7 +700,7 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
     } else {
       result->Error("Invalid argument", "The argument must be a string.");
     }
-  } else if (method_name == "backgroundColor") {
+  } else if (method_name == "setBackgroundColor") {
     const auto* color = std::get_if<int32_t>(arguments);
     if (color) {
       LWE::Settings settings = webview_instance_->GetSettings();
@@ -710,7 +709,7 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
       webview_instance_->SetSettings(settings);
       result->Success();
     }
-  } else if (method_name == "userAgent") {
+  } else if (method_name == "setUserAgent") {
     const auto* user_agent = std::get_if<std::string>(arguments);
     if (user_agent) {
       LWE::Settings settings = webview_instance_->GetSettings();

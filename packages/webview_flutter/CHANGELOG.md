@@ -1,3 +1,7 @@
+## NEXT
+
+* Clean up method name.
+
 ## 0.7.0
 
 * Update webivew_flutter to 4.0.2.
