@@ -36,6 +36,14 @@ bool EwkInternalApiBinding::Initialize() {
   view.KeyEventsEnabledSet = reinterpret_cast<EwkViewKeyEventsEnabledSetFnPtr>(
       dlsym(handle_, "ewk_view_key_events_enabled_set"));
 
+  view.SetSupportVideoHole = reinterpret_cast<EwkViewSupportVideoHoleSetFnPtr>(
+      dlsym(handle_, "ewk_view_set_support_video_hole"));
+
+  view.GetScale = reinterpret_cast<EwkViewScaleGetFnPtr>(
+      dlsym(handle_, "ewk_view_scale_get"));
+  view.SetScale = reinterpret_cast<EwkViewScaleSetFnPtr>(
+      dlsym(handle_, "ewk_view_scale_set"));
+
   // ewk_main
   main.SetArguments = reinterpret_cast<EwkSetArgumentsFnPtr>(
       dlsym(handle_, "ewk_set_arguments"));
@@ -44,6 +52,9 @@ bool EwkInternalApiBinding::Initialize() {
   settings.ImePanelEnabledSet =
       reinterpret_cast<EwkSettingsImePanelEnabledSetFnPtr>(
           dlsym(handle_, "ewk_settings_ime_panel_enabled_set"));
+  settings.MixedContentsSet =
+      reinterpret_cast<EwkSettingsMixedContentsSetFnPtr>(
+          dlsym(handle_, "ewk_settings_mixed_contents_set"));
 
   // ewk_console_message
   console_message.LevelGet = reinterpret_cast<EwkConsoleMessageLevelGetFnPtr>(
@@ -57,7 +68,8 @@ bool EwkInternalApiBinding::Initialize() {
 
   return view.SetBackgroundColor && view.FeedTouchEvent && view.SendKeyEvent &&
          view.OffscreenRenderingEnabledSet && view.ImeWindowSet &&
-         view.KeyEventsEnabledSet && main.SetArguments &&
+         view.KeyEventsEnabledSet && view.SetSupportVideoHole &&
+         view.GetScale && view.SetScale && main.SetArguments &&
          settings.ImePanelEnabledSet && console_message.LevelGet &&
          console_message.TextGet && console_message.LineGet &&
          console_message.SourceGet;

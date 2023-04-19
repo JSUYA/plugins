@@ -78,8 +78,8 @@ WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
                  void* window)
     : PlatformView(registrar, view_id, nullptr),
       texture_registrar_(texture_registrar),
-      width_(width),
-      height_(height),
+      width_(width * 1.6f),
+      height_(height * 1.6f),
       window_(window) {
   if (!EwkInternalApiBinding::GetInstance().Initialize()) {
     LOG_ERROR("Failed to initialize EWK internal APIs.");
@@ -201,8 +201,8 @@ void WebView::Touch(int type, int button, double x, double y, double dx,
   Eina_List* points = 0;
   Ewk_Touch_Point* point = new Ewk_Touch_Point;
   point->id = 0;
-  point->x = x;
-  point->y = y;
+  point->x = x * 1.6;
+  point->y = y * 1.6;
   point->state = state;
   points = eina_list_append(points, point);
 
@@ -264,6 +264,7 @@ void WebView::InitWebView() {
 
   webview_instance_ = ewk_view_add(ecore_evas_get(evas));
   ecore_evas_focus_set(evas, true);
+
   ewk_view_focus_set(webview_instance_, true);
   EwkInternalApiBinding::GetInstance().view.OffscreenRenderingEnabledSet(
       webview_instance_, true);
@@ -278,10 +279,16 @@ void WebView::InitWebView() {
 
   EwkInternalApiBinding::GetInstance().settings.ImePanelEnabledSet(
       ewk_view_settings_get(webview_instance_), true);
+  EwkInternalApiBinding::GetInstance().settings.MixedContentsSet(
+      ewk_view_settings_get(webview_instance_), true);
+
   EwkInternalApiBinding::GetInstance().view.ImeWindowSet(webview_instance_,
                                                          window_);
   EwkInternalApiBinding::GetInstance().view.KeyEventsEnabledSet(
       webview_instance_, true);
+
+  EwkInternalApiBinding::GetInstance().view.SetSupportVideoHole(
+      webview_instance_, window_, true, false);
 
   evas_object_smart_callback_add(webview_instance_, "offscreen,frame,rendered",
                                  &WebView::OnFrameRendered, this);
@@ -299,7 +306,13 @@ void WebView::InitWebView() {
                                  &WebView::OnNavigationPolicy, this);
 
   Resize(width_, height_);
+  // evas_object_move(webview_instance_, 100, 100);
+  // evas_object_resize(webview_instance_, width_ * 1.8f, height_ * 1.8f);
   evas_object_show(webview_instance_);
+  // ewk_settings_javascript_enabled_set(ewk_view_settings_get(webview_instance_),
+  //                                     true);
+  // ewk_settings_scripts_can_open_windows_set(
+  //     ewk_view_settings_get(webview_instance_), true);
 
   evas_object_data_set(webview_instance_, kEwkInstance, this);
 }

@@ -5,6 +5,7 @@
 #ifndef FLUTTER_PLUGIN_EWK_INTERNAL_API_BINDING_H_
 #define FLUTTER_PLUGIN_EWK_INTERNAL_API_BINDING_H_
 
+#include <Ecore_Evas.h>
 #include <Evas.h>
 
 typedef enum {
@@ -36,6 +37,13 @@ typedef void (*EwkViewOffscreenRenderingEnabledSetFnPtr)(Evas_Object* obj,
 typedef void (*EwkViewImeWindowSetFnPtr)(Evas_Object* obj, void* window);
 typedef Eina_Bool (*EwkViewKeyEventsEnabledSetFnPtr)(Evas_Object* obj,
                                                      Eina_Bool enabled);
+typedef Eina_Bool (*EwkViewSupportVideoHoleSetFnPtr)(Evas_Object* obj,
+                                                     void* window,
+                                                     Eina_Bool enabled,
+                                                     Eina_Bool boo);
+typedef double (*EwkViewScaleGetFnPtr)(Evas_Object* obj);
+typedef Eina_Bool (*EwkViewScaleSetFnPtr)(Evas_Object* obj, double scale_factor,
+                                          int x, int y);
 
 typedef struct {
   EwkViewBgColorSetFnPtr SetBackgroundColor = nullptr;
@@ -45,6 +53,9 @@ typedef struct {
       nullptr;
   EwkViewImeWindowSetFnPtr ImeWindowSet = nullptr;
   EwkViewKeyEventsEnabledSetFnPtr KeyEventsEnabledSet = nullptr;
+  EwkViewSupportVideoHoleSetFnPtr SetSupportVideoHole = nullptr;
+  EwkViewScaleGetFnPtr GetScale = nullptr;
+  EwkViewScaleSetFnPtr SetScale = nullptr;
 } EwkViewProcTable;
 
 typedef void (*EwkSetArgumentsFnPtr)(int argc, char** argv);
@@ -56,9 +67,12 @@ typedef struct {
 typedef struct Ewk_Settings Ewk_Settings;
 typedef void (*EwkSettingsImePanelEnabledSetFnPtr)(Ewk_Settings* settings,
                                                    Eina_Bool enabled);
+typedef void (*EwkSettingsMixedContentsSetFnPtr)(Ewk_Settings* settings,
+                                                 Eina_Bool enabled);
 
 typedef struct {
   EwkSettingsImePanelEnabledSetFnPtr ImePanelEnabledSet = nullptr;
+  EwkSettingsMixedContentsSetFnPtr MixedContentsSet = nullptr;
 } EwkSettingsProcTable;
 
 typedef struct _Ewk_Console_Message Ewk_Console_Message;
