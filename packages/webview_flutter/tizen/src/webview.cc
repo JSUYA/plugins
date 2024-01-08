@@ -297,9 +297,15 @@ void WebView::InitWebView() {
                                                          chromium_argv);
 
   ewk_init();
-  Ecore_Evas* evas = ecore_evas_new("wayland_egl", 0, 0, 1, 1, 0);
+  Ecore_Evas* evas = nullptr;  // ecore_evas_new("wayland_egl", 0, 0, 1, 1, 0);
+  if (!evas) {
+    debug_log_ += "\n Fail to create ecore evas.";
+  }
 
-  webview_instance_ = ewk_view_add(ecore_evas_get(evas));
+  webview_instance_ = nullptr;  // ewk_view_add(ecore_evas_get(evas));
+  if (!webview_instance_) {
+    debug_log_ += "\n Fail to create ewk_view.";
+  }
   ecore_evas_focus_set(evas, true);
   ewk_view_focus_set(webview_instance_, true);
   EwkInternalApiBinding::GetInstance().view.OffscreenRenderingEnabledSet(
@@ -351,8 +357,9 @@ void WebView::InitWebView() {
 void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
                                       std::unique_ptr<FlMethodResult> result) {
   if (!webview_instance_) {
-    result->Error("Invalid operation",
-                  "The webview instance has not been initialized.");
+    result->Error(
+        "Invalid operation",
+        "The webview instance has not been initialized.\n" + debug_log_);
     return;
   }
 

@@ -99,6 +99,8 @@ class WebView : public PlatformView {
   std::unique_ptr<flutter::TextureVariant> texture_variant_;
   std::mutex mutex_;
   std::unique_ptr<BufferPool> tbm_pool_;
+
+  std::string debug_log_;
 };
 
 #endif  // FLUTTER_PLUGIN_WEBVIEW_H_
