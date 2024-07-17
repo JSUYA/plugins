@@ -199,7 +199,10 @@ void WebView::Dispose() {
     evas_object_del(webview_instance_);
   }
 
-  ewk_shutdown();
+  if (enable_initialize_) {
+    ewk_shutdown();
+  }
+
   disposed_ = true;
 }
 
@@ -305,8 +308,10 @@ bool WebView::InitWebView() {
   int chromium_argc = sizeof(chromium_argv) / sizeof(chromium_argv[0]);
   EwkInternalApiBinding::GetInstance().main.SetArguments(chromium_argc,
                                                          chromium_argv);
+  if (enable_initialize_) {
+    ewk_init();
+  }
 
-  ewk_init();
   Ecore_Evas* evas = ecore_evas_new("wayland_egl", 0, 0, 1, 1, 0);
 
   webview_instance_ = ewk_view_add(ecore_evas_get(evas));
@@ -368,7 +373,14 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
   const std::string& method_name = method_call.method_name();
   const flutter::EncodableValue* arguments = method_call.arguments();
 
-  if (method_name == "setEnginePolicy") {
+  if (method_name == "enableInitialize") {
+    const auto* enable_initialize = std::get_if<bool>(arguments);
+    if (enable_initialize) {
+      enable_initialize_ = *enable_initialize;
+    }
+    result->Success();
+    return;
+  } else if (method_name == "setEnginePolicy") {
     const auto* engine_policy = std::get_if<bool>(arguments);
     if (engine_policy) {
       engine_policy_ = *engine_policy;

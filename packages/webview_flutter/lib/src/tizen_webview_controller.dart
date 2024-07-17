@@ -29,6 +29,13 @@ extension TizenWebViewControllerExtension on WebViewController {
         platform as TizenWebViewController;
     controller._enginePolicy = enginePolicy;
   }
+
+  /// Set whether to initialize of web engine.
+  set enableInitialize(bool enable) {
+    final TizenWebViewController controller =
+        platform as TizenWebViewController;
+    controller._enableInitialize = enable;
+  }
 }
 
 /// An implementation of [PlatformWebViewController] using the Tizen WebView API.
@@ -46,6 +53,8 @@ class TizenWebViewController extends PlatformWebViewController {
   late final MethodChannel _webviewControllerChannel;
 
   bool _enginePolicy = false;
+
+  bool _enableInitialize = false;
 
   /// Called when [TizenView] is created.
   void createWebviewControllerChannel(int viewId) {
@@ -87,7 +96,7 @@ class TizenWebViewController extends PlatformWebViewController {
 
   /// Called when [TizenView] is created.
   void onCreate(int viewId) {
-    _webview.onCreate(viewId, _enginePolicy);
+    _webview.onCreate(viewId, _enginePolicy, _enableInitialize);
     if (_webview.hasNavigationDelegate) {
       _tizenNavigationDelegate.createNavigationDelegateChannel(viewId);
     }

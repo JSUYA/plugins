@@ -85,6 +85,7 @@ class WebView : public PlatformView {
   Evas_Object* webview_instance_ = nullptr;
   flutter::TextureRegistrar* texture_registrar_;
   bool engine_policy_ = false;
+  bool enable_initialize_ = false;
   double width_ = 0.0;
   double height_ = 0.0;
   double left_ = 0.0;
