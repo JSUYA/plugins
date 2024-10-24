@@ -218,6 +218,8 @@ VideoPlayer::VideoPlayer(flutter::PluginRegistrar *plugin_registrar,
                            get_error_message(ret));
   }
 
+  player_set_video_codec_type(player_, PLAYER_CODEC_TYPE_HW);
+
   ret = player_prepare_async(player_, OnPrepared, this);
   if (ret != PLAYER_ERROR_NONE) {
     player_destroy(player_);
