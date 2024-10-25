@@ -15,6 +15,9 @@ import 'src/messages.g.dart';
 class VideoPlayerTizen extends VideoPlayerPlatform {
   final TizenVideoPlayerApi _api = TizenVideoPlayerApi();
 
+  ///
+  static bool forceUseHwDecoder = false;
+
   /// Registers this class as the default platform instance.
   static void register() {
     VideoPlayerPlatform.instance = VideoPlayerTizen();
@@ -22,7 +25,7 @@ class VideoPlayerTizen extends VideoPlayerPlatform {
 
   @override
   Future<void> init() {
-    return _api.initialize();
+    return _api.initialize(forceUseHwDecoder);
   }
 
   @override

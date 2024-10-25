@@ -54,7 +54,7 @@ class MixWithOthersMessage {
 
 @HostApi()
 abstract class TizenVideoPlayerApi {
-  void initialize();
+  void initialize(bool forceUseHwDecoder);
   TextureMessage create(CreateMessage msg);
   void dispose(TextureMessage msg);
   void setLooping(LoopingMessage msg);

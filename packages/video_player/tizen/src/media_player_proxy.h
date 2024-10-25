@@ -52,6 +52,7 @@ class MediaPlayerProxy {
 
   int player_get_adaptive_streaming_info(player_h player, void* adaptive_info,
                                          int adaptive_type);
+  int player_set_video_codec_type(player_h player, int video_codec_type);
 
  private:
   void* media_player_handle_ = nullptr;

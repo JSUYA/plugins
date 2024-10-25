@@ -12,6 +12,9 @@ typedef int (*FuncPlayerGetAdaptiveStreamingInfo)(player_h player,
                                                   void* adaptive_info,
                                                   int adaptive_type);
 
+typedef int (*FuncPlayerSetVideoCodecType)(player_h player,
+                                           int video_codec_type);
+
 MediaPlayerProxy::MediaPlayerProxy() {
   media_player_handle_ = dlopen("libcapi-media-player.so.0", RTLD_LAZY);
   if (media_player_handle_ == nullptr) {
@@ -42,4 +45,20 @@ int MediaPlayerProxy::player_get_adaptive_streaming_info(player_h player,
   }
   return player_get_adaptive_streaming_info(player, adaptive_info,
                                             adaptive_type);
+}
+
+int MediaPlayerProxy::player_set_video_codec_type(player_h player,
+                                                  int video_codec_type) {
+  if (!media_player_handle_) {
+    LOG_ERROR("media_player_handle_ not valid");
+    return PLAYER_ERROR_NOT_AVAILABLE;
+  }
+  FuncPlayerSetVideoCodecType player_set_video_codec_type =
+      reinterpret_cast<FuncPlayerSetVideoCodecType>(
+          dlsym(media_player_handle_, "player_set_video_codec_type_ex"));
+  if (!player_set_video_codec_type) {
+    LOG_ERROR("Fail to find player_set_video_codec_type_ex.");
+    return PLAYER_ERROR_NOT_AVAILABLE;
+  }
+  return player_set_video_codec_type(player, video_codec_type);
 }

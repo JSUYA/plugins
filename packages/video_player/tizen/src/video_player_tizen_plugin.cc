@@ -29,7 +29,7 @@ class VideoPlayerTizenPlugin : public flutter::Plugin,
   VideoPlayerTizenPlugin(flutter::PluginRegistrar *registrar);
   virtual ~VideoPlayerTizenPlugin();
 
-  std::optional<FlutterError> Initialize() override;
+  std::optional<FlutterError> Initialize(bool force_use_hw_decoder) override;
   ErrorOr<TextureMessage> Create(const CreateMessage &msg) override;
   std::optional<FlutterError> Dispose(const TextureMessage &msg) override;
   std::optional<FlutterError> SetLooping(const LoopingMessage &msg) override;
@@ -47,6 +47,8 @@ class VideoPlayerTizenPlugin : public flutter::Plugin,
 
  private:
   void DisposeAllPlayers();
+
+  bool force_use_hw_decoder_ = false;
 
   flutter::PluginRegistrar *plugin_registrar_;
   flutter::TextureRegistrar *texture_registrar_;
@@ -77,8 +79,10 @@ void VideoPlayerTizenPlugin::DisposeAllPlayers() {
   players_.clear();
 }
 
-std::optional<FlutterError> VideoPlayerTizenPlugin::Initialize() {
+std::optional<FlutterError> VideoPlayerTizenPlugin::Initialize(
+    bool force_use_hw_decoder) {
   DisposeAllPlayers();
+  force_use_hw_decoder_ = force_use_hw_decoder;
   return std::nullopt;
 }
 
@@ -110,7 +114,8 @@ ErrorOr<TextureMessage> VideoPlayerTizenPlugin::Create(
   int64_t texture_id = 0;
   try {
     auto player = std::make_unique<VideoPlayer>(
-        plugin_registrar_, texture_registrar_, uri, options_, http_headers);
+        plugin_registrar_, texture_registrar_, uri, options_, http_headers,
+        force_use_hw_decoder_);
     texture_id = player->GetTextureId();
     players_[texture_id] = std::move(player);
   } catch (const VideoPlayerError &error) {

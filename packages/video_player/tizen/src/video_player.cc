@@ -112,7 +112,8 @@ void VideoPlayer::InitScreenSaverApi() {
 VideoPlayer::VideoPlayer(flutter::PluginRegistrar *plugin_registrar,
                          flutter::TextureRegistrar *texture_registrar,
                          const std::string &uri, VideoPlayerOptions &options,
-                         flutter::EncodableMap &http_headers) {
+                         flutter::EncodableMap &http_headers,
+                         bool force_use_hw_decoder) {
   sink_event_pipe_ = ecore_pipe_add(
       [](void *data, void *buffer, unsigned int nbyte) -> void {
         auto *self = static_cast<VideoPlayer *>(data);
@@ -216,6 +217,15 @@ VideoPlayer::VideoPlayer(flutter::PluginRegistrar *plugin_registrar,
     player_destroy(player_);
     throw VideoPlayerError("player_set_error_cb failed",
                            get_error_message(ret));
+  }
+
+  if (force_use_hw_decoder) {
+    ret = media_player_proxy_->player_set_video_codec_type(player_, 0 /*HW */);
+    if (ret != PLAYER_ERROR_NONE) {
+      player_destroy(player_);
+      throw VideoPlayerError("player_set_video_codec_type failed",
+                             get_error_message(ret));
+    }
   }
 
   ret = player_prepare_async(player_, OnPrepared, this);

@@ -10,6 +10,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_player_tizen/video_player_tizen.dart';
 
 void main() {
   runApp(
@@ -224,15 +225,15 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
   void initState() {
     super.initState();
     _controller = VideoPlayerController.networkUrl(
-      Uri.parse(
-          'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'),
-      closedCaptionFile: _loadCaptions(),
+      Uri.parse('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'),
+      // closedCaptionFile: _loadCaptions(),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
 
     _controller.addListener(() {
       setState(() {});
     });
+    VideoPlayerTizen.forceUseHwDecoder = true;
     _controller.setLooping(true);
     _controller.initialize();
   }
