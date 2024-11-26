@@ -20,6 +20,7 @@ export 'src/closed_caption_file.dart';
 export 'src/drm_configs.dart';
 export 'src/tracks.dart';
 
+//
 VideoPlayerPlatform? _lastVideoPlayerPlatform;
 
 VideoPlayerPlatform get _videoPlayerPlatform {
