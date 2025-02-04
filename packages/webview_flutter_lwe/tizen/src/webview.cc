@@ -107,7 +107,10 @@ WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
       texture_registrar_(texture_registrar),
       width_(width),
       height_(height) {
-  use_sw_backend_ = IsRunningOnEmulator();
+  if (IsRunningOnEmulator()) {
+    use_sw_backend_ = true;
+  }
+
   if (use_sw_backend_) {
     tbm_pool_ = std::make_unique<SingleBufferPool>(width, height);
   } else {
@@ -122,8 +125,6 @@ WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
             return ObtainGpuSurface(width, height);
           }));
   SetTextureId(texture_registrar_->RegisterTexture(texture_variant_.get()));
-
-  InitWebView();
 
   dispatcher_ = std::make_unique<MessageDispatcher>();
 
@@ -146,75 +147,6 @@ WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
   cookie_channel->SetMethodCallHandler(
       [webview = this](const auto& call, auto result) {
         webview->HandleCookieMethodCall(call, std::move(result));
-      });
-
-  webview_instance_->RegisterOnPageStartedHandler(
-      [this](LWE::WebContainer* container, const std::string& url) {
-        flutter::EncodableMap args = {
-            {flutter::EncodableValue("url"), flutter::EncodableValue(url)}};
-
-        dispatcher_->dispatchTaskOnMainThread([this, &args]() {
-          navigation_delegate_channel_->InvokeMethod(
-              "onPageStarted", std::make_unique<flutter::EncodableValue>(args));
-        });
-      });
-  webview_instance_->RegisterOnPageLoadedHandler(
-      [this](LWE::WebContainer* container, const std::string& url) {
-        flutter::EncodableMap args = {
-            {flutter::EncodableValue("url"), flutter::EncodableValue(url)}};
-
-        dispatcher_->dispatchTaskOnMainThread([this, &args]() {
-          navigation_delegate_channel_->InvokeMethod(
-              "onPageFinished",
-              std::make_unique<flutter::EncodableValue>(args));
-        });
-      });
-  webview_instance_->RegisterOnProgressChangedHandler(
-      [this](LWE::WebContainer* container, int progress) {
-        flutter::EncodableMap args = {{flutter::EncodableValue("progress"),
-                                       flutter::EncodableValue(progress)}};
-
-        dispatcher_->dispatchTaskOnMainThread([this, &args]() {
-          navigation_delegate_channel_->InvokeMethod(
-              "onProgress", std::make_unique<flutter::EncodableValue>(args));
-        });
-      });
-  webview_instance_->RegisterOnReceivedErrorHandler(
-      [this](LWE::WebContainer* container, LWE::ResourceError error) {
-        flutter::EncodableMap args = {
-            {flutter::EncodableValue("errorCode"),
-             flutter::EncodableValue(error.GetErrorCode())},
-            {flutter::EncodableValue("description"),
-             flutter::EncodableValue(error.GetDescription())},
-            {flutter::EncodableValue("failingUrl"),
-             flutter::EncodableValue(error.GetUrl())},
-        };
-
-        dispatcher_->dispatchTaskOnMainThread([this, &args]() {
-          navigation_delegate_channel_->InvokeMethod(
-              "onWebResourceError",
-              std::make_unique<flutter::EncodableValue>(args));
-        });
-      });
-  webview_instance_->RegisterShouldOverrideUrlLoadingHandler(
-      [this](LWE::WebContainer* view, const std::string& url) -> bool {
-        if (!has_navigation_delegate_) {
-          return false;
-        }
-        flutter::EncodableMap args = {
-            {flutter::EncodableValue("url"), flutter::EncodableValue(url)},
-            {flutter::EncodableValue("isForMainFrame"),
-             flutter::EncodableValue(true)},
-        };
-
-        dispatcher_->dispatchTaskOnMainThread([this, &args, url]() {
-          auto result = std::make_unique<NavigationRequestResult>(url, this);
-          navigation_delegate_channel_->InvokeMethod(
-              "navigationRequest",
-              std::make_unique<flutter::EncodableValue>(args),
-              std::move(result));
-        });
-        return true;
       });
 }
 
@@ -536,7 +468,7 @@ void WebView::SetDirection(int direction) {
   // TODO: Implement if necessary.
 }
 
-void WebView::InitWebView() {
+bool WebView::InitWebView() {
   if (webview_instance_) {
     webview_instance_->Destroy();
     webview_instance_ = nullptr;
@@ -574,6 +506,9 @@ void WebView::InitWebView() {
       reinterpret_cast<LWE::WebContainer*>(createWebViewInstance(
           0, 0, width_, height_, pixel_ratio, "SamsungOneUI", "ko-KR",
           "Asia/Seoul", on_prepare_image, on_flush, use_sw_backend_));
+  if (!webview_instance_) {
+    return false;
+  }
 
 #ifndef TV_PROFILE
   LWE::Settings settings = webview_instance_->GetSettings();
@@ -581,18 +516,100 @@ void WebView::InitWebView() {
       "Mozilla/5.0 (like Gecko/54.0 Firefox/54.0) Mobile");
   webview_instance_->SetSettings(settings);
 #endif
+
+  webview_instance_->RegisterOnPageStartedHandler(
+      [this](LWE::WebContainer* container, const std::string& url) {
+        flutter::EncodableMap args = {
+            {flutter::EncodableValue("url"), flutter::EncodableValue(url)}};
+
+        dispatcher_->dispatchTaskOnMainThread([this, &args]() {
+          navigation_delegate_channel_->InvokeMethod(
+              "onPageStarted", std::make_unique<flutter::EncodableValue>(args));
+        });
+      });
+  webview_instance_->RegisterOnPageLoadedHandler(
+      [this](LWE::WebContainer* container, const std::string& url) {
+        flutter::EncodableMap args = {
+            {flutter::EncodableValue("url"), flutter::EncodableValue(url)}};
+
+        dispatcher_->dispatchTaskOnMainThread([this, &args]() {
+          navigation_delegate_channel_->InvokeMethod(
+              "onPageFinished",
+              std::make_unique<flutter::EncodableValue>(args));
+        });
+      });
+  webview_instance_->RegisterOnProgressChangedHandler(
+      [this](LWE::WebContainer* container, int progress) {
+        flutter::EncodableMap args = {{flutter::EncodableValue("progress"),
+                                       flutter::EncodableValue(progress)}};
+
+        dispatcher_->dispatchTaskOnMainThread([this, &args]() {
+          navigation_delegate_channel_->InvokeMethod(
+              "onProgress", std::make_unique<flutter::EncodableValue>(args));
+        });
+      });
+  webview_instance_->RegisterOnReceivedErrorHandler(
+      [this](LWE::WebContainer* container, LWE::ResourceError error) {
+        flutter::EncodableMap args = {
+            {flutter::EncodableValue("errorCode"),
+             flutter::EncodableValue(error.GetErrorCode())},
+            {flutter::EncodableValue("description"),
+             flutter::EncodableValue(error.GetDescription())},
+            {flutter::EncodableValue("failingUrl"),
+             flutter::EncodableValue(error.GetUrl())},
+        };
+
+        dispatcher_->dispatchTaskOnMainThread([this, &args]() {
+          navigation_delegate_channel_->InvokeMethod(
+              "onWebResourceError",
+              std::make_unique<flutter::EncodableValue>(args));
+        });
+      });
+  webview_instance_->RegisterShouldOverrideUrlLoadingHandler(
+      [this](LWE::WebContainer* view, const std::string& url) -> bool {
+        if (!has_navigation_delegate_) {
+          return false;
+        }
+        flutter::EncodableMap args = {
+            {flutter::EncodableValue("url"), flutter::EncodableValue(url)},
+            {flutter::EncodableValue("isForMainFrame"),
+             flutter::EncodableValue(true)},
+        };
+
+        dispatcher_->dispatchTaskOnMainThread([this, &args, url]() {
+          auto result = std::make_unique<NavigationRequestResult>(url, this);
+          navigation_delegate_channel_->InvokeMethod(
+              "navigationRequest",
+              std::make_unique<flutter::EncodableValue>(args),
+              std::move(result));
+        });
+        return true;
+      });
+
+  return true;
 }
 
 void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
                                       std::unique_ptr<FlMethodResult> result) {
-  if (!webview_instance_) {
-    result->Error("Invalid operation",
-                  "The webview instance has not been initialized.");
+  const std::string& method_name = method_call.method_name();
+  const flutter::EncodableValue* arguments = method_call.arguments();
+
+  if (method_name == "setUseSwBackend") {
+    const auto* use_sw_backend = std::get_if<bool>(arguments);
+    if (use_sw_backend) {
+      use_sw_backend_ = *use_sw_backend;
+    }
+    result->Success();
     return;
   }
 
-  const std::string& method_name = method_call.method_name();
-  const flutter::EncodableValue* arguments = method_call.arguments();
+  if (!webview_instance_) {
+    if (!InitWebView()) {
+      result->Error("Invalid operation",
+                    "The webview instance initialize failed.");
+      return;
+    }
+  }
 
   if (method_name == "javaScriptMode") {
     // NOTE: Not supported by LWE on Tizen.

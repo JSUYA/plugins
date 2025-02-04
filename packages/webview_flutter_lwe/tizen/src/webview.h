@@ -65,7 +65,7 @@ class WebView : public PlatformView {
   std::string GetWebViewChannelName();
   std::string GetNavigationDelegateChannelName();
 
-  void InitWebView();
+  bool InitWebView();
 
   LWE::WebContainer* webview_instance_ = nullptr;
   flutter::TextureRegistrar* texture_registrar_;
@@ -82,7 +82,7 @@ class WebView : public PlatformView {
   std::unique_ptr<flutter::TextureVariant> texture_variant_;
   std::mutex mutex_;
   std::unique_ptr<BufferPool> tbm_pool_;
-  bool use_sw_backend_;
+  bool use_sw_backend_ = false;
 };
 
 #endif  // FLUTTER_PLUGIN_WEBVIEW_H_

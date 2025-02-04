@@ -56,11 +56,12 @@ class LweWebView {
   }
 
   /// Called when [TizenView] is created. Invokes the requested method call before [LweWebView] is created.
-  void onCreate(int viewId) {
+  void onCreate(int viewId, bool useSwBackend) {
     _isCreated = true;
     _lweWebViewChannel =
         MethodChannel(kLweWebViewChannelName + viewId.toString());
     _lweWebViewChannel.setMethodCallHandler(_onMethodCall);
+    _invokeChannelMethod<void>('setUseSwBackend', useSwBackend);
 
     _callPendingMethodCalls();
   }

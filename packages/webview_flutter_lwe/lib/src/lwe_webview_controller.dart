@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tizen/widgets.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 
 import 'lwe_webview.dart';
@@ -15,6 +16,15 @@ import 'lwe_webview.dart';
 /// The channel name of [LweNavigationDelegate].
 const String kLweNavigationDelegateChannelName =
     'plugins.flutter.io/lwe_webview_navigation_delegate_';
+
+/// The extension of WebViewController class for the Tizen.
+extension LweWebViewControllerExtension on WebViewController {
+  /// Set to engine policy.
+  set useSwBackend(bool useSwBackend) {
+    final LweWebViewController controller = platform as LweWebViewController;
+    controller._useSwBackend = useSwBackend;
+  }
+}
 
 /// An implementation of [PlatformWebViewController] using the Lightweight Web Engine.
 class LweWebViewController extends PlatformWebViewController {
@@ -26,12 +36,14 @@ class LweWebViewController extends PlatformWebViewController {
   final LweWebView _webview;
   late LweNavigationDelegate _lweNavigationDelegate;
 
+  bool _useSwBackend = false;
+
   /// Called when [TizenView] is created.
   void onCreate(int viewId) {
     if (_webview.hasNavigationDelegate) {
       _lweNavigationDelegate.onCreate(viewId);
     }
-    _webview.onCreate(viewId);
+    _webview.onCreate(viewId, _useSwBackend);
   }
 
   @override

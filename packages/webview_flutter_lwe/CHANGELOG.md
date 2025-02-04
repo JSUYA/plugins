@@ -1,3 +1,7 @@
+## 0.3.6
+
+* Add WebViewController.useSwBackend extension API.
+
 ## 0.3.5
 
 * Fix an issue where platform channel isn't called on the main thread.
