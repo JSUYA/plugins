@@ -17,6 +17,7 @@ flutter:
 dependencies:
   flutter:
     sdk: flutter
+  google_maps_flutter: ^2.10.0
   google_maps_flutter_platform_interface: ^2.10.0
   stream_transform: ^2.0.0
   webview_flutter: ^4.10.0

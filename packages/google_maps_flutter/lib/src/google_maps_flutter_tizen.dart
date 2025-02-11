@@ -106,7 +106,8 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
     HeatmapUpdates heatmapUpdates, {
     required int mapId,
   }) async {
-    return; // Noop for now!
+    _map(mapId).updateHeatmaps(heatmapUpdates);
+    return;
   }
 
   @override
@@ -313,6 +314,27 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
   }
 
   @override
+  Widget buildViewWithConfiguration(
+    int creationId,
+    PlatformViewCreatedCallback onPlatformViewCreated, {
+    required MapWidgetConfiguration widgetConfiguration,
+    MapObjects mapObjects = const MapObjects(),
+    MapConfiguration mapConfiguration = const MapConfiguration(),
+  }) {
+    return _buildView(
+      creationId,
+      onPlatformViewCreated,
+      initialCameraPosition: widgetConfiguration.initialCameraPosition,
+      markers: mapObjects.markers,
+      polygons: mapObjects.polygons,
+      polylines: mapObjects.polylines,
+      circles: mapObjects.circles,
+      heatmaps: mapObjects.heatmaps,
+      tileOverlays: mapObjects.tileOverlays,
+    );
+  }
+
+  @override
   Widget buildView(
     int creationId,
     PlatformViewCreatedCallback onPlatformViewCreated, {
@@ -321,6 +343,33 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
     Set<Polygon> polygons = const <Polygon>{},
     Set<Polyline> polylines = const <Polyline>{},
     Set<Circle> circles = const <Circle>{},
+    Set<Heatmap> heatmaps = const <Heatmap>{},
+    Set<TileOverlay> tileOverlays = const <TileOverlay>{},
+    Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers =
+        const <Factory<OneSequenceGestureRecognizer>>{},
+    Map<String, dynamic> mapOptions = const <String, dynamic>{},
+  }) {
+    return _buildView(creationId, onPlatformViewCreated,
+        initialCameraPosition: initialCameraPosition,
+        markers: markers,
+        polygons: polygons,
+        polylines: polylines,
+        circles: circles,
+        heatmaps: heatmaps,
+        tileOverlays: tileOverlays,
+        gestureRecognizers: gestureRecognizers,
+        mapOptions: mapOptions);
+  }
+
+  Widget _buildView(
+    int creationId,
+    PlatformViewCreatedCallback onPlatformViewCreated, {
+    required CameraPosition initialCameraPosition,
+    Set<Marker> markers = const <Marker>{},
+    Set<Polygon> polygons = const <Polygon>{},
+    Set<Polyline> polylines = const <Polyline>{},
+    Set<Circle> circles = const <Circle>{},
+    Set<Heatmap> heatmaps = const <Heatmap>{},
     Set<TileOverlay> tileOverlays = const <TileOverlay>{},
     Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers =
         const <Factory<OneSequenceGestureRecognizer>>{},
@@ -342,6 +391,7 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
       polygons: polygons,
       polylines: polylines,
       circles: circles,
+      heatmaps: heatmaps,
       mapOptions: mapOptions,
     )..init(); // Initialize the controller
 

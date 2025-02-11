@@ -7,6 +7,7 @@
 
 //part of '../google_maps_flutter_tizen.dart';
 import 'dart:async';
+import 'dart:ui';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -554,6 +555,108 @@ class GCircleOptions {
     return '{center: new google.maps.LatLng(${center?.latitude}, ${center?.longitude}), fillColor:"$fillColor",'
         ' fillOpacity:$fillOpacity, radius:$radius, strokeColor:"$strokeColor", strokeOpacity:$strokeOpacity,'
         ' map: map, strokeWeight:$strokeWeight, visible:$visible, zIndex:$zIndex}';
+  }
+}
+
+/// A data point entry for a heatmap. This is a geographical data point with a weight attribute.
+class GWeightedLocation {
+  /// GWeightedLocation Constructor.
+  GWeightedLocation();
+
+  /// The location of the data point.
+  LatLng? _location;
+
+  set location(LatLng? localtion) => _location = localtion;
+
+  /// The weighting value of the data point.
+  num? _weight = 0.6;
+
+  set weight(num? weight) => _weight = weight;
+
+  @override
+  String toString() {
+    return '{location: new google.maps.LatLng(${_location!.latitude}, ${_location!.longitude}), weight: $_weight}';
+  }
+}
+
+/// This class represents a geographical location on the map as a Marker.
+class GHeatmapLayer {
+  /// GMarker Constructor.
+  GHeatmapLayer([
+    GHeatmapLayerOptions? opts,
+  ])  : id = _gid++,
+        _options = opts {
+    _createHeatmap(opts);
+  }
+
+  Future<void> _createHeatmap(GHeatmapLayerOptions? opts) async {
+    print(
+        'var ${toString()} = new google.maps.visualization.HeatmapLayer($opts);');
+    await webController!.runJavaScript(
+        'var ${toString()} = new google.maps.visualization.HeatmapLayer($opts);');
+  }
+
+  /// GMarker id.
+  final int id;
+  static int _gid = 0;
+  GHeatmapLayerOptions? _options;
+
+  /// Caches GHeatmapLayer's options
+  GHeatmapLayerOptions? get options => _options;
+
+  @override
+  String toString() {
+    return 'heatmap$id';
+  }
+
+  /// Sets map.
+  set map(Object? /*GMap?|StreetViewPanorama?*/ map) => _setMap(map);
+
+  /// Sets heatmap options.
+  set options(GHeatmapLayerOptions? options) {
+    _options = options;
+    _setOptions(options);
+  }
+
+  Future<void> _setMap(Object? /*GMap?|StreetViewPanorama?*/ map) async {
+    await callMethod(this, 'setMap', <Object?>[map]);
+  }
+
+  Future<void> _setOptions(GHeatmapLayerOptions? options) async {
+    await callMethod(this, 'setOptions', <GHeatmapLayerOptions?>[options]);
+  }
+}
+
+/// This class defines circle's options.
+class GHeatmapLayerOptions {
+  /// GCircleOptions Constructor.
+  factory GHeatmapLayerOptions() {
+    return _options;
+  }
+  GHeatmapLayerOptions._internal();
+  static final GHeatmapLayerOptions _options = GHeatmapLayerOptions._internal();
+
+  /// The data points to display.
+  String? data;
+
+  /// Specifies whether heatmaps dissipate on zoom. By default, the radius of influence of a data point is specified by the radius option only. When dissipating is disabled, the radius option is interpreted as a radius at zoom level 0.
+  bool? dissipating;
+
+  /// The color gradient of the heatmap, specified as an array of CSS color strings. All CSS3 colors are supported except for extended named colors.
+  List<String>? gradient;
+
+  /// The maximum intensity of the heatmap. By default, heatmap colors are dynamically scaled according to the greatest concentration of points at any particular pixel on the map. This property allows you to specify a fixed maximum.
+  num? maxIntensity;
+
+  /// The opacity of the heatmap, expressed as a number between 0 and 1.
+  num? opacity;
+
+  /// The radius of influence for each data point, in pixels.
+  num? radius;
+
+  @override
+  String toString() {
+    return '{${data == null ? '' : 'data: [$data]'} ${dissipating == null ? '' : ', dissipating: $dissipating'} ${gradient == null ? '' : ', gradient: $gradient'} , map: map ${maxIntensity == null ? '' : ', maxIntensity: $maxIntensity'} ${opacity == null ? '' : ', opacity: $opacity'} ${radius == null ? '' : ', radius: $radius'}}';
   }
 }
 

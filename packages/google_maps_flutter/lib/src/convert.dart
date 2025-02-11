@@ -31,6 +31,11 @@ String? _getCameraBounds(dynamic option) {
   return restrictedBound;
 }
 
+// Converts a [Color] into a valid CSS value rgba(R, G, B, A).
+String _getCssColorWithAlpha(Color color) {
+  return '"rgba(${color.red}, ${color.green}, ${color.blue}, ${(color.alpha / 255).toStringAsFixed(2)})"';
+}
+
 // Converts options into String that can be used by a webview.
 // The following options are not handled here due to various reasons:
 // The following are not available in web, because the map doesn't rotate there:
@@ -390,4 +395,30 @@ util.GCircleOptions _circleOptionsFromCircle(Circle circle) {
     ..radius = circle.radius
     ..visible = circle.visible
     ..zIndex = circle.zIndex;
+}
+
+util.GHeatmapLayerOptions _heatmapOptionsFromHeatmap(Heatmap heatmap) {
+  final Iterable<Color>? gradientColors =
+      heatmap.gradient?.colors.map((HeatmapGradientColor e) => e.color);
+  final util.GHeatmapLayerOptions heatmapOptions = util.GHeatmapLayerOptions()
+    ..data = heatmap.data
+        .map(
+          (WeightedLatLng e) => util.GWeightedLocation()
+            ..location = LatLng(e.point.latitude, e.point.longitude)
+            ..weight = e.weight,
+        )
+        .toList()
+        .join(',')
+    ..dissipating = heatmap.dissipating
+    ..gradient = gradientColors == null
+        ? null
+        : <Color>[
+            // Web needs a first color with 0 alpha
+            gradientColors.first.withAlpha(0),
+            ...gradientColors,
+          ].map(_getCssColorWithAlpha).toList()
+    ..maxIntensity = heatmap.maxIntensity
+    ..opacity = heatmap.opacity
+    ..radius = heatmap.radius.radius;
+  return heatmapOptions;
 }

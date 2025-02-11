@@ -21,6 +21,7 @@ class GoogleMapsController {
     Set<Polygon> polygons = const <Polygon>{},
     Set<Polyline> polylines = const <Polyline>{},
     Set<Circle> circles = const <Circle>{},
+    Set<Heatmap> heatmaps = const <Heatmap>{},
     Map<String, dynamic> mapOptions = const <String, dynamic>{},
   })  : _mapId = mapId,
         _streamController = streamController,
@@ -29,8 +30,10 @@ class GoogleMapsController {
         _polygons = polygons,
         _polylines = polylines,
         _circles = circles,
+        _heatmaps = heatmaps,
         _rawMapOptions = mapOptions {
     _circlesController = CirclesController(stream: _streamController);
+    _heatmapsController = HeatmapsController();
     _polygonsController = PolygonsController(stream: _streamController);
     _polylinesController = PolylinesController(stream: _streamController);
     _markersController = MarkersController(stream: _streamController);
@@ -43,6 +46,7 @@ class GoogleMapsController {
 
   final CameraPosition _initialCameraPosition;
   final Set<Marker> _markers;
+  final Set<Heatmap> _heatmaps;
   final Set<Polygon> _polygons;
   final Set<Polyline> _polylines;
   final Set<Circle> _circles;
@@ -204,6 +208,7 @@ class GoogleMapsController {
 
   // // Geometry controllers, for different features of the map.
   CirclesController? _circlesController;
+  HeatmapsController? _heatmapsController;
   PolygonsController? _polygonsController;
   PolylinesController? _polylinesController;
   MarkersController? _markersController;
@@ -380,6 +385,7 @@ class GoogleMapsController {
     await _attachGeometryControllers();
     _renderInitialGeometry(
       markers: _markers,
+      heatmaps: _heatmaps,
       circles: _circles,
       polygons: _polygons,
       polylines: _polylines,
@@ -393,6 +399,8 @@ class GoogleMapsController {
     // And bind the (ready) map instance to the other geometry controllers.
     assert(_circlesController != null,
         'Cannot attach a map to a null CirclesController instance.');
+    assert(_heatmapsController != null,
+        'Cannot attach a map to a null HeatmapsController instance.');
     assert(_polygonsController != null,
         'Cannot attach a map to a null PolygonsController instance.');
     assert(_polylinesController != null,
@@ -400,6 +408,7 @@ class GoogleMapsController {
     assert(_markersController != null,
         'Cannot attach a map to a null MarkersController instance.');
     _circlesController!.bindToMap(_mapId, _webview!);
+    _heatmapsController!.bindToMap(_mapId, _webview!);
     _polygonsController!.bindToMap(_mapId, _webview!);
     _polylinesController!.bindToMap(_mapId, _webview!);
     _markersController!.bindToMap(_mapId, _webview!);
@@ -411,6 +420,7 @@ class GoogleMapsController {
   void _renderInitialGeometry({
     Set<Marker> markers = const <Marker>{},
     Set<Circle> circles = const <Circle>{},
+    Set<Heatmap> heatmaps = const <Heatmap>{},
     Set<Polygon> polygons = const <Polygon>{},
     Set<Polyline> polylines = const <Polyline>{},
   }) {
@@ -423,6 +433,7 @@ class GoogleMapsController {
     // controllers below are *not* null.
     _markersController!.addMarkers(markers);
     _circlesController!.addCircles(circles);
+    _heatmapsController!.addHeatmaps(heatmaps);
     _polygonsController!.addPolygons(polygons);
     _polylinesController!.addPolylines(polylines);
   }
@@ -643,6 +654,17 @@ class GoogleMapsController {
     _circlesController?.removeCircles(updates.circleIdsToRemove);
   }
 
+  /// Applies [HeatmapUpdates] to the currently managed heatmaps.
+  void updateHeatmaps(HeatmapUpdates updates) {
+    assert(
+      _heatmapsController != null,
+      'Cannot update heatmaps after dispose().',
+    );
+    _heatmapsController?.addHeatmaps(updates.heatmapsToAdd);
+    _heatmapsController?.changeHeatmaps(updates.heatmapsToChange);
+    _heatmapsController?.removeHeatmaps(updates.heatmapIdsToRemove);
+  }
+
   /// Applies [PolygonUpdates] to the currently managed polygons.
   void updatePolygons(PolygonUpdates updates) {
     assert(
@@ -698,6 +720,7 @@ class GoogleMapsController {
   void dispose() {
     _webview = null;
     _circlesController = null;
+    _heatmapsController = null;
     _polygonsController = null;
     _polylinesController = null;
     _markersController = null;
