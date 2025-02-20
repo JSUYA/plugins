@@ -140,3 +140,75 @@ This plugin has the following limitations.
 - The playback speed will reset to 1.0 when the video is replayed in loop mode.
 - The `seekTo` method works only when the playback speed is 1.0, and it sets the video position to the nearest keyframe, not the exact value passed.
 - The `setLooping` method only works when the player's DataSourceType is DataSourceType.asset.
+- The video player automatically pauses and resumes itself according to the app cycle, but on TV devices, certain OS version reported issues with the resume function when the display is turned off and then on again within a few seconds (i.e. when the screen is turned off using the power button and then turned on again). If you are experiencing problems with video/audio playback, you can add an exception handling on display off/on by following the guide below.
+```yaml
+// Add tizen_intoerp_callbacks package.
+tizen_interop: ^0.4.1
+tizen_interop_callbacks: ^0.3.1
+```
+```dart
+// import tizen_intoerp_callbacks packages.
+import 'package:tizen_interop/9.0/tizen.dart';
+import 'package:tizen_interop_callbacks/tizen_interop_callbacks.dart';
+```
+```dart
+final TizenInteropCallbacks _callbacks = TizenInteropCallbacks();
+late final RegisteredCallback<Void Function(Int32, Pointer<Void>, Pointer<Void>)> _displayStateCallback;
+late Duration? _previousPosition;
+
+// Define displayChanged callback.
+static Future<void> _displayChanged(
+    int type,
+    Pointer<Void> value,
+    Pointer<Void> userData,
+) async {
+  final _WidgetState state =
+      TizenInteropCallbacks.getUserObject<_WidgetState>(userData)!;
+  if (type == device_callback_e.DEVICE_CALLBACK_DISPLAY_STATE) {
+    if (value.address == display_state_e.DISPLAY_STATE_SCREEN_OFF) {
+      // Dispose video controller and save current position.
+      state._previousPosition = await state._controller!.position;
+      await state._controller!.dispose();
+      state._controller = null;
+    } else if (value.address == display_state_e.DISPLAY_STATE_NORMAL) {
+        if (state._controller == null) {
+          // Recreate VideoPlayerController and set previous position.
+          state._controller = VideoPlayerController.network(
+            url,
+            playerOptions: {
+              'startPosition': state._previousPosition?.inMilliseconds,
+            },
+          );
+          // Set up video controller and playback video.
+          await state._controller!.play();
+        }
+      }
+  }
+}
+
+@override
+void initState() {
+  _displayStateCallback = _callbacks.register(
+    'device_changed_cb',
+    Pointer.fromFunction(_displayChanged),
+    userObject: this,
+  );
+  final int ret = tizen.device_add_callback(
+    device_callback_e.DEVICE_CALLBACK_DISPLAY_STATE,
+    _displayStateCallback.interopCallback,
+    _displayStateCallback.interopUserData,
+  );
+  if (ret != 0) {
+    final String error = tizen.get_error_message(ret).toDartString();
+    print('Failed to add DEVICE_CALLBACK_DISPLAY_STATE callback: $error');
+  }
+}
+
+@override
+void dispose() {
+  _controller!.dispose();
+  _controller = null;
+  _callbacks.unregister(_displayStateCallback);
+  super.dispose();
+}
+```
