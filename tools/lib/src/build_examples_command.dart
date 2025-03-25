@@ -35,11 +35,12 @@ class BuildExamplesCommand extends PackageLoopingCommand {
 
       builtSomething = true;
       exitCode = await processRunner.runAndStream(
-        'flutter-tizen',
+        'dbus-run-session -- bash -c "echo tizen | gnome-keyring-daemon --unlock && flutter-tizen',
         <String>[
           'build',
           'tpk',
           '-v',
+          '"',
         ],
         workingDir: example.directory,
       );
