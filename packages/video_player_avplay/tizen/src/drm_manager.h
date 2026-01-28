@@ -37,7 +37,6 @@ class DrmManager {
   void StopDrmSession();
   void ReleaseDrmSession();
   void SetErrorCallback(ErrorCallback callback);
-  void SendInstallKeyError();
 
  private:
   struct DataForLicenseProcess {
@@ -49,8 +48,9 @@ class DrmManager {
   };
 
   void RequestLicense(std::string &session_id, std::string &message);
-  bool InstallKey(void *session_id, void *response_data, void *response_len);
+  void InstallKey(void *session_id, void *response_data, void *response_len);
   int SetChallenge(const std::string &media_url);
+  void SendInstallKeyError(const std::string &error_message);
 
   static int OnChallengeData(void *session_id, int message_type, void *message,
                              int message_length, void *user_data);

@@ -248,16 +248,14 @@ bool DrmManager::ProcessLicense(DataForLicenseProcess &data) {
         static_cast<DrmLicenseHelper::DrmType>(drm_type_), nullptr, nullptr);
     if (DRM_SUCCESS != ret || nullptr == response_data || 0 == response_len) {
       LOG_ERROR("[DrmManager] Fail to get respone by license server url.");
-      SendInstallKeyError();
+      SendInstallKeyError("Fail to get respone by license server url.");
       return false;
     }
     LOG_INFO("[DrmManager] Response length : %lu", response_len);
-    if (!InstallKey(const_cast<void *>(reinterpret_cast<const void *>(
-                        data.session_id.c_str())),
-                    static_cast<void *>(response_data),
-                    reinterpret_cast<void *>(response_len))) {
-      SendInstallKeyError();
-    }
+    InstallKey(const_cast<void *>(
+                   reinterpret_cast<const void *>(data.session_id.c_str())),
+               static_cast<void *>(response_data),
+               reinterpret_cast<void *>(response_len));
     free(response_data);
   } else if (request_license_channel_) {
     // Get license via the Dart callback.
@@ -268,7 +266,7 @@ bool DrmManager::ProcessLicense(DataForLicenseProcess &data) {
   return false;
 }
 
-bool DrmManager::InstallKey(void *session_id, void *response_data,
+void DrmManager::InstallKey(void *session_id, void *response_data,
                             void *response_len) {
   LOG_INFO("[DrmManager] Start install license.");
 
@@ -281,21 +279,17 @@ bool DrmManager::InstallKey(void *session_id, void *response_data,
   if (ret != DM_ERROR_NONE) {
     LOG_ERROR("[DrmManager] Fail to install eme key: %s",
               get_error_message(ret));
-    return false;
+    SendInstallKeyError(get_error_message(ret));
   }
-  return true;
 }
 
 void DrmManager::SetErrorCallback(ErrorCallback callback) {
   error_callback_ = callback;
 }
 
-void DrmManager::SendInstallKeyError() {
+void DrmManager::SendInstallKeyError(const std::string &error_message) {
   if (error_callback_) {
     std::string error_code = "[DrmManager] error";
-    std::string error_message =
-        "Error: install drm key failed, please check licenseURL or network "
-        "connection.";
     error_callback_(error_code, error_message);
   }
 }
@@ -322,16 +316,14 @@ void DrmManager::RequestLicense(std::string &session_id, std::string &message) {
               response = std::get<std::vector<uint8_t>>(*success_value);
             } else {
               LOG_ERROR("[DrmManager] Fail to get response.");
-              SendInstallKeyError();
+              SendInstallKeyError("Fail to get response.");
               return;
             }
             LOG_INFO("[DrmManager] Response length : %d", response.size());
-            if (!InstallKey(const_cast<void *>(reinterpret_cast<const void *>(
-                                session_id.c_str())),
-                            reinterpret_cast<void *>(response.data()),
-                            reinterpret_cast<void *>(response.size()))) {
-              SendInstallKeyError();
-            }
+            InstallKey(const_cast<void *>(
+                           reinterpret_cast<const void *>(session_id.c_str())),
+                       reinterpret_cast<void *>(response.data()),
+                       reinterpret_cast<void *>(response.size()));
           },
           nullptr, nullptr);
   request_license_channel_->InvokeMethod(
