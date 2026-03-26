@@ -342,6 +342,40 @@ class TizenWebViewController extends PlatformWebViewController {
   ) async {
     _onJavaScriptPrompt = onJavaScriptTextInputDialog;
   }
+
+  @override
+  Future<void> setOverScrollMode(WebViewOverScrollMode mode) async {
+    throw UnimplementedError(
+      'This version of `TizenWebViewController` currently has no '
+      'implementation of `setOverScrollMode`.',
+    );
+  }
+
+  @override
+  Future<void> setVerticalScrollBarEnabled(bool enabled) async {
+    throw UnimplementedError(
+      'This version of `TizenWebViewController` currently has no '
+      'implementation of `setVerticalScrollBarEnabled`.',
+    );
+  }
+
+  @override
+  Future<void> setHorizontalScrollBarEnabled(bool enabled) async {
+    throw UnimplementedError(
+      'This version of `TizenWebViewController` currently has no '
+      'implementation of `setHorizontalScrollBarEnabled`.',
+    );
+  }
+
+  @override
+  bool supportsSetScrollBarsEnabled() {
+    return false;
+  }
+
+  @override
+  Future<void> loadFileWithParams(LoadFileParams params) {
+    return _webview.loadFile(params.absoluteFilePath);
+  }
 }
 
 /// An implementation of [PlatformWebViewWidget] with the Tizen WebView API.
@@ -590,6 +624,14 @@ class TizenNavigationDelegate extends PlatformNavigationDelegate {
     throw UnimplementedError(
       'This version of `TizenNavigationDelegate` currently has no '
       'implementation for `setOnHttpAuthRequest`',
+    );
+  }
+
+  @override
+  Future<void> setOnSSlAuthError(SslAuthErrorCallback onSslAuthError) async {
+    throw UnimplementedError(
+      'This version of `TizenNavigationDelegate` currently has no '
+      'implementation for `setOnSSlAuthError`',
     );
   }
 }

@@ -35,6 +35,14 @@ class TizenWebViewCookieManager extends PlatformWebViewCookieManager {
     );
   }
 
+  @override
+  Future<List<WebViewCookie>> getCookies(Uri url) async {
+    throw UnimplementedError(
+      'This version of `TizenWebViewCookieManager` currently has no '
+      'implementation for getCookies method.',
+    );
+  }
+
   bool _isValidPath(String path) {
     // Permitted ranges based on RFC6265bis: https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-02#section-4.1.1
     for (final int char in path.codeUnits) {

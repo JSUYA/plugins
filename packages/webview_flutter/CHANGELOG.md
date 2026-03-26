@@ -1,3 +1,9 @@
+## 0.10.0
+
+* Update webview_flutter_platform_interface to 2.15.1.
+* Update webview_flutter to 4.13.1.
+* Updates minimum supported SDK version to Flutter 3.27/Dart 3.6.
+
 ## 0.9.7
 
 * Fix back key, exit key handling.
