@@ -1,3 +1,8 @@
+## 1.5.2
+
+* Update flutter_tts to 4.2.5.
+* Updates minimum supported SDK version to Flutter 3.27/Dart 3.6.
+
 ## 1.5.1
 
 * Update code format.
