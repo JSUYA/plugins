@@ -1,3 +1,7 @@
+## 0.1.3
+
+* Updates minimum supported SDK version to Flutter 3.27/Dart 3.6.
+
 ## 0.1.2
 
 * Updates README to indicate that the package has been discontinued.
