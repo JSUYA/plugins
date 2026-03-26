@@ -16,6 +16,8 @@ sensor_type_e ToTizenSensorType(const SensorType &sensor_type) {
       return SENSOR_GYROSCOPE;
     case SensorType::kMagnetometer:
       return SENSOR_MAGNETIC;
+    case SensorType::kBarometer:
+      return SENSOR_PRESSURE;
     case SensorType::kUserAccel:
     default:
       return SENSOR_LINEAR_ACCELERATION;
@@ -52,12 +54,6 @@ DeviceSensor::~DeviceSensor() {
 }
 
 bool DeviceSensor::StartListen(SensorEventCallback callback) {
-  if (sensor_type_ == SensorType::kMagnetometer) {
-    LOG_ERROR("Not supported sensor type.");
-    last_error_ = SENSOR_ERROR_NOT_SUPPORTED;
-    return false;
-  }
-
   if (is_listening_) {
     LOG_WARN("Already listening.");
     last_error_ = SENSOR_ERROR_OPERATION_FAILED;
@@ -72,6 +68,7 @@ bool DeviceSensor::StartListen(SensorEventCallback callback) {
         for (int i = 0; i < event->value_count; i++) {
           sensor_event.push_back(event->values[i]);
         }
+        sensor_event.push_back(static_cast<double>(event->timestamp));
         self->callback_(sensor_event);
       },
       this);

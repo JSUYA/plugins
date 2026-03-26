@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-enum class SensorType { kAccelerometer, kGyroscope, kUserAccel, kMagnetometer };
+enum class SensorType { kAccelerometer, kGyroscope, kUserAccel, kMagnetometer, kBarometer };
 
 typedef std::vector<double> SensorEvent;
 typedef std::function<void(SensorEvent)> SensorEventCallback;

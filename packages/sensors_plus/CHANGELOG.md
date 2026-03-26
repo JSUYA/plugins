@@ -1,3 +1,11 @@
+## 2.0.0
+
+* Update sensors_plus_platform_interface to 2.0.0.
+* Update sensors_plus to 7.0.0.
+* Add barometer sensor support.
+* Add timestamp to sensor events.
+* Updates minimum supported SDK version to Flutter 3.27/Dart 3.6.
+
 ## 1.1.6
 
 * Update code format.

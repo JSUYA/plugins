@@ -118,6 +118,14 @@ class SensorsPlusPlugin : public flutter::Plugin {
     magnetometer_event_channel_->SetStreamHandler(
         std::make_unique<DeviceSensorStreamHandler>(
             magnetometer_sensor_.get()));
+
+    barometer_event_channel_ = std::make_unique<FlEventChannel>(
+        registrar->messenger(),
+        "dev.fluttercommunity.plus/sensors/barometer",
+        &flutter::StandardMethodCodec::GetInstance());
+    barometer_sensor_ = std::make_unique<DeviceSensor>(SensorType::kBarometer);
+    barometer_event_channel_->SetStreamHandler(
+        std::make_unique<DeviceSensorStreamHandler>(barometer_sensor_.get()));
   }
 
   void HandleMethodCall(const FlMethodCall &method_call,
@@ -144,6 +152,11 @@ class SensorsPlusPlugin : public flutter::Plugin {
         return;
       }
       magnetometer_sensor_->SetInterval(interval_ms_);
+    } else if (method_name == "setBarometerSamplingPeriod") {
+      if (!SetInterval(method_call, result.get())) {
+        return;
+      }
+      barometer_sensor_->SetInterval(interval_ms_);
     } else {
       result->NotImplemented();
       return;
@@ -173,11 +186,13 @@ class SensorsPlusPlugin : public flutter::Plugin {
   std::unique_ptr<DeviceSensor> gyroscope_sensor_;
   std::unique_ptr<DeviceSensor> user_accelerometer_sensor_;
   std::unique_ptr<DeviceSensor> magnetometer_sensor_;
+  std::unique_ptr<DeviceSensor> barometer_sensor_;
 
   std::unique_ptr<FlEventChannel> accelerometer_event_channel_;
   std::unique_ptr<FlEventChannel> gyroscope_event_channel_;
   std::unique_ptr<FlEventChannel> user_accelerometer_event_channel_;
   std::unique_ptr<FlEventChannel> magnetometer_event_channel_;
+  std::unique_ptr<FlEventChannel> barometer_event_channel_;
 };
 
 void SensorsPlusPluginRegisterWithRegistrar(

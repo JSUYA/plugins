@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// ignore_for_file: public_member_api_docs
+// ignore_for_file: public_member_api_docs, use_build_context_synchronously
 
 import 'dart:async';
 
@@ -14,16 +14,18 @@ import 'snake.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  SystemChrome.setPreferredOrientations(
+    [
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ],
+  );
 
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +41,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, this.title}) : super(key: key);
+  const MyHomePage({super.key, this.title});
 
   final String? title;
 
@@ -58,16 +60,19 @@ class _MyHomePageState extends State<MyHomePage> {
   AccelerometerEvent? _accelerometerEvent;
   GyroscopeEvent? _gyroscopeEvent;
   MagnetometerEvent? _magnetometerEvent;
+  BarometerEvent? _barometerEvent;
 
   DateTime? _userAccelerometerUpdateTime;
   DateTime? _accelerometerUpdateTime;
   DateTime? _gyroscopeUpdateTime;
   DateTime? _magnetometerUpdateTime;
+  DateTime? _barometerUpdateTime;
 
   int? _userAccelerometerLastInterval;
   int? _accelerometerLastInterval;
   int? _gyroscopeLastInterval;
   int? _magnetometerLastInterval;
+  int? _barometerLastInterval;
   final _streamSubscriptions = <StreamSubscription<dynamic>>[];
 
   Duration sensorInterval = SensorInterval.normalInterval;
@@ -75,7 +80,10 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sensors Plus Example'), elevation: 4),
+      appBar: AppBar(
+        title: const Text('Sensors Plus Example'),
+        elevation: 4,
+      ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
@@ -96,7 +104,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 0.0),
             child: Table(
               columnWidths: const {
                 0: FlexColumnWidth(4),
@@ -122,8 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     Text(_userAccelerometerEvent?.y.toStringAsFixed(1) ?? '?'),
                     Text(_userAccelerometerEvent?.z.toStringAsFixed(1) ?? '?'),
                     Text(
-                      '${_userAccelerometerLastInterval?.toString() ?? '?'} ms',
-                    ),
+                        '${_userAccelerometerLastInterval?.toString() ?? '?'} ms'),
                   ],
                 ),
                 TableRow(
@@ -165,6 +172,36 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 20.0),
+            child: Table(
+              columnWidths: const {
+                0: FlexColumnWidth(4),
+                1: FlexColumnWidth(3),
+                2: FlexColumnWidth(2),
+              },
+              children: [
+                const TableRow(
+                  children: [
+                    SizedBox.shrink(),
+                    Text('Pressure'),
+                    Text('Interval'),
+                  ],
+                ),
+                TableRow(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text('Barometer'),
+                    ),
+                    Text(
+                        '${_barometerEvent?.pressure.toStringAsFixed(1) ?? '?'} hPa'),
+                    Text('${_barometerLastInterval?.toString() ?? '?'} ms'),
+                  ],
+                ),
+              ],
+            ),
+          ),
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -173,24 +210,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 segments: [
                   ButtonSegment(
                     value: SensorInterval.gameInterval,
-                    label: Text(
-                      'Game\n'
-                      '(${SensorInterval.gameInterval.inMilliseconds}ms)',
-                    ),
+                    label: Text('Game\n'
+                        '(${SensorInterval.gameInterval.inMilliseconds}ms)'),
                   ),
                   ButtonSegment(
                     value: SensorInterval.uiInterval,
-                    label: Text(
-                      'UI\n'
-                      '(${SensorInterval.uiInterval.inMilliseconds}ms)',
-                    ),
+                    label: Text('UI\n'
+                        '(${SensorInterval.uiInterval.inMilliseconds}ms)'),
                   ),
                   ButtonSegment(
                     value: SensorInterval.normalInterval,
-                    label: Text(
-                      'Normal\n'
-                      '(${SensorInterval.normalInterval.inMilliseconds}ms)',
-                    ),
+                    label: Text('Normal\n'
+                        '(${SensorInterval.normalInterval.inMilliseconds}ms)'),
                   ),
                   const ButtonSegment(
                     value: Duration(milliseconds: 500),
@@ -207,11 +238,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     sensorInterval = value.first;
                     userAccelerometerEventStream(
-                      samplingPeriod: sensorInterval,
-                    );
+                        samplingPeriod: sensorInterval);
                     accelerometerEventStream(samplingPeriod: sensorInterval);
                     gyroscopeEventStream(samplingPeriod: sensorInterval);
                     magnetometerEventStream(samplingPeriod: sensorInterval);
+                    barometerEventStream(samplingPeriod: sensorInterval);
                   });
                 },
               ),
@@ -236,7 +267,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _streamSubscriptions.add(
       userAccelerometerEventStream(samplingPeriod: sensorInterval).listen(
         (UserAccelerometerEvent event) {
-          final now = DateTime.now();
+          final now = event.timestamp;
           setState(() {
             _userAccelerometerEvent = event;
             if (_userAccelerometerUpdateTime != null) {
@@ -249,18 +280,15 @@ class _MyHomePageState extends State<MyHomePage> {
           _userAccelerometerUpdateTime = now;
         },
         onError: (e) {
-          if (!mounted) return;
           showDialog(
-            context: context,
-            builder: (context) {
-              return const AlertDialog(
-                title: Text("Sensor Not Found"),
-                content: Text(
-                  "It seems that your device doesn't support User Accelerometer Sensor",
-                ),
-              );
-            },
-          );
+              context: context,
+              builder: (context) {
+                return const AlertDialog(
+                  title: Text("Sensor Not Found"),
+                  content: Text(
+                      "It seems that your device doesn't support User Accelerometer Sensor"),
+                );
+              });
         },
         cancelOnError: true,
       ),
@@ -268,7 +296,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _streamSubscriptions.add(
       accelerometerEventStream(samplingPeriod: sensorInterval).listen(
         (AccelerometerEvent event) {
-          final now = DateTime.now();
+          final now = event.timestamp;
           setState(() {
             _accelerometerEvent = event;
             if (_accelerometerUpdateTime != null) {
@@ -281,18 +309,15 @@ class _MyHomePageState extends State<MyHomePage> {
           _accelerometerUpdateTime = now;
         },
         onError: (e) {
-          if (!mounted) return;
           showDialog(
-            context: context,
-            builder: (context) {
-              return const AlertDialog(
-                title: Text("Sensor Not Found"),
-                content: Text(
-                  "It seems that your device doesn't support Accelerometer Sensor",
-                ),
-              );
-            },
-          );
+              context: context,
+              builder: (context) {
+                return const AlertDialog(
+                  title: Text("Sensor Not Found"),
+                  content: Text(
+                      "It seems that your device doesn't support Accelerometer Sensor"),
+                );
+              });
         },
         cancelOnError: true,
       ),
@@ -300,7 +325,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _streamSubscriptions.add(
       gyroscopeEventStream(samplingPeriod: sensorInterval).listen(
         (GyroscopeEvent event) {
-          final now = DateTime.now();
+          final now = event.timestamp;
           setState(() {
             _gyroscopeEvent = event;
             if (_gyroscopeUpdateTime != null) {
@@ -313,18 +338,15 @@ class _MyHomePageState extends State<MyHomePage> {
           _gyroscopeUpdateTime = now;
         },
         onError: (e) {
-          if (!mounted) return;
           showDialog(
-            context: context,
-            builder: (context) {
-              return const AlertDialog(
-                title: Text("Sensor Not Found"),
-                content: Text(
-                  "It seems that your device doesn't support Gyroscope Sensor",
-                ),
-              );
-            },
-          );
+              context: context,
+              builder: (context) {
+                return const AlertDialog(
+                  title: Text("Sensor Not Found"),
+                  content: Text(
+                      "It seems that your device doesn't support Gyroscope Sensor"),
+                );
+              });
         },
         cancelOnError: true,
       ),
@@ -332,7 +354,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _streamSubscriptions.add(
       magnetometerEventStream(samplingPeriod: sensorInterval).listen(
         (MagnetometerEvent event) {
-          final now = DateTime.now();
+          final now = event.timestamp;
           setState(() {
             _magnetometerEvent = event;
             if (_magnetometerUpdateTime != null) {
@@ -345,18 +367,44 @@ class _MyHomePageState extends State<MyHomePage> {
           _magnetometerUpdateTime = now;
         },
         onError: (e) {
-          if (!mounted) return;
           showDialog(
-            context: context,
-            builder: (context) {
-              return const AlertDialog(
-                title: Text("Sensor Not Found"),
-                content: Text(
-                  "It seems that your device doesn't support Magnetometer Sensor",
-                ),
-              );
-            },
-          );
+              context: context,
+              builder: (context) {
+                return const AlertDialog(
+                  title: Text("Sensor Not Found"),
+                  content: Text(
+                      "It seems that your device doesn't support Magnetometer Sensor"),
+                );
+              });
+        },
+        cancelOnError: true,
+      ),
+    );
+    _streamSubscriptions.add(
+      barometerEventStream(samplingPeriod: sensorInterval).listen(
+        (BarometerEvent event) {
+          final now = event.timestamp;
+          setState(() {
+            _barometerEvent = event;
+            if (_barometerUpdateTime != null) {
+              final interval = now.difference(_barometerUpdateTime!);
+              if (interval > _ignoreDuration) {
+                _barometerLastInterval = interval.inMilliseconds;
+              }
+            }
+          });
+          _barometerUpdateTime = now;
+        },
+        onError: (e) {
+          showDialog(
+              context: context,
+              builder: (context) {
+                return const AlertDialog(
+                  title: Text("Sensor Not Found"),
+                  content: Text(
+                      "It seems that your device doesn't support Barometer Sensor"),
+                );
+              });
         },
         cancelOnError: true,
       ),
