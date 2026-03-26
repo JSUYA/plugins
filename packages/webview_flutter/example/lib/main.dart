@@ -490,8 +490,7 @@ class SampleMenu extends StatelessWidget {
 
   Future<void> _onClearCache(BuildContext context) async {
     await webViewController.clearCache();
-    // This is unimplemented in webview_flutter_tizen.
-    // await webViewController.clearLocalStorage();
+    await webViewController.clearLocalStorage();
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,

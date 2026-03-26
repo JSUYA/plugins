@@ -219,10 +219,7 @@ class TizenWebViewController extends PlatformWebViewController {
 
   @override
   Future<void> clearLocalStorage() {
-    throw UnimplementedError(
-      'This version of `TizenWebViewController` currently has no '
-      'implementation.',
-    );
+    return _webview.runJavaScript('window.localStorage.clear()');
   }
 
   @override
