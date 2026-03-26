@@ -315,6 +315,13 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
   Future<void> signOut(SignOutParams params) => _storage.removeToken();
 
   @override
+  Future<void> clearAuthorizationToken(
+    ClearAuthorizationTokenParams params,
+  ) async {
+    await _storage.removeToken();
+  }
+
+  @override
   Future<void> disconnect(DisconnectParams params) async {
     final _GoogleSignInTokenDataTizen? existingToken =
         await _storage.getToken();
