@@ -1,6 +1,7 @@
-## NEXT
+## 0.2.0
 
-* Update minimum Flutter and Dart version to 3.13 and 3.1.
+* Update sqflite to 2.4.0.
+* Updates minimum supported SDK version to Flutter 3.27/Dart 3.6.
 * Update code format.
 
 ## 0.1.3
