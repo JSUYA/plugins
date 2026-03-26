@@ -12,6 +12,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 // Sets a platform override for desktop to avoid exceptions. See
 // https://flutter.dev/desktop#target-platform-override for more info.
@@ -70,18 +71,20 @@ class _MyHomePageState extends State<MyHomePage> {
         elevation: 4,
       ),
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Network info',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Network info',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 16),
-            Text(_connectionStatus),
-          ],
-        ),
-      ),
+          ),
+          const SizedBox(height: 16),
+          Text(_connectionStatus),
+        ],
+      )),
     );
   }
 
@@ -95,14 +98,34 @@ class _MyHomePageState extends State<MyHomePage> {
         wifiSubmask;
 
     try {
-      wifiName = await _networkInfo.getWifiName();
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+        // Request permissions as recommended by the plugin documentation:
+        // https://github.com/fluttercommunity/plus_plugins/tree/main/packages/network_info_plus/network_info_plus
+        if (await Permission.locationWhenInUse.request().isGranted) {
+          wifiName = await _networkInfo.getWifiName();
+        } else {
+          wifiName = 'Unauthorized to get Wifi Name';
+        }
+      } else {
+        wifiName = await _networkInfo.getWifiName();
+      }
     } on PlatformException catch (e) {
       developer.log('Failed to get Wifi Name', error: e);
       wifiName = 'Failed to get Wifi Name';
     }
 
     try {
-      wifiBSSID = await _networkInfo.getWifiBSSID();
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+        // Request permissions as recommended by the plugin documentation:
+        // https://github.com/fluttercommunity/plus_plugins/tree/main/packages/network_info_plus/network_info_plus
+        if (await Permission.locationWhenInUse.request().isGranted) {
+          wifiBSSID = await _networkInfo.getWifiBSSID();
+        } else {
+          wifiBSSID = 'Unauthorized to get Wifi BSSID';
+        }
+      } else {
+        wifiName = await _networkInfo.getWifiName();
+      }
     } on PlatformException catch (e) {
       developer.log('Failed to get Wifi BSSID', error: e);
       wifiBSSID = 'Failed to get Wifi BSSID';
