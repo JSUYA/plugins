@@ -15,23 +15,23 @@ import 'src/oauth2.dart';
 export 'src/authorization_exception.dart';
 
 /// Holds authentication data after Google sign in for Tizen.
-class _GoogleSignInTokenDataTizen extends GoogleSignInTokenData {
+class _GoogleSignInTokenDataTizen {
   /// Creates an instance of [_GoogleSignInTokenDataTizen].
   _GoogleSignInTokenDataTizen({
-    required super.accessToken,
+    required this.accessToken,
     required this.accessTokenExpirationDate,
-    required super.idToken,
+    required this.idToken,
     this.refreshToken,
   });
 
-  @override
-  String get accessToken => super.accessToken!;
+  /// The access token issued by the authorization server.
+  final String accessToken;
 
   /// The estimated expiration date of [accessToken].
   final DateTime accessTokenExpirationDate;
 
-  @override
-  String get idToken => super.idToken!;
+  /// The ID token issued by the Google authorization server.
+  final String idToken;
 
   /// The OAuth2 refresh token to exchange for new access tokens.
   final String? refreshToken;
@@ -185,55 +185,52 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
   }
 
   @override
-  Future<void> init({
-    List<String> scopes = const <String>[],
-    SignInOption signInOption = SignInOption.standard,
-    String? hostedDomain,
-    String? clientId,
-  }) async {
-    if (signInOption == SignInOption.games) {
-      throw PlatformException(
-        code: 'unsupported-options',
-        message: 'Games sign in is not supported on Tizen.',
-      );
-    }
-
+  Future<void> init(InitParameters params) async {
     _ensureSetCredentials();
-    if (clientId != null) {
-      _credentials = _Credentials(clientId, _credentials!.clientSecret);
+    if (params.clientId != null) {
+      _credentials = _Credentials(params.clientId!, _credentials!.clientSecret);
     }
-    _scopes = scopes;
   }
 
   @override
-  Future<GoogleSignInUserData?> signInSilently() async {
+  bool supportsAuthenticate() => true;
+
+  @override
+  Future<AuthenticationResults?> attemptLightweightAuthentication(
+    AttemptLightweightAuthenticationParameters params,
+  ) async {
     final _GoogleSignInTokenDataTizen? existingToken =
         await _storage.getToken();
     if (existingToken == null) {
-      throw PlatformException(
-        code: 'not-signed-in',
-        message: 'Cannot get tokens as there is no signed in user.',
-      );
+      return null;
     }
     // Check if access token expired.
     if (!existingToken.isExpired) {
-      return _createUserData(existingToken.idToken);
+      return _createAuthResults(existingToken.idToken);
     }
     final _GoogleSignInTokenDataTizen token = await _refreshToken(
       existingToken,
     );
     await _storage.saveToken(token);
 
-    return _createUserData(token.idToken);
+    return _createAuthResults(token.idToken);
   }
 
   @override
-  Future<GoogleSignInUserData?> signIn() async {
+  Future<AuthenticationResults> authenticate(
+    AuthenticateParameters params,
+  ) async {
     _ensureSetCredentials();
     _ensureNavigatorKeyAssigned();
 
+    final List<String> scopes =
+        params.scopeHint.isNotEmpty ? params.scopeHint : _scopes;
+
     final AuthorizationResponse authorizationResponse =
-        await _authClient.requestAuthorization(_credentials!.clientId, _scopes);
+        await _authClient.requestAuthorization(
+      _credentials!.clientId,
+      scopes,
+    );
 
     final Future<TokenResponse?> tokenResponseFuture = _authClient.pollToken(
       clientId: _credentials!.clientId,
@@ -260,7 +257,10 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
       return null;
     });
     if (tokenResponse == null) {
-      return null;
+      throw PlatformException(
+        code: 'sign-in-canceled',
+        message: 'Sign in was canceled or failed.',
+      );
     }
     device_flow_widget.closeDeviceFlowWidget();
 
@@ -272,40 +272,50 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
     );
     await _storage.saveToken(token);
 
-    return _createUserData(token.idToken);
+    return _createAuthResults(token.idToken);
   }
 
   @override
-  Future<GoogleSignInTokenData> getTokens({
-    required String email,
-    bool? shouldRecoverAuth = true,
-  }) async {
+  bool authorizationRequiresUserInteraction() => true;
+
+  @override
+  Future<ClientAuthorizationTokenData?> clientAuthorizationTokensForScopes(
+    ClientAuthorizationTokensForScopesParameters params,
+  ) async {
     final _GoogleSignInTokenDataTizen? existingToken =
         await _storage.getToken();
     if (existingToken == null) {
-      throw PlatformException(
-        code: 'not-signed-in',
-        message: 'Cannot get tokens as there is no signed in user.',
-      );
+      return null;
     }
 
     // Check if access token expired.
     if (!existingToken.isExpired) {
-      return existingToken;
+      return ClientAuthorizationTokenData(
+        accessToken: existingToken.accessToken,
+      );
     }
     final _GoogleSignInTokenDataTizen token = await _refreshToken(
       existingToken,
     );
 
     await _storage.saveToken(token);
-    return token;
+    return ClientAuthorizationTokenData(accessToken: token.accessToken);
   }
 
   @override
-  Future<void> signOut() => _storage.removeToken();
+  Future<ServerAuthorizationTokenData?> serverAuthorizationTokensForScopes(
+    ServerAuthorizationTokensForScopesParameters params,
+  ) {
+    throw UnimplementedError(
+      'serverAuthorizationTokensForScopes() has not been implemented.',
+    );
+  }
 
   @override
-  Future<void> disconnect() async {
+  Future<void> signOut(SignOutParams params) => _storage.removeToken();
+
+  @override
+  Future<void> disconnect(DisconnectParams params) async {
     final _GoogleSignInTokenDataTizen? existingToken =
         await _storage.getToken();
     if (existingToken == null) {
@@ -313,23 +323,10 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
     }
 
     await _authClient.revokeToken(existingToken.accessToken);
-    await signOut();
+    await signOut(const SignOutParams());
   }
 
-  @override
-  Future<bool> isSignedIn() async => await _storage.getToken() != null;
-
-  @override
-  Future<void> clearAuthCache({String? token}) {
-    throw UnimplementedError('clearAuthCache() has not been implemented.');
-  }
-
-  @override
-  Future<bool> requestScopes(List<String> scopes) {
-    throw UnimplementedError('requestScopes() has not been implemented.');
-  }
-
-  GoogleSignInUserData _createUserData(String idToken) {
+  AuthenticationResults _createAuthResults(String idToken) {
     // Decodes JWT payload as a json object.
     final List<String> splitTokens = idToken.split('.');
     if (splitTokens.length != 3) {
@@ -340,12 +337,14 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
     final Map<String, Object?> json =
         jsonDecode(payloadString) as Map<String, Object?>;
 
-    return GoogleSignInUserData(
-      email: json['email']! as String,
-      id: json['sub']! as String,
-      displayName: json['name'] as String?,
-      idToken: idToken,
-      photoUrl: json['picture'] as String?,
+    return AuthenticationResults(
+      user: GoogleSignInUserData(
+        email: json['email']! as String,
+        id: json['sub']! as String,
+        displayName: json['name'] as String?,
+        photoUrl: json['picture'] as String?,
+      ),
+      authenticationTokens: AuthenticationTokenData(idToken: idToken),
     );
   }
 

@@ -14,7 +14,7 @@ import 'package:http/http.dart' as http;
 
 import 'credentials.dart' as credentials;
 
-GoogleSignIn _googleSignIn = GoogleSignIn(scopes: <String>['email', 'profile']);
+const List<String> scopes = <String>['email', 'profile'];
 
 void main() {
   GoogleSignInTizen.setCredentials(
@@ -39,32 +39,64 @@ class SignInDemo extends StatefulWidget {
 
 class SignInDemoState extends State<SignInDemo> {
   GoogleSignInAccount? _currentUser;
+  bool _isAuthorized = false;
   String _contactText = '';
 
   @override
   void initState() {
     super.initState();
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-      setState(() {
-        _currentUser = account;
-      });
-      if (_currentUser != null) {
-        _handleGetContact(_currentUser!);
-      }
+
+    final GoogleSignIn signIn = GoogleSignIn.instance;
+    signIn.authenticationEvents
+        .listen(_handleAuthenticationEvent)
+        .onError(_handleAuthenticationError);
+    signIn.initialize();
+  }
+
+  void _handleAuthenticationEvent(GoogleSignInAuthenticationEvent event) {
+    final GoogleSignInAccount? user = switch (event) {
+      GoogleSignInAuthenticationEventSignIn() => event.user,
+      GoogleSignInAuthenticationEventSignOut() => null,
+    };
+    setState(() {
+      _currentUser = user;
     });
-    _googleSignIn.signInSilently();
+    if (user != null) {
+      _handleAuthorizeScopes(user);
+    }
+  }
+
+  void _handleAuthenticationError(Object error) {
+    print('Authentication error: $error');
+  }
+
+  Future<void> _handleAuthorizeScopes(GoogleSignInAccount user) async {
+    final GoogleSignInClientAuthorization? authorization =
+        await user.authorizationClient.authorizationForScopes(scopes);
+    setState(() {
+      _isAuthorized = authorization != null;
+    });
+    if (_isAuthorized) {
+      unawaited(_handleGetContact(user));
+    }
   }
 
   Future<void> _handleGetContact(GoogleSignInAccount user) async {
     setState(() {
       _contactText = 'Loading contact info...';
     });
+
+    final GoogleSignInClientAuthorization authorization =
+        await user.authorizationClient.authorizeScopes(scopes);
+
     final http.Response response = await http.get(
       Uri.parse(
         'https://people.googleapis.com/v1/people/me/connections'
         '?requestMask.includeField=person.names',
       ),
-      headers: await user.authHeaders,
+      headers: <String, String>{
+        'Authorization': 'Bearer ${authorization.accessToken}',
+      },
     );
     if (response.statusCode != 200) {
       setState(() {
@@ -108,13 +140,13 @@ class SignInDemoState extends State<SignInDemo> {
 
   Future<void> _handleSignIn() async {
     try {
-      await _googleSignIn.signIn();
+      await GoogleSignIn.instance.authenticate(scopeHint: scopes);
     } catch (error) {
       print(error);
     }
   }
 
-  Future<void> _handleSignOut() => _googleSignIn.disconnect();
+  Future<void> _handleSignOut() => GoogleSignIn.instance.disconnect();
 
   Widget _buildBody() {
     final GoogleSignInAccount? user = _currentUser;
@@ -128,14 +160,21 @@ class SignInDemoState extends State<SignInDemo> {
             subtitle: Text(user.email),
           ),
           const Text('Signed in successfully.'),
-          Text(_contactText),
+          if (_isAuthorized) ...<Widget>[
+            Text(_contactText),
+            ElevatedButton(
+              child: const Text('REFRESH'),
+              onPressed: () => _handleGetContact(user),
+            ),
+          ],
+          if (!_isAuthorized)
+            ElevatedButton(
+              onPressed: () => _handleAuthorizeScopes(user),
+              child: const Text('AUTHORIZE SCOPES'),
+            ),
           ElevatedButton(
             onPressed: _handleSignOut,
             child: const Text('SIGN OUT'),
-          ),
-          ElevatedButton(
-            child: const Text('REFRESH'),
-            onPressed: () => _handleGetContact(user),
           ),
         ],
       );

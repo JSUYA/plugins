@@ -1,3 +1,9 @@
+## 0.2.0
+
+* Update google_sign_in_platform_interface to 3.0.0.
+* Update google_sign_in to 7.0.0.
+* Updates minimum supported SDK version to Flutter 3.27/Dart 3.6.
+
 ## 0.1.5
 
 * Update code format.
