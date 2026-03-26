@@ -11,7 +11,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -43,9 +43,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _battery.batteryState.then(_updateBatteryState);
-    _batteryStateSubscription = _battery.onBatteryStateChanged.listen(
-      _updateBatteryState,
-    );
+    _batteryStateSubscription =
+        _battery.onBatteryStateChanged.listen(_updateBatteryState);
   }
 
   void _updateBatteryState(BatteryState state) {
@@ -66,60 +65,74 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('$_batteryState', style: const TextStyle(fontSize: 24)),
+            const Text(
+              'Current battery state:',
+              style: TextStyle(fontSize: 24),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${_batteryState?.name}',
+              style: const TextStyle(fontSize: 24),
+            ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                _battery.batteryLevel.then((batteryLevel) {
-                  if (!context.mounted) return;
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      content: Text('Battery: $batteryLevel%'),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text('OK'),
+                _battery.batteryLevel.then(
+                  (batteryLevel) {
+                    if (context.mounted) {
+                      showDialog<void>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          content: Text('Battery: $batteryLevel%'),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('OK'),
+                            )
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                });
+                      );
+                    }
+                  },
+                );
               },
               child: const Text('Get battery level'),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                _battery.isInBatterySaveMode.then((isInPowerSaveMode) {
-                  if (!context.mounted) return;
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text(
-                        'Is in Battery Save mode?',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      content: Text(
-                        "$isInPowerSaveMode",
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Close'),
+                _battery.isInBatterySaveMode.then(
+                  (isInPowerSaveMode) {
+                    if (context.mounted) {
+                      showDialog<void>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text(
+                            'Is in Battery Save mode?',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                          content: Text(
+                            "$isInPowerSaveMode",
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Close'),
+                            )
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                });
+                      );
+                    }
+                  },
+                );
               },
               child: const Text('Is in Battery Save mode?'),
-            ),
+            )
           ],
         ),
       ),

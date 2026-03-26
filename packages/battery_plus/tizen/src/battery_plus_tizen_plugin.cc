@@ -36,6 +36,8 @@ std::string BatteryStatusToString(BatteryStatus status) {
       return "full";
     case BatteryStatus::kDischarging:
       return "discharging";
+    case BatteryStatus::kConnectedNotCharging:
+      return "connectedNotCharging";
     case BatteryStatus::kUnknown:
     default:
       return "unknown";

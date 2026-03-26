@@ -2,11 +2,11 @@ name: battery_plus_tizen
 description: A Flutter plugin to access various information about the battery of the device the app is running on. This is a tizen implementation of the battery_plus plugin.
 homepage: https://github.com/flutter-tizen/plugins
 repository: https://github.com/flutter-tizen/plugins/tree/master/packages/battery_plus
-version: 1.1.4
+version: 1.2.0
 
 environment:
-  sdk: ">=3.1.0 <4.0.0"
-  flutter: ">=3.13.0"
+  sdk: ^3.6.0
+  flutter: ">=3.27.0"
 
 flutter:
   plugin:
@@ -16,7 +16,7 @@ flutter:
         fileName: battery_plus_tizen_plugin.h
 
 dependencies:
-  battery_plus_platform_interface: ^1.2.2
+  battery_plus_platform_interface: ^2.0.0
   flutter:
     sdk: flutter
 

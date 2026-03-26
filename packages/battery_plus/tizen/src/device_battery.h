@@ -11,7 +11,7 @@
 #include <functional>
 #include <string>
 
-enum class BatteryStatus { kFull, kCharging, kDischarging, kUnknown, kError };
+enum class BatteryStatus { kFull, kCharging, kDischarging, kConnectedNotCharging, kUnknown, kError };
 
 typedef std::function<void(BatteryStatus)> BatteryStatusCallback;
 

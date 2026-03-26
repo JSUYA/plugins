@@ -80,8 +80,9 @@ BatteryStatus DeviceBattery::GetStatus() {
     case DEVICE_BATTERY_STATUS_FULL:
       return BatteryStatus::kFull;
     case DEVICE_BATTERY_STATUS_DISCHARGING:
-    case DEVICE_BATTERY_STATUS_NOT_CHARGING:
       return BatteryStatus::kDischarging;
+    case DEVICE_BATTERY_STATUS_NOT_CHARGING:
+      return BatteryStatus::kConnectedNotCharging;
     default:
       return BatteryStatus::kUnknown;
   }

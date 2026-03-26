@@ -1,3 +1,9 @@
+## 1.2.0
+
+* Update battery_plus_platform_interface to 2.0.0.
+* Add support for `BatteryState.connectedNotCharging`.
+* Updates minimum supported SDK version to Flutter 3.27/Dart 3.6.
+
 ## 1.1.4
 
 * Update code format.
