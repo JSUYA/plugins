@@ -24,13 +24,6 @@ TizenDeviceInfo tizenInfo = await deviceInfo.tizenInfo;
 String modelName = tizenInfo.modelName;
 ```
 
-To read `physicalRamSize` and `availableRamSize`, declare the following
-privilege in your Tizen manifest:
-
-```xml
-<privilege>http://tizen.org/privilege/systemmonitor</privilege>
-```
-
 ## Supported properties
 
 | Property | Feature or system key |
