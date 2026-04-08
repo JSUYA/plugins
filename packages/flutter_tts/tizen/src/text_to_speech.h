@@ -18,6 +18,7 @@ enum class TtsState { kCreated, kReady, kPlaying, kPaused };
 using StateChangedCallback =
     std::function<void(TtsState previous, TtsState current)>;
 using UtteranceCompletedCallback = std::function<void(int32_t utt_id)>;
+using ErrorCallback = std::function<void(const std::string &message)>;
 
 class TextToSpeech {
  public:
@@ -35,6 +36,8 @@ class TextToSpeech {
     utterance_completed_callback_ = callback;
   }
 
+  void SetErrorCallback(ErrorCallback callback) { error_callback_ = callback; }
+
   std::string GetDefaultLanguage() { return default_language_; }
 
   void SetDefaultLanguage(const std::string &language) {
@@ -47,8 +50,8 @@ class TextToSpeech {
     return supported_lanaguages_;
   }
 
-  const std::vector<std::map<std::string, std::string>>
-      &GetSupportedVoiceTypes() {
+  const std::vector<std::map<std::string, std::string>> &
+  GetSupportedVoiceTypes() {
     return supported_voice_types_;
   }
 
@@ -102,6 +105,7 @@ class TextToSpeech {
 
   StateChangedCallback state_changed_callback_;
   UtteranceCompletedCallback utterance_completed_callback_;
+  ErrorCallback error_callback_;
 };
 
 #endif  // FLUTTER_PLUGIN_TEXT_TO_SPEACH_H_
