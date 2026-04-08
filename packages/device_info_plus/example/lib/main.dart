@@ -77,6 +77,10 @@ class _MyAppState extends State<MyApp> {
       'platformName': data.platformName,
       'platformProcessor': data.platformProcessor,
       'tizenId': data.tizenId,
+      'freeDiskSize': data.freeDiskSize,
+      'totalDiskSize': data.totalDiskSize,
+      'physicalRamSize': data.physicalRamSize,
+      'availableRamSize': data.availableRamSize,
       'screenWidth': data.screenWidth,
       'screenHeight': data.screenHeight,
     };
