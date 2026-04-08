@@ -10,8 +10,8 @@ This package is not an _endorsed_ implementation of `package_info_plus`. Therefo
 
 ```yaml
 dependencies:
-  package_info_plus: ^8.0.0
-  package_info_plus_tizen: ^1.0.5
+  package_info_plus: ^9.0.1
+  package_info_plus_tizen: ^1.1.0
 ```
 
 Then you can import `package_info_plus` in your Dart code.
@@ -30,3 +30,8 @@ For detailed usage, see https://pub.dev/packages/package_info_plus#usage.
 - [ ] `PackageInfo.buildNumber`
 - [ ] `PackageInfo.buildSignature`
 - [ ] `PackageInfo.installerStore`
+- [x] `PackageInfo.installTime` // Uses Tizen `package_info_get_installed_time()`; may reflect last modified time after updates. Docs: https://docs.tizen.org/application/native/api/wearable/6.5/group__CAPI__PACKAGE__INFO__MODULE.html
+- [ ] `PackageInfo.updateTime`
+
+`buildSignature` remains unsupported. Upstream `package_info_plus` defines this
+field as Android-only and an empty string on the other platforms.
