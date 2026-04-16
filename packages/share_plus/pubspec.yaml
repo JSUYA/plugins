@@ -1,0 +1,23 @@
+name: share_plus_tizen
+description: Tizen implementation of the share_plus plugin.
+homepage: https://github.com/flutter-tizen/plugins
+repository: https://github.com/flutter-tizen/plugins/tree/master/packages/share_plus
+version: 0.1.0
+
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+  flutter: ">=3.41.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  mime: ^2.0.0
+  path_provider_tizen: ^2.2.1
+  share_plus_platform_interface: ^7.0.0
+  tizen_app_control: ^0.2.3
+
+flutter:
+  plugin:
+    platforms:
+      tizen:
+        dartPluginClass: SharePlusTizenPlugin
