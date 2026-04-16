@@ -1,3 +1,12 @@
+## 1.3.0
+
+* Update minimum Flutter and Dart version to 3.7 and 3.2.
+* Update connectivity_plus to 7.1.0.
+* Update connectivity_plus_platform_interface to 2.1.0.
+* Support ConnectivityResult.other type.
+* Clarify unsupported ConnectivityResult.satellite type.
+* Update the integration test.
+
 ## 1.2.2
 
 * Update the LICENSE file so that it is recognized by pub.dev.
