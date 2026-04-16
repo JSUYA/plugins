@@ -1,0 +1,27 @@
+name: speech_to_text_example
+description: Demonstrates how to use the speech_to_text_tizen plugin.
+publish_to: "none"
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  speech_to_text: ^7.4.0-beta.8
+  speech_to_text_tizen:
+    path: ../
+
+dev_dependencies:
+  flutter_driver:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  integration_test_tizen:
+    path: ../../integration_test/
+
+flutter:
+  uses-material-design: true
