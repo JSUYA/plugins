@@ -1,0 +1,25 @@
+# See https://docs.tizen.org/application/tizen-studio/native-tools/project-conversion
+# for details.
+
+APPNAME = flutter_inappwebview_lwe_plugin
+type = sharedLib
+profile = common-5.5
+
+# Source files
+USER_SRCS += src/*.cc
+
+# User defines
+USER_DEFS =
+USER_UNDEFS =
+USER_CPP_DEFS = FLUTTER_PLUGIN_IMPL
+USER_CPP_UNDEFS =
+
+# User includes
+USER_INC_DIRS = inc src
+USER_INC_FILES =
+USER_CPP_INC_FILES =
+
+# Linker options
+USER_LIB_DIRS = lib/${BUILD_ARCH}
+USER_LIBS = pthread stdc++ lightweight-web-engine.flutter tuv lightweight-web-engine.flutter-impl
+USER_LFLAGS = -Wl,-rpath='$$ORIGIN'
