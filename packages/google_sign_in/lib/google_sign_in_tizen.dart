@@ -124,8 +124,6 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
 
   final _CachedTokenStorage _storage = _CachedTokenStorage();
 
-  List<String> _scopes = <String>[];
-
   final DeviceAuthClient _authClient = DeviceAuthClient(
     authorizationEndPoint: Uri.parse(
       'https://oauth2.googleapis.com/device/code',
@@ -223,13 +221,10 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
     _ensureSetCredentials();
     _ensureNavigatorKeyAssigned();
 
-    final List<String> scopes =
-        params.scopeHint.isNotEmpty ? params.scopeHint : _scopes;
-
     final AuthorizationResponse authorizationResponse =
         await _authClient.requestAuthorization(
       _credentials!.clientId,
-      scopes,
+      params.scopeHint,
     );
 
     final Future<TokenResponse?> tokenResponseFuture = _authClient.pollToken(
@@ -257,9 +252,9 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
       return null;
     });
     if (tokenResponse == null) {
-      throw PlatformException(
-        code: 'sign-in-canceled',
-        message: 'Sign in was canceled or failed.',
+      throw const GoogleSignInException(
+        code: GoogleSignInExceptionCode.canceled,
+        description: 'Sign in was canceled or failed.',
       );
     }
     device_flow_widget.closeDeviceFlowWidget();
@@ -313,13 +308,6 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
 
   @override
   Future<void> signOut(SignOutParams params) => _storage.removeToken();
-
-  @override
-  Future<void> clearAuthorizationToken(
-    ClearAuthorizationTokenParams params,
-  ) async {
-    await _storage.removeToken();
-  }
 
   @override
   Future<void> disconnect(DisconnectParams params) async {
