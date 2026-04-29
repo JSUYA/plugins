@@ -120,6 +120,14 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
   }
 
   @override
+  Future<void> updateGroundOverlays(
+    GroundOverlayUpdates groundOverlayUpdates, {
+    required int mapId,
+  }) async {
+    return; // Noop for now!
+  }
+
+  @override
   Future<void> clearTileCache(
     TileOverlayId tileOverlayId, {
     required int mapId,
@@ -298,6 +306,11 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
   @override
   Stream<ClusterTapEvent> onClusterTap({required int mapId}) {
     return _events(mapId).whereType<ClusterTapEvent>();
+  }
+
+  @override
+  Stream<GroundOverlayTapEvent> onGroundOverlayTap({required int mapId}) {
+    return const Stream<GroundOverlayTapEvent>.empty();
   }
 
   /// Disposes of the current map. It can't be used afterwards!

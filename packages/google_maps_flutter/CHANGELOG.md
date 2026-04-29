@@ -1,5 +1,11 @@
-## NEXT
+## 0.1.14
 
+* Update google_maps_flutter to 2.17.0.
+* Update google_maps_flutter_platform_interface to 2.15.0.
+* Update webview_flutter to 4.13.1.
+* Update webview_flutter_lwe to 0.4.0.
+* Updates minimum supported SDK version to Flutter 3.38/Dart 3.10.
+* Add a no-op ground overlay interface implementation.
 * Update code format.
 
 ## 0.1.13
