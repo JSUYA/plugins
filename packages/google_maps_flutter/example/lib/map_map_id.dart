@@ -1,15 +1,16 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
+// Copyright 2013 The Flutter Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 // ignore_for_file: public_member_api_docs
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'page.dart';
 
 class MapIdPage extends GoogleMapExampleAppPage {
   const MapIdPage({Key? key})
-      : super(const Icon(Icons.map), 'Cloud-based maps styling', key: key);
+    : super(const Icon(Icons.map), 'Cloud-based maps styling', key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +34,6 @@ class MapIdBodyState extends State<MapIdBody> {
   String? _mapId;
   final TextEditingController _mapIdController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   void _setMapId() {
     setState(() {
       _mapId = _mapIdController.text;
@@ -49,17 +45,17 @@ class MapIdBodyState extends State<MapIdBody> {
 
   @override
   Widget build(BuildContext context) {
-    final GoogleMap googleMap = GoogleMap(
+    final googleMap = GoogleMap(
       onMapCreated: _onMapCreated,
       initialCameraPosition: const CameraPosition(
         target: _kMapCenter,
         zoom: 7.0,
       ),
       key: _key,
-      cloudMapId: _mapId,
+      mapId: _mapId,
     );
 
-    final List<Widget> columnChildren = <Widget>[
+    final columnChildren = <Widget>[
       Padding(
         padding: const EdgeInsets.all(10.0),
         child: Center(

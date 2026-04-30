@@ -59,6 +59,14 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
     _map(mapId).updateRawOptions(optionsUpdate);
   }
 
+  @override
+  Future<void> updateMapConfiguration(
+    MapConfiguration configuration, {
+    required int mapId,
+  }) async {
+    _map(mapId).updateRawOptions(_jsonForMapConfiguration(configuration));
+  }
+
   /// Applies the passed in `markerUpdates` to the `mapId`.
   @override
   Future<void> updateMarkers(
@@ -124,7 +132,7 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
     GroundOverlayUpdates groundOverlayUpdates, {
     required int mapId,
   }) async {
-    return; // Noop for now!
+    _map(mapId).updateGroundOverlays(groundOverlayUpdates);
   }
 
   @override
@@ -142,6 +150,15 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
     required int mapId,
   }) async {
     return moveCamera(cameraUpdate, mapId: mapId);
+  }
+
+  @override
+  Future<void> animateCameraWithConfiguration(
+    CameraUpdate cameraUpdate,
+    CameraUpdateAnimationConfiguration configuration, {
+    required int mapId,
+  }) async {
+    return animateCamera(cameraUpdate, mapId: mapId);
   }
 
   /// Applies the given `cameraUpdate` to the current viewport.
@@ -310,7 +327,7 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
 
   @override
   Stream<GroundOverlayTapEvent> onGroundOverlayTap({required int mapId}) {
-    return const Stream<GroundOverlayTapEvent>.empty();
+    return _events(mapId).whereType<GroundOverlayTapEvent>();
   }
 
   /// Disposes of the current map. It can't be used afterwards!
@@ -334,6 +351,57 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
         const <Factory<OneSequenceGestureRecognizer>>{},
     Map<String, dynamic> mapOptions = const <String, dynamic>{},
   }) {
+    return _buildView(
+      creationId,
+      onPlatformViewCreated,
+      initialCameraPosition: initialCameraPosition,
+      markers: markers,
+      polygons: polygons,
+      polylines: polylines,
+      circles: circles,
+      mapOptions: mapOptions,
+    );
+  }
+
+  @override
+  Widget buildViewWithConfiguration(
+    int creationId,
+    PlatformViewCreatedCallback onPlatformViewCreated, {
+    required MapWidgetConfiguration widgetConfiguration,
+    MapConfiguration mapConfiguration = const MapConfiguration(),
+    MapObjects mapObjects = const MapObjects(),
+  }) {
+    return _buildView(
+      creationId,
+      onPlatformViewCreated,
+      initialCameraPosition: widgetConfiguration.initialCameraPosition,
+      markers: mapObjects.markers,
+      polygons: mapObjects.polygons,
+      polylines: mapObjects.polylines,
+      circles: mapObjects.circles,
+      clusterManagers: mapObjects.clusterManagers,
+      groundOverlays: mapObjects.groundOverlays,
+      mapOptions: _jsonForMapConfiguration(mapConfiguration),
+    );
+  }
+
+  @override
+  Future<bool> isAdvancedMarkersAvailable({required int mapId}) async {
+    return false;
+  }
+
+  Widget _buildView(
+    int creationId,
+    PlatformViewCreatedCallback onPlatformViewCreated, {
+    required CameraPosition initialCameraPosition,
+    Set<Marker> markers = const <Marker>{},
+    Set<Polygon> polygons = const <Polygon>{},
+    Set<Polyline> polylines = const <Polyline>{},
+    Set<Circle> circles = const <Circle>{},
+    Set<ClusterManager> clusterManagers = const <ClusterManager>{},
+    Set<GroundOverlay> groundOverlays = const <GroundOverlay>{},
+    Map<String, dynamic> mapOptions = const <String, dynamic>{},
+  }) {
     // Bail fast if we've already rendered this map ID...
     if (_mapById[creationId]?.webview != null) {
       return _mapById[creationId]!.webview!;
@@ -350,6 +418,8 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
       polygons: polygons,
       polylines: polylines,
       circles: circles,
+      clusterManagers: clusterManagers,
+      groundOverlays: groundOverlays,
       mapOptions: mapOptions,
     )..init(); // Initialize the controller
 

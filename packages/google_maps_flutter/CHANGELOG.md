@@ -5,7 +5,9 @@
 * Update webview_flutter to 4.13.1.
 * Update webview_flutter_lwe to 0.4.0.
 * Updates minimum supported SDK version to Flutter 3.38/Dart 3.10.
-* Add a no-op ground overlay interface implementation.
+* Add support for ground overlays.
+* Sync the example app with google_maps_flutter 2.17.0.
+* Add support for new map configuration fields such as `mapId`, web camera control options, and map color scheme.
 * Update code format.
 
 ## 0.1.13

@@ -16,6 +16,62 @@ Map<int, String> _mapTypeToMapTypeId = <int, String>{
   4: 'hybrid',
 };
 
+Map<String, Object> _jsonForMapConfiguration(MapConfiguration config) {
+  final EdgeInsets? padding = config.padding;
+  return <String, Object>{
+    if (config.webCameraControlPosition != null)
+      'webCameraControlPosition': config.webCameraControlPosition!.name,
+    if (config.webCameraControlEnabled != null)
+      'webCameraControlEnabled': config.webCameraControlEnabled!,
+    if (config.webGestureHandling != null)
+      'webGestureHandling': config.webGestureHandling!.name,
+    if (config.compassEnabled != null) 'compassEnabled': config.compassEnabled!,
+    if (config.mapToolbarEnabled != null)
+      'mapToolbarEnabled': config.mapToolbarEnabled!,
+    if (config.cameraTargetBounds != null)
+      'cameraTargetBounds': config.cameraTargetBounds!.toJson(),
+    if (config.mapType != null) 'mapType': config.mapType!.index,
+    if (config.minMaxZoomPreference != null)
+      'minMaxZoomPreference': config.minMaxZoomPreference!.toJson(),
+    if (config.rotateGesturesEnabled != null)
+      'rotateGesturesEnabled': config.rotateGesturesEnabled!,
+    if (config.scrollGesturesEnabled != null)
+      'scrollGesturesEnabled': config.scrollGesturesEnabled!,
+    if (config.tiltGesturesEnabled != null)
+      'tiltGesturesEnabled': config.tiltGesturesEnabled!,
+    if (config.fortyFiveDegreeImageryEnabled != null)
+      'fortyFiveDegreeImageryEnabled': config.fortyFiveDegreeImageryEnabled!,
+    if (config.trackCameraPosition != null)
+      'trackCameraPosition': config.trackCameraPosition!,
+    if (config.zoomControlsEnabled != null)
+      'zoomControlsEnabled': config.zoomControlsEnabled!,
+    if (config.zoomGesturesEnabled != null)
+      'zoomGesturesEnabled': config.zoomGesturesEnabled!,
+    if (config.liteModeEnabled != null)
+      'liteModeEnabled': config.liteModeEnabled!,
+    if (config.myLocationEnabled != null)
+      'myLocationEnabled': config.myLocationEnabled!,
+    if (config.myLocationButtonEnabled != null)
+      'myLocationButtonEnabled': config.myLocationButtonEnabled!,
+    if (padding != null)
+      'padding': <double>[
+        padding.top,
+        padding.left,
+        padding.bottom,
+        padding.right,
+      ],
+    if (config.indoorViewEnabled != null)
+      'indoorEnabled': config.indoorViewEnabled!,
+    if (config.trafficEnabled != null) 'trafficEnabled': config.trafficEnabled!,
+    if (config.buildingsEnabled != null)
+      'buildingsEnabled': config.buildingsEnabled!,
+    if (config.mapId != null) 'mapId': config.mapId!,
+    if (config.style != null) 'style': config.style!,
+    if (config.markerType != null) 'markerType': config.markerType!.index,
+    if (config.colorScheme != null) 'colorScheme': config.colorScheme!.name,
+  };
+}
+
 String? _getCameraBounds(dynamic option) {
   if (option is! List<Object?> || option.first == null) {
     return null;
@@ -29,6 +85,29 @@ String? _getCameraBounds(dynamic option) {
       '{south:${southwest?.latitude}, west:${southwest?.longitude}, north:${northeast?.latitude}, east:${northeast?.longitude}}';
 
   return restrictedBound;
+}
+
+String _jsEnumName(String name) {
+  final StringBuffer buffer = StringBuffer();
+  for (int i = 0; i < name.length; i++) {
+    final String character = name[i];
+    final String upper = character.toUpperCase();
+    if (i > 0 && character == upper) {
+      buffer.write('_');
+    }
+    buffer.write(upper);
+  }
+  return buffer.toString();
+}
+
+String? _enumNameFromOption(Object? option, List<Enum> values) {
+  if (option is String) {
+    return option;
+  }
+  if (option is int && option >= 0 && option < values.length) {
+    return values[option].name;
+  }
+  return null;
 }
 
 // Converts options into String that can be used by a webview.
@@ -76,18 +155,59 @@ String _rawOptionsToString(Map<String, dynamic> rawOptions) {
     options += ', zoomControl: ${rawOptions['zoomControlsEnabled']}';
   }
 
-  if (rawOptions['style'] != null &&
-      (rawOptions['style'] as String).isNotEmpty) {
-    options += ', styles: ${rawOptions['style']}';
-  } else {
-    options += ', styles: null';
+  final Object? mapId = rawOptions['mapId'] ?? rawOptions['cloudMapId'];
+  if (mapId is String && mapId.isNotEmpty) {
+    options += ', mapId: ${jsonEncode(mapId)}';
   }
 
-  if (rawOptions['scrollGesturesEnabled'] == false ||
+  final bool hasMapId = mapId is String && mapId.isNotEmpty;
+  if (!hasMapId) {
+    final Object? style = rawOptions['style'] ?? rawOptions['styles'];
+    if (style is String && style.isNotEmpty) {
+      options += ', styles: $style';
+    } else {
+      options += ', styles: null';
+    }
+  }
+
+  final String? webGestureHandling = _enumNameFromOption(
+    rawOptions['webGestureHandling'],
+    WebGestureHandling.values,
+  );
+  if (webGestureHandling != null) {
+    options += ', gestureHandling: ${jsonEncode(webGestureHandling)}';
+  } else if (rawOptions['scrollGesturesEnabled'] == false ||
       rawOptions['zoomGesturesEnabled'] == false) {
     options += ", gestureHandling: 'none'";
   } else {
     options += ", gestureHandling: 'auto'";
+  }
+
+  if (rawOptions['webCameraControlEnabled'] != null) {
+    options += ', cameraControl: ${rawOptions['webCameraControlEnabled']}';
+  }
+
+  final String? cameraControlPosition = _enumNameFromOption(
+    rawOptions['webCameraControlPosition'],
+    WebCameraControlPosition.values,
+  );
+  if (cameraControlPosition != null) {
+    options +=
+        ', cameraControlOptions: {position: google.maps.ControlPosition.${_jsEnumName(cameraControlPosition)}}';
+  }
+
+  if (rawOptions['fortyFiveDegreeImageryEnabled'] != null) {
+    options +=
+        ', rotateControl: ${rawOptions['fortyFiveDegreeImageryEnabled']}';
+  }
+
+  final String? colorScheme = _enumNameFromOption(
+    rawOptions['colorScheme'],
+    MapColorScheme.values,
+  );
+  if (colorScheme != null) {
+    options +=
+        ', colorScheme: google.maps.ColorScheme.${_jsEnumName(colorScheme)}';
   }
 
   return options;
@@ -399,4 +519,83 @@ util.GCircleOptions _circleOptionsFromCircle(Circle circle) {
     ..radius = circle.radius
     ..visible = circle.visible
     ..zIndex = circle.zIndex;
+}
+
+util.GGroundOverlayOptions _groundOverlayOptionsFromGroundOverlay(
+  GroundOverlay groundOverlay,
+) {
+  return util.GGroundOverlayOptions()
+    ..opacity = 1.0 - groundOverlay.transparency
+    ..clickable = groundOverlay.clickable
+    ..visible = groundOverlay.visible;
+}
+
+String _urlFromMapBitmap(MapBitmap mapBitmap) {
+  if (mapBitmap is AssetMapBitmap) {
+    return '../${mapBitmap.assetName}';
+  }
+  if (mapBitmap is BytesMapBitmap) {
+    return 'data:image/png;base64,${base64Encode(mapBitmap.byteData)}';
+  }
+  throw UnimplementedError(
+    'Only AssetMapBitmap and BytesMapBitmap are supported.',
+  );
+}
+
+String _boundsStringFromGroundOverlay(GroundOverlay groundOverlay) {
+  final LatLngBounds? bounds = groundOverlay.bounds;
+  if (bounds != null) {
+    return _boundsStringFromLatLngBounds(bounds);
+  }
+
+  final LatLng position = groundOverlay.position!;
+  final Offset anchor = groundOverlay.anchor ?? const Offset(0.5, 0.5);
+  final double fallbackSize = _groundOverlaySizeFromZoom(
+    position,
+    groundOverlay.zoomLevel ?? 14.0,
+  );
+  final double width =
+      groundOverlay.width ?? groundOverlay.height ?? fallbackSize;
+  final double height =
+      groundOverlay.height ?? groundOverlay.width ?? fallbackSize;
+
+  final double northMeters = height * anchor.dy;
+  final double southMeters = height * (1.0 - anchor.dy);
+  final double westMeters = width * anchor.dx;
+  final double eastMeters = width * (1.0 - anchor.dx);
+
+  const double latitudeDegreesPerMeter = 180.0 / (math.pi * 6378137.0);
+  final double longitudeDegreesPerMeter =
+      180.0 /
+      (math.pi *
+          6378137.0 *
+          math.max(
+            math.cos(position.latitude * math.pi / 180.0).abs(),
+            0.000001,
+          ));
+
+  return _boundsStringFromLatLngBounds(
+    LatLngBounds(
+      southwest: LatLng(
+        position.latitude - southMeters * latitudeDegreesPerMeter,
+        position.longitude - westMeters * longitudeDegreesPerMeter,
+      ),
+      northeast: LatLng(
+        position.latitude + northMeters * latitudeDegreesPerMeter,
+        position.longitude + eastMeters * longitudeDegreesPerMeter,
+      ),
+    ),
+  );
+}
+
+double _groundOverlaySizeFromZoom(LatLng position, double zoom) {
+  final double metersPerPixel =
+      156543.03392 *
+      math.cos(position.latitude * math.pi / 180.0).abs() /
+      math.pow(2.0, zoom);
+  return metersPerPixel * 256.0;
+}
+
+String _boundsStringFromLatLngBounds(LatLngBounds bounds) {
+  return '{south:${bounds.southwest.latitude}, west:${bounds.southwest.longitude}, north:${bounds.northeast.latitude}, east:${bounds.northeast.longitude}}';
 }

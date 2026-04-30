@@ -1,4 +1,4 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
+// Copyright 2013 The Flutter Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -16,16 +16,16 @@ import 'page.dart';
 
 class MarkerIconsPage extends GoogleMapExampleAppPage {
   const MarkerIconsPage({Key? key})
-      : super(const Icon(Icons.image), 'Marker icons', key: key);
+    : super(const Icon(Icons.image), 'Marker icons', key: key);
 
   @override
   Widget build(BuildContext context) {
-    return const MarkerIconsBody();
+    return const _MarkerIconsBody();
   }
 }
 
-class MarkerIconsBody extends StatefulWidget {
-  const MarkerIconsBody({super.key});
+class _MarkerIconsBody extends StatefulWidget {
+  const _MarkerIconsBody();
 
   @override
   State<StatefulWidget> createState() => MarkerIconsBodyState();
@@ -35,7 +35,7 @@ const LatLng _kMapCenter = LatLng(52.4478, -3.5402);
 
 enum _MarkerSizeOption { original, width30, height40, size30x60, size120x60 }
 
-class MarkerIconsBodyState extends State<MarkerIconsBody> {
+class MarkerIconsBodyState extends State<_MarkerIconsBody> {
   final Size _markerAssetImageSize = const Size(48, 48);
   _MarkerSizeOption _currentSizeOption = _MarkerSizeOption.original;
   Set<Marker> _markers = <Marker>{};
@@ -209,7 +209,7 @@ class MarkerIconsBodyState extends State<MarkerIconsBody> {
   }
 
   Marker _createAssetMarker(int index) {
-    final LatLng position = LatLng(
+    final position = LatLng(
       _kMapCenter.latitude - (index * 0.5),
       _kMapCenter.longitude - 1,
     );
@@ -222,7 +222,7 @@ class MarkerIconsBodyState extends State<MarkerIconsBody> {
   }
 
   Marker _createBytesMarker(int index) {
-    final LatLng position = LatLng(
+    final position = LatLng(
       _kMapCenter.latitude - (index * 0.5),
       _kMapCenter.longitude + 1,
     );
@@ -235,8 +235,8 @@ class MarkerIconsBodyState extends State<MarkerIconsBody> {
   }
 
   void _updateMarkers() {
-    final Set<Marker> markers = <Marker>{};
-    for (int i = 0; i < _markersAmountPerType; i++) {
+    final markers = <Marker>{};
+    for (var i = 0; i < _markersAmountPerType; i++) {
       if (_markerIconAsset != null) {
         markers.add(_createAssetMarker(i));
       }
@@ -251,10 +251,12 @@ class MarkerIconsBodyState extends State<MarkerIconsBody> {
 
   Future<void> _updateMarkerAssetImage(BuildContext context) async {
     // Width and height are used only for custom size.
-    final (double? width, double? height) =
-        _scalingEnabled && _customSizeEnabled
-            ? _getCurrentMarkerSize()
-            : (null, null);
+    final (
+      double? width,
+      double? height,
+    ) = _scalingEnabled && _customSizeEnabled
+        ? _getCurrentMarkerSize()
+        : (null, null);
 
     AssetMapBitmap assetMapBitmap;
     if (_mipMapsEnabled) {
@@ -266,8 +268,9 @@ class MarkerIconsBodyState extends State<MarkerIconsBody> {
         'assets/red_square.png',
         width: width,
         height: height,
-        bitmapScaling:
-            _scalingEnabled ? MapBitmapScaling.auto : MapBitmapScaling.none,
+        bitmapScaling: _scalingEnabled
+            ? MapBitmapScaling.auto
+            : MapBitmapScaling.none,
       );
     } else {
       // Uses hardcoded asset path
@@ -277,8 +280,9 @@ class MarkerIconsBodyState extends State<MarkerIconsBody> {
         'assets/red_square.png',
         width: width,
         height: height,
-        bitmapScaling:
-            _scalingEnabled ? MapBitmapScaling.auto : MapBitmapScaling.none,
+        bitmapScaling: _scalingEnabled
+            ? MapBitmapScaling.auto
+            : MapBitmapScaling.none,
       );
     }
 
@@ -294,7 +298,7 @@ class MarkerIconsBodyState extends State<MarkerIconsBody> {
     final double? imagePixelRatio = _scalingEnabled ? devicePixelRatio : null;
 
     // Create canvasSize with physical marker size
-    final Size canvasSize = Size(
+    final canvasSize = Size(
       bitmapLogicalSize.width * (imagePixelRatio ?? 1.0),
       bitmapLogicalSize.height * (imagePixelRatio ?? 1.0),
     );
@@ -302,18 +306,21 @@ class MarkerIconsBodyState extends State<MarkerIconsBody> {
     final ByteData bytes = await createCustomMarkerIconImage(size: canvasSize);
 
     // Width and height are used only for custom size.
-    final (double? width, double? height) =
-        _scalingEnabled && _customSizeEnabled
-            ? _getCurrentMarkerSize()
-            : (null, null);
+    final (
+      double? width,
+      double? height,
+    ) = _scalingEnabled && _customSizeEnabled
+        ? _getCurrentMarkerSize()
+        : (null, null);
 
-    final BytesMapBitmap bitmap = BytesMapBitmap(
+    final bitmap = BytesMapBitmap(
       bytes.buffer.asUint8List(),
       imagePixelRatio: imagePixelRatio,
       width: width,
       height: height,
-      bitmapScaling:
-          _scalingEnabled ? MapBitmapScaling.auto : MapBitmapScaling.none,
+      bitmapScaling: _scalingEnabled
+          ? MapBitmapScaling.auto
+          : MapBitmapScaling.none,
     );
 
     _updateBytesBitmap(bitmap);

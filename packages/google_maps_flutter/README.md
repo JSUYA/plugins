@@ -41,4 +41,5 @@ Plus, to use MarkerClusterer, you need to include the following script in the `a
 
 - This plugin was implemented using the [Google JavaScript API](https://developers.google.com/maps/documentation/javascript/overview).
 - The Marker feature uses the [Legacy API](https://developers.google.com/maps/documentation/javascript/markers). Depending on the Deprecate plan of the JavaScript API, some parts may not work.
-- [Heatmap layers](https://pub.dev/packages/google_maps_flutter_platform_interface/changelog#290) and tile overlays are not yet supported.
+- Advanced markers, [heatmap layers](https://pub.dev/packages/google_maps_flutter_platform_interface/changelog#290), and tile overlays are not yet supported.
+- Ground overlays are backed by the JavaScript API. Bearing and z-index are not supported by that API.

@@ -1,4 +1,4 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
+// Copyright 2013 The Flutter Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -11,7 +11,7 @@ import 'page.dart';
 
 class MoveCameraPage extends GoogleMapExampleAppPage {
   const MoveCameraPage({Key? key})
-      : super(const Icon(Icons.map), 'Camera control', key: key);
+    : super(const Icon(Icons.map), 'Camera control', key: key);
 
   @override
   Widget build(BuildContext context) {

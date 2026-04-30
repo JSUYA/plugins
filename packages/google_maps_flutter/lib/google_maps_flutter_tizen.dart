@@ -8,6 +8,7 @@ library google_maps_flutter_tizen;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -24,6 +25,8 @@ import 'src/util.dart' as util;
 part 'src/circle.dart';
 part 'src/circles.dart';
 part 'src/convert.dart';
+part 'src/ground_overlay.dart';
+part 'src/ground_overlays.dart';
 part 'src/google_maps_controller.dart';
 part 'src/google_maps_flutter_tizen.dart';
 part 'src/marker.dart';

@@ -6,6 +6,8 @@
 // ignore_for_file: avoid_setters_without_getters
 
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -593,6 +595,75 @@ class GCircleOptions {
     return '{center: new google.maps.LatLng(${center?.latitude}, ${center?.longitude}), fillColor:"$fillColor",'
         ' fillOpacity:$fillOpacity, radius:$radius, strokeColor:"$strokeColor", strokeOpacity:$strokeOpacity,'
         ' map: map, strokeWeight:$strokeWeight, visible:$visible, zIndex:$zIndex}';
+  }
+}
+
+/// This class represents a GroundOverlay using the passed GGroundOverlayOptions.
+class GGroundOverlay {
+  /// GGroundOverlay Constructor.
+  GGroundOverlay(String url, String bounds, [GGroundOverlayOptions? opts])
+      : id = _gid++ {
+    _createGroundOverlay(url, bounds, opts);
+  }
+
+  Future<void> _createGroundOverlay(
+    String url,
+    String bounds,
+    GGroundOverlayOptions? opts,
+  ) async {
+    final String command =
+        'var ${toString()} = new google.maps.GroundOverlay(${jsonEncode(url)}, $bounds, $opts); ${toString()}.id = $id;';
+    await webController!.runJavaScript(command);
+  }
+
+  /// GGroundOverlay id.
+  final int id;
+  static int _gid = 0;
+
+  @override
+  String toString() {
+    return 'groundOverlay$id';
+  }
+
+  /// Sets map.
+  set map(Object? /*GMap?*/ map) => _setMap(map);
+
+  /// Sets opacity.
+  set opacity(num? opacity) => _setOpacity(opacity);
+
+  /// Sets if this GroundOverlay is clickable.
+  set clickable(bool? clickable) => _setClickable(clickable);
+
+  Future<void> _setMap(Object? /*GMap?*/ map) async {
+    await callMethod(this, 'setMap', <Object?>[map]);
+  }
+
+  Future<void> _setOpacity(num? opacity) async {
+    await callMethod(this, 'setOpacity', <num?>[opacity]);
+  }
+
+  Future<void> _setClickable(bool? clickable) async {
+    await webController!.runJavaScript("$this.set('clickable', $clickable);");
+  }
+}
+
+/// This class defines ground overlay's options.
+class GGroundOverlayOptions {
+  /// GGroundOverlayOptions Constructor.
+  GGroundOverlayOptions();
+
+  /// Whether this ground overlay handles click events.
+  bool? clickable;
+
+  /// The opacity between 0.0 and 1.0.
+  num? opacity;
+
+  /// Whether this ground overlay is visible on the map.
+  bool? visible;
+
+  @override
+  String toString() {
+    return '{clickable:$clickable, map:${(visible ?? false) ? 'map' : 'null'}, opacity:$opacity}';
   }
 }
 

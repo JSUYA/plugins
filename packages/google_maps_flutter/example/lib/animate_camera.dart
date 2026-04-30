@@ -1,9 +1,10 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
+// Copyright 2013 The Flutter Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 // ignore_for_file: public_member_api_docs
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -11,7 +12,7 @@ import 'page.dart';
 
 class AnimateCameraPage extends GoogleMapExampleAppPage {
   const AnimateCameraPage({Key? key})
-      : super(const Icon(Icons.map), 'Camera control, animated', key: key);
+    : super(const Icon(Icons.map), 'Camera control, animated', key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,12 +26,24 @@ class AnimateCamera extends StatefulWidget {
   State createState() => AnimateCameraState();
 }
 
+// Duration for camera animation in seconds.
+const int _durationSeconds = 10;
+
 class AnimateCameraState extends State<AnimateCamera> {
   GoogleMapController? mapController;
+  Duration? _cameraUpdateAnimationDuration;
 
   // ignore: use_setters_to_change_properties
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
+  }
+
+  void _toggleAnimationDuration() {
+    setState(() {
+      _cameraUpdateAnimationDuration = _cameraUpdateAnimationDuration != null
+          ? null
+          : const Duration(seconds: _durationSeconds);
+    });
   }
 
   @override
@@ -67,6 +80,7 @@ class AnimateCameraState extends State<AnimateCamera> {
                           zoom: 17.0,
                         ),
                       ),
+                      duration: _cameraUpdateAnimationDuration,
                     );
                   },
                   child: const Text('newCameraPosition'),
@@ -77,6 +91,7 @@ class AnimateCameraState extends State<AnimateCamera> {
                       CameraUpdate.newLatLng(
                         const LatLng(56.1725505, 10.1850512),
                       ),
+                      duration: _cameraUpdateAnimationDuration,
                     );
                   },
                   child: const Text('newLatLng'),
@@ -91,6 +106,7 @@ class AnimateCameraState extends State<AnimateCamera> {
                         ),
                         10.0,
                       ),
+                      duration: _cameraUpdateAnimationDuration,
                     );
                   },
                   child: const Text('newLatLngBounds'),
@@ -102,6 +118,7 @@ class AnimateCameraState extends State<AnimateCamera> {
                         const LatLng(37.4231613, -122.087159),
                         11.0,
                       ),
+                      duration: _cameraUpdateAnimationDuration,
                     );
                   },
                   child: const Text('newLatLngZoom'),
@@ -110,6 +127,7 @@ class AnimateCameraState extends State<AnimateCamera> {
                   onPressed: () {
                     mapController?.animateCamera(
                       CameraUpdate.scrollBy(150.0, -225.0),
+                      duration: _cameraUpdateAnimationDuration,
                     );
                   },
                   child: const Text('scrollBy'),
@@ -122,35 +140,63 @@ class AnimateCameraState extends State<AnimateCamera> {
                   onPressed: () {
                     mapController?.animateCamera(
                       CameraUpdate.zoomBy(-0.5, const Offset(30.0, 20.0)),
+                      duration: _cameraUpdateAnimationDuration,
                     );
                   },
                   child: const Text('zoomBy with focus'),
                 ),
                 TextButton(
                   onPressed: () {
-                    mapController?.animateCamera(CameraUpdate.zoomBy(-0.5));
+                    mapController?.animateCamera(
+                      CameraUpdate.zoomBy(-0.5),
+                      duration: _cameraUpdateAnimationDuration,
+                    );
                   },
                   child: const Text('zoomBy'),
                 ),
                 TextButton(
                   onPressed: () {
-                    mapController?.animateCamera(CameraUpdate.zoomIn());
+                    mapController?.animateCamera(
+                      CameraUpdate.zoomIn(),
+                      duration: _cameraUpdateAnimationDuration,
+                    );
                   },
                   child: const Text('zoomIn'),
                 ),
                 TextButton(
                   onPressed: () {
-                    mapController?.animateCamera(CameraUpdate.zoomOut());
+                    mapController?.animateCamera(
+                      CameraUpdate.zoomOut(),
+                      duration: _cameraUpdateAnimationDuration,
+                    );
                   },
                   child: const Text('zoomOut'),
                 ),
                 TextButton(
                   onPressed: () {
-                    mapController?.animateCamera(CameraUpdate.zoomTo(16.0));
+                    mapController?.animateCamera(
+                      CameraUpdate.zoomTo(16.0),
+                      duration: _cameraUpdateAnimationDuration,
+                    );
                   },
                   child: const Text('zoomTo'),
                 ),
               ],
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text('With 10 second duration', textAlign: TextAlign.right),
+            const SizedBox(width: 5),
+            Switch(
+              value: _cameraUpdateAnimationDuration != null,
+              onChanged: kIsWeb
+                  ? null
+                  : (bool value) {
+                      _toggleAnimationDuration();
+                    },
             ),
           ],
         ),

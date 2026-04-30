@@ -1,4 +1,4 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
+// Copyright 2013 The Flutter Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -15,7 +15,7 @@ const CameraPosition _kInitialPosition = CameraPosition(
 
 class MapCoordinatesPage extends GoogleMapExampleAppPage {
   const MapCoordinatesPage({Key? key})
-      : super(const Icon(Icons.map), 'Map coordinates', key: key);
+    : super(const Icon(Icons.map), 'Map coordinates', key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class _MapCoordinatesBodyState extends State<_MapCoordinatesBody> {
 
   @override
   Widget build(BuildContext context) {
-    final GoogleMap googleMap = GoogleMap(
+    final googleMap = GoogleMap(
       onMapCreated: onMapCreated,
       initialCameraPosition: _kInitialPosition,
       onCameraIdle:

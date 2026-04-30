@@ -1,4 +1,4 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
+// Copyright 2013 The Flutter Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -18,7 +18,7 @@ final LatLngBounds sydneyBounds = LatLngBounds(
 
 class MapUiPage extends GoogleMapExampleAppPage {
   const MapUiPage({Key? key})
-      : super(const Icon(Icons.map), 'User interface', key: key);
+    : super(const Icon(Icons.map), 'User interface', key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +61,8 @@ class MapUiBodyState extends State<MapUiBody> {
   late GoogleMapController _controller;
   bool _nightMode = false;
   String _mapStyle = '';
+  bool _webCameraControlEnabled = true;
+  WebCameraControlPosition? _webCameraControlPosition;
 
   @override
   void initState() {
@@ -70,6 +72,62 @@ class MapUiBodyState extends State<MapUiBody> {
   @override
   void dispose() {
     super.dispose();
+  }
+
+  Widget _webCameraControlToggler() {
+    return TextButton(
+      child: Text(
+        '${_webCameraControlEnabled ? 'disable' : 'enable'} web camera control',
+      ),
+      onPressed: () {
+        setState(() {
+          _webCameraControlEnabled = !_webCameraControlEnabled;
+        });
+      },
+    );
+  }
+
+  Widget _webCameraControlPositionToggler() {
+    return TextButton(
+      onPressed: () => showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Web camera control position'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                DropdownButton<WebCameraControlPosition>(
+                  hint: const Text('Web camera control position'),
+                  value: _webCameraControlPosition,
+                  items: WebCameraControlPosition.values
+                      .map(
+                        (WebCameraControlPosition e) =>
+                            DropdownMenuItem<WebCameraControlPosition>(
+                              value: e,
+                              child: Text(e.name),
+                            ),
+                      )
+                      .toList(),
+                  onChanged: (WebCameraControlPosition? value) {
+                    setState(() {
+                      _webCameraControlPosition = value;
+                    });
+                  },
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Ok'),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      child: const Text('change web camera control position'),
+    );
   }
 
   Widget _compassToggler() {
@@ -255,8 +313,9 @@ class MapUiBodyState extends State<MapUiBody> {
       child: Text('${_nightMode ? 'disable' : 'enable'} night mode'),
       onPressed: () async {
         _nightMode = !_nightMode;
-        final String style =
-            _nightMode ? await _getFileData('assets/night_mode.json') : '';
+        final String style = _nightMode
+            ? await _getFileData('assets/night_mode.json')
+            : '';
         setState(() {
           _mapStyle = style;
         });
@@ -266,7 +325,9 @@ class MapUiBodyState extends State<MapUiBody> {
 
   @override
   Widget build(BuildContext context) {
-    final GoogleMap googleMap = GoogleMap(
+    final googleMap = GoogleMap(
+      webCameraControlEnabled: _webCameraControlEnabled,
+      webCameraControlPosition: _webCameraControlPosition,
       onMapCreated: onMapCreated,
       initialCameraPosition: _kInitialPosition,
       compassEnabled: _compassEnabled,
@@ -287,7 +348,7 @@ class MapUiBodyState extends State<MapUiBody> {
       onCameraMove: _updateCameraPosition,
     );
 
-    final List<Widget> columnChildren = <Widget>[
+    final columnChildren = <Widget>[
       Padding(
         padding: const EdgeInsets.all(10.0),
         child: Center(
@@ -324,6 +385,11 @@ class MapUiBodyState extends State<MapUiBody> {
               _myLocationButtonToggler(),
               _myTrafficToggler(),
               _nightModeToggler(),
+              if (kIsWeb) ...<Widget>[
+                _webCameraControlToggler(),
+                if (_webCameraControlEnabled)
+                  _webCameraControlPositionToggler(),
+              ],
             ],
           ),
         ),
