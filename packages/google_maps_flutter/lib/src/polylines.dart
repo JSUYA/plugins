@@ -67,7 +67,10 @@ class PolylinesController extends GeometryController {
   void _removePolyline(PolylineId polylineId) {
     final PolylineController? polylineController =
         _polylineIdToController[polylineId];
-    polylineController?.remove();
+    if (polylineController != null) {
+      _idToPolylineId.remove(polylineController._polyline?.id);
+      polylineController.remove();
+    }
     _polylineIdToController.remove(polylineId);
   }
 

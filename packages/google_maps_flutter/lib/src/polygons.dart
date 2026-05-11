@@ -67,7 +67,10 @@ class PolygonsController extends GeometryController {
   void _removePolygon(PolygonId polygonId) {
     final PolygonController? polygonController =
         _polygonIdToController[polygonId];
-    polygonController?.remove();
+    if (polygonController != null) {
+      _idToPolygonId.remove(polygonController._polygon?.id);
+      polygonController.remove();
+    }
     _polygonIdToController.remove(polygonId);
   }
 

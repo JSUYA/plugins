@@ -1,6 +1,8 @@
 ## NEXT
 
 * Update code format.
+* Fix `_idTo*Id` map entries leaking when markers, polygons, polylines, or
+  circles are removed.
 
 ## 0.1.13
 

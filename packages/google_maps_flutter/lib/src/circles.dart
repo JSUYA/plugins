@@ -67,7 +67,10 @@ class CirclesController extends GeometryController {
   // Removes a circle and its controller by its [CircleId].
   void _removeCircle(CircleId circleId) {
     final CircleController? circleController = _circleIdToController[circleId];
-    circleController?.remove();
+    if (circleController != null) {
+      _idToCircleId.remove(circleController._circle?.id);
+      circleController.remove();
+    }
     _circleIdToController.remove(circleId);
   }
 

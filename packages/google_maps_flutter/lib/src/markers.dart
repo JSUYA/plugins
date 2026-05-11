@@ -112,14 +112,16 @@ class MarkersController extends GeometryController {
   void _removeMarker(MarkerId markerId) {
     final MarkerController? markerController = _markerIdToController[markerId];
 
-    if (markerController?.clusterManagerId != null) {
-      _clusterManagersController.removeItem(
-        markerController!.clusterManagerId!,
-        markerController.marker,
-      );
+    if (markerController != null) {
+      if (markerController.clusterManagerId != null) {
+        _clusterManagersController.removeItem(
+          markerController.clusterManagerId!,
+          markerController.marker,
+        );
+      }
+      _idToMarkerId.remove(markerController._marker?.id);
+      markerController.remove();
     }
-
-    markerController?.remove();
     _markerIdToController.remove(markerId);
   }
 
