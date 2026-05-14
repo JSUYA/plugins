@@ -18,6 +18,7 @@ import 'package:flutter/widgets.dart';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:stream_transform/stream_transform.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_lwe/webview_flutter_lwe.dart';
 
 import 'src/util.dart' as util;
 

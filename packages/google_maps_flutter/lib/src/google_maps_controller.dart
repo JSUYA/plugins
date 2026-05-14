@@ -62,6 +62,13 @@ class GoogleMapsController {
   final Set<ClusterManager> _clusterManagers;
   final Set<GroundOverlay> _groundOverlays;
   final Completer<bool> _pageFinishedCompleter = Completer<bool>();
+  // Completes on the first `tilesloaded` event so initial geometry is rendered
+  // only after the JS map's projection is ready. Without this, overlays stay
+  // invisible until the user pans the map and forces a redraw.
+  final Completer<void> _mapReadyCompleter = Completer<void>();
+  // Memoizes init() so the framework's second call (after onPlatformViewCreated)
+  // does not re-run _renderInitialGeometry and produce duplicate JS overlays.
+  Future<void>? _initFuture;
   WebViewWidget? _webview;
   // The raw options passed by the user, before converting to maps.
   // Caching this allows us to re-create the map faithfully when needed.
@@ -267,6 +274,9 @@ class GoogleMapsController {
         return;
       }
       _streamController.add(MapReadyEvent(_mapId));
+      if (!_mapReadyCompleter.isCompleted) {
+        _mapReadyCompleter.complete();
+      }
       _isFirst = true;
     } catch (e) {
       debugPrint('JavaScript Error: $e');
@@ -495,13 +505,19 @@ class GoogleMapsController {
   ///
   /// Failure to call this method would result in not rendering at all,
   /// and most of the public methods on this class no-op'ing.
-  Future<void> init() async {
+  Future<void> init() => _initFuture ??= _init();
+
+  Future<void> _init() async {
     if (_webview == null && !_streamController.isClosed) {
       _getWebview();
       await _pageFinishedCompleter.future;
       await _createMap();
     }
     await _attachGeometryControllers();
+    // Wait until the JS map has loaded its first tiles. Adding overlays before
+    // this point leaves them invisible on Tizen LWE WebView until the next
+    // viewport change.
+    await _mapReadyCompleter.future;
     _renderInitialGeometry(
       markers: _markers,
       circles: _circles,
@@ -513,6 +529,21 @@ class GoogleMapsController {
     _initClustering(_clusterManagers);
 
     await _setTrafficLayer(_isTrafficLayerEnabled(_rawMapOptions));
+    await _requestRender();
+  }
+
+  // Asks the underlying LWE WebView to schedule a paint after the JS layer
+  // mutated the DOM. LWE does not promote JS-induced DOM mutations into a
+  // render request, so initial overlays and per-update changes stay
+  // invisible until a real user input arrives without this call.
+  Future<void> _requestRender() async {
+    if (_webview == null) {
+      return;
+    }
+    final Object platform = controller.platform;
+    if (platform is LweWebViewController) {
+      await platform.requestRender();
+    }
   }
 
   // Binds the Geometry controllers to a map instance
@@ -807,6 +838,7 @@ class GoogleMapsController {
     _circlesController?.addCircles(updates.circlesToAdd);
     _circlesController?.changeCircles(updates.circlesToChange);
     _circlesController?.removeCircles(updates.circleIdsToRemove);
+    _requestRender();
   }
 
   /// Applies [PolygonUpdates] to the currently managed polygons.
@@ -818,6 +850,7 @@ class GoogleMapsController {
     _polygonsController?.addPolygons(updates.polygonsToAdd);
     _polygonsController?.changePolygons(updates.polygonsToChange);
     _polygonsController?.removePolygons(updates.polygonIdsToRemove);
+    _requestRender();
   }
 
   /// Applies [PolylineUpdates] to the currently managed lines.
@@ -829,6 +862,7 @@ class GoogleMapsController {
     _polylinesController?.addPolylines(updates.polylinesToAdd);
     _polylinesController?.changePolylines(updates.polylinesToChange);
     _polylinesController?.removePolylines(updates.polylineIdsToRemove);
+    _requestRender();
   }
 
   /// Applies [MarkerUpdates] to the currently managed markers.
@@ -840,6 +874,7 @@ class GoogleMapsController {
     _markersController?.addMarkers(updates.markersToAdd);
     _markersController?.changeMarkers(updates.markersToChange);
     _markersController?.removeMarkers(updates.markerIdsToRemove);
+    _requestRender();
   }
 
   /// Applies [ClusterManagerUpdates] to the currently managed cluster managers.
@@ -854,6 +889,7 @@ class GoogleMapsController {
     _clusterManagersController?.removeClusterManagers(
       updates.clusterManagerIdsToRemove,
     );
+    _requestRender();
   }
 
   /// Applies [GroundOverlayUpdates] to the currently managed ground overlays.
@@ -869,6 +905,7 @@ class GoogleMapsController {
     _groundOverlaysController?.removeGroundOverlays(
       updates.groundOverlayIdsToRemove,
     );
+    _requestRender();
   }
 
   /// Shows the [InfoWindow] of the marker identified by its [MarkerId].

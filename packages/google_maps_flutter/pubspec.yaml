@@ -20,4 +20,11 @@ dependencies:
   google_maps_flutter_platform_interface: ^2.15.0
   stream_transform: ^2.0.0
   webview_flutter: ^4.10.0
-  webview_flutter_lwe: ^0.3.7
+  webview_flutter_lwe: ^0.4.1
+
+# Temporary override until webview_flutter_lwe 0.4.1 is published.
+# The render-after-JS fix that makes Google Maps overlays visible on Tizen
+# lives in the local copy.
+dependency_overrides:
+  webview_flutter_lwe:
+    path: ../webview_flutter_lwe

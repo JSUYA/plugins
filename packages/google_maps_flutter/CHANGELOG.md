@@ -6,6 +6,14 @@
   `google.maps.GroundOverlay`.
 * Forward the `colorScheme` map option to `google.maps.ColorScheme`.
 * * Update code format.
+* Fix markers, polygons, polylines, circles, cluster managers, and ground
+  overlays not rendering until the map is panned for the first time on
+  Tizen LWE WebView. Initial geometry is now rendered after the JS map's
+  first `tilesloaded` event, `init()` is memoized so the framework's
+  double-call no longer produces duplicate overlays, and after every
+  initial render and `update*` call the plugin asks the LWE WebView to
+  schedule a paint via `LweWebViewController.requestRender()`.
+* Bump `webview_flutter_lwe` dependency to `^0.4.1`.
 
 ## 0.1.13
 
