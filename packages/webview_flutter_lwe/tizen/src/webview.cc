@@ -661,6 +661,16 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
     } else {
       result->Error("Invalid argument", "The argument must be a string.");
     }
+  } else if (method_name == "requestRender") {
+    // LWE does not promote JS-induced DOM mutations into a render request
+    // that reaches `on_prepare_image`/`on_flush`. Re-applying the current
+    // dimensions routes through LWE's resize path and schedules a paint
+    // without altering any observable WebView state (the size, scroll
+    // position, focus, and camera are unchanged). Callers that mutate the
+    // DOM via JS and need the result on screen before the next user input
+    // can invoke this method explicitly.
+    webview_instance_->ResizeTo(width_, height_);
+    result->Success();
   } else if (method_name == "addJavaScriptChannel") {
     const auto* channel = std::get_if<std::string>(arguments);
     if (channel) {

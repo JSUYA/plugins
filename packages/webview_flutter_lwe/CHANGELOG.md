@@ -1,3 +1,13 @@
+## 0.4.1
+
+* Add `LweWebViewController.requestRender()` so callers can opt in to a
+  paint after they mutate the DOM via JavaScript. LWE does not promote
+  JS-induced DOM mutations into a render request, so JS-driven UI
+  changes (e.g. Google Maps overlays) stay invisible until a real input
+  event arrives. The native handler re-applies the current WebView
+  dimensions, which routes through LWE's resize path and schedules a
+  paint without altering size, scroll position, focus, or input state.
+
 ## 0.4.0
 
 * Update minimum supported SDK version to Flutter 3.32/Dart 3.8.

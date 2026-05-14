@@ -121,6 +121,13 @@ class LweWebViewController extends PlatformWebViewController {
   @override
   Future<void> scrollBy(int x, int y) => _webview.scrollBy(x, y);
 
+  /// LWE-specific. Asks the WebView to schedule a paint of the current DOM
+  /// state. JS-induced DOM mutations on LWE do not automatically schedule a
+  /// paint, so callers that change the DOM via JavaScript and need the
+  /// result on screen before the next user input should call this after
+  /// the JS finishes.
+  Future<void> requestRender() => _webview.requestRender();
+
   @override
   Future<Offset> getScrollPosition() => _webview.getScrollPosition();
 

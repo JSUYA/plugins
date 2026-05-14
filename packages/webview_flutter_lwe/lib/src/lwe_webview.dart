@@ -147,6 +147,15 @@ class LweWebView {
   Future<void> scrollBy(int x, int y) =>
       _invokeChannelMethod<void>('scrollBy', <String, int>{'x': x, 'y': y});
 
+  /// Requests the WebView to schedule a paint of the current DOM state.
+  ///
+  /// LWE does not promote JS-induced DOM mutations into a render request, so
+  /// JS-driven UI changes (e.g. overlays added via the Google Maps JS API)
+  /// stay invisible until a real input event arrives. Callers that mutate
+  /// the DOM via JavaScript and need the result on screen before the user
+  /// interacts with the view can invoke this method explicitly.
+  Future<void> requestRender() => _invokeChannelMethod<void>('requestRender');
+
   /// Returns the current scroll position of this view.
   Future<Offset> getScrollPosition() async {
     final Map<String, Object?>? position =
