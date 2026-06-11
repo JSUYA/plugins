@@ -5,11 +5,11 @@
 #ifndef FLUTTER_PLUGIN_VIDEO_PLAYER_H_
 #define FLUTTER_PLUGIN_VIDEO_PLAYER_H_
 
-#include <Ecore.h>
 #include <flutter/encodable_value.h>
 #include <flutter/event_channel.h>
 #include <flutter/plugin_registrar.h>
 #include <flutter/texture_registrar.h>
+#include <glib.h>
 #include <player.h>
 
 #include <functional>
@@ -49,6 +49,8 @@ class VideoPlayer {
 
  private:
   void SendPendingEvents();
+  // Should be called with queue_mutex_ held.
+  void RequestEventDispatch();
   void PushEvent(const flutter::EncodableValue &encodable_value);
   void SendError(const std::string &error_code,
                  const std::string &error_message);
@@ -72,7 +74,7 @@ class VideoPlayer {
   static void OnVideoFrameDecoded(media_packet_h packet, void *data);
   static void ReleaseMediaPacket(void *packet);
 #ifdef TV_PROFILE
-  static Eina_Bool ResetScreensaverTimeout(void *data);
+  static gboolean ResetScreensaverTimeout(gpointer data);
 #endif
 
   void RequestRendering();
@@ -108,10 +110,10 @@ class VideoPlayer {
 #ifdef TV_PROFILE
   void *screensaver_handle_ = nullptr;
   ScreensaverResetTimeout screensaver_reset_timeout_;
-  Ecore_Timer *timer_ = nullptr;
+  guint timer_ = 0;
 #endif
 
-  Ecore_Pipe *sink_event_pipe_ = nullptr;
+  guint sink_event_source_ = 0;
   std::mutex queue_mutex_;
   std::queue<flutter::EncodableValue> encodable_event_queue_;
   std::queue<std::pair<std::string, std::string>> error_event_queue_;
