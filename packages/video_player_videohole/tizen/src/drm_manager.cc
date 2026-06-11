@@ -34,18 +34,16 @@ DrmManager::DrmManager() : drm_type_(DM_TYPE_NONE) {
   } else {
     LOG_ERROR("[DrmManager] Fail to dlopen libdrmmanager.");
   }
-  license_request_pipe_ = ecore_pipe_add(
-      [](void *data, void *buffer, unsigned int nbyte) -> void {
-        auto *self = static_cast<DrmManager *>(data);
-        self->ExecuteRequest();
-      },
-      this);
 }
 
 DrmManager::~DrmManager() {
   ReleaseDrmSession();
-  if (license_request_pipe_) {
-    ecore_pipe_del(license_request_pipe_);
+  {
+    std::lock_guard<std::mutex> lock(queue_mutex_);
+    if (license_request_source_) {
+      g_source_remove(license_request_source_);
+      license_request_source_ = 0;
+    }
   }
   if (drm_manager_proxy_) {
     CloseDrmManagerProxy(drm_manager_proxy_);
@@ -328,11 +326,21 @@ void DrmManager::RequestLicense(std::string &session_id, std::string &message) {
 void DrmManager::PushLicenseRequestData(DataForLicenseProcess &data) {
   std::lock_guard<std::mutex> lock(queue_mutex_);
   license_request_queue_.push(data);
-  ecore_pipe_write(license_request_pipe_, nullptr, 0);
+  if (license_request_source_ == 0) {
+    license_request_source_ = g_idle_add_full(
+        G_PRIORITY_DEFAULT,
+        [](gpointer data) -> gboolean {
+          auto *self = static_cast<DrmManager *>(data);
+          self->ExecuteRequest();
+          return G_SOURCE_REMOVE;
+        },
+        this, nullptr);
+  }
 }
 
 void DrmManager::ExecuteRequest() {
   std::lock_guard<std::mutex> lock(queue_mutex_);
+  license_request_source_ = 0;
   while (!license_request_queue_.empty()) {
     DataForLicenseProcess data = license_request_queue_.front();
     ProcessLicense(data);
