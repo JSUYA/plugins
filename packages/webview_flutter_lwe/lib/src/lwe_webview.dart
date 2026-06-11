@@ -12,6 +12,32 @@ import 'package:webview_flutter_platform_interface/webview_flutter_platform_inte
 /// The channel name of [LweWebView].
 const String kLweWebViewChannelName = 'plugins.flutter.io/lwe_webview_';
 
+/// The engine-internal channel used to borrow the engine's input method
+/// context while an editable element inside a webview is focused.
+const MethodChannel _textInputChannel = MethodChannel(
+  'tizen/internal/platformviewtextinput',
+);
+
+final Map<int, LweWebView> _webViewsById = <int, LweWebView>{};
+bool _textInputHandlerRegistered = false;
+
+void _ensureTextInputHandler() {
+  if (_textInputHandlerRegistered) {
+    return;
+  }
+  _textInputHandlerRegistered = true;
+  _textInputChannel.setMethodCallHandler((MethodCall call) async {
+    final Map<String, Object?> arguments =
+        (call.arguments as Map<Object?, Object?>).cast<String, Object?>();
+    final int viewId = arguments['viewId']! as int;
+    final LweWebView? webView = _webViewsById[viewId];
+    if (webView == null) {
+      return;
+    }
+    await webView._onImfEvent(call.method, arguments['text'] as String?);
+  });
+}
+
 /// A lwe webview that displays web pages.
 class LweWebView {
   /// Whether the [LweNavigationDelegate] is set by the [PlatformWebViewController].
@@ -25,6 +51,8 @@ class LweWebView {
   final Map<String, JavaScriptChannelParams> _javaScriptChannelParams =
       <String, JavaScriptChannelParams>{};
   final List<(String, dynamic)> _pendingMethodCalls = <(String, dynamic)>[];
+
+  late final int _viewId;
 
   Future<bool?> _onMethodCall(MethodCall call) async {
     switch (call.method) {
@@ -40,11 +68,32 @@ class LweWebView {
         }
 
         return true;
+      case 'textInputActive':
+        final bool active = call.arguments! as bool;
+        try {
+          await _textInputChannel.invokeMethod<void>(
+            active ? 'activate' : 'deactivate',
+            <String, int>{'viewId': _viewId},
+          );
+        } on MissingPluginException {
+          // The engine does not support borrowing the input method context.
+          // Text input falls back to raw key events.
+        }
+        return true;
     }
 
     throw MissingPluginException(
       '${call.method} was invoked but has no handler',
     );
+  }
+
+  /// Forwards a preedit/commit event from the engine's input method context
+  /// to the platform side.
+  Future<void> _onImfEvent(String method, String? text) {
+    return _invokeChannelMethod<void>('imfEvent', <String, String?>{
+      'method': method,
+      'text': text,
+    });
   }
 
   Future<T?> _invokeChannelMethod<T>(String method, [dynamic arguments]) async {
@@ -59,10 +108,13 @@ class LweWebView {
   /// Called when [TizenView] is created. Invokes the requested method call before [LweWebView] is created.
   void onCreate(int viewId) {
     _isCreated = true;
+    _viewId = viewId;
     _lweWebViewChannel = MethodChannel(
       kLweWebViewChannelName + viewId.toString(),
     );
     _lweWebViewChannel.setMethodCallHandler(_onMethodCall);
+    _webViewsById[viewId] = this;
+    _ensureTextInputHandler();
 
     _callPendingMethodCalls();
   }

@@ -215,6 +215,24 @@ WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
         });
         return true;
       });
+
+  webview_instance_->RegisterOnShowSoftwareKeyboardIfPossibleHandler(
+      [this](LWE::WebContainer* container) {
+        dispatcher_->dispatchTaskOnMainThread(
+            [this]() { NotifyTextInputActive(true); });
+      });
+  webview_instance_->RegisterOnHideSoftwareKeyboardIfPossibleHandler(
+      [this](LWE::WebContainer* container) {
+        dispatcher_->dispatchTaskOnMainThread(
+            [this]() { NotifyTextInputActive(false); });
+      });
+}
+
+void WebView::NotifyTextInputActive(bool active) {
+  // The engine's input method context is borrowed through the Dart side
+  // because platform-to-platform channel messages are not routed.
+  webview_channel_->InvokeMethod(
+      "textInputActive", std::make_unique<flutter::EncodableValue>(active));
 }
 
 /**
@@ -260,9 +278,14 @@ void WebView::Dispose() {
   texture_registrar_->UnregisterTexture(GetTextureId(), nullptr);
 
   if (webview_instance_) {
+    NotifyTextInputActive(false);
     webview_instance_->Destroy();
     webview_instance_ = nullptr;
   }
+}
+
+void WebView::ClearFocus() {
+  NotifyTextInputActive(false);
 }
 
 void WebView::Resize(double width, double height) {
@@ -536,6 +559,62 @@ bool WebView::SendKey(const char* key, const char* string, const char* compose,
   return false;
 }
 
+void WebView::HandleImfEvent(const std::string& method,
+                             const std::string& text) {
+  if (!webview_instance_) {
+    return;
+  }
+
+  struct Param {
+    LWE::WebContainer* webview_instance;
+    std::string method;
+    std::string text;
+    std::shared_ptr<bool> composing;
+  };
+  Param* param =
+      new Param{webview_instance_, method, text, lwe_composing_};
+
+  webview_instance_->AddIdleCallback(
+      [](void* data) {
+        Param* param = reinterpret_cast<Param*>(data);
+        LWE::WebContainer* instance = param->webview_instance;
+        bool& composing = *param->composing;
+
+        if (param->method == "preeditChanged") {
+          if (param->text.empty()) {
+            if (composing) {
+              instance->DispatchCompositionEndEvent("");
+              composing = false;
+            }
+          } else {
+            if (!composing) {
+              instance->DispatchCompositionStartEvent("");
+              composing = true;
+            }
+            instance->DispatchCompositionUpdateEvent(param->text);
+          }
+        } else if (param->method == "preeditEnd") {
+          if (composing) {
+            instance->DispatchCompositionEndEvent("");
+            composing = false;
+          }
+        } else if (param->method == "commit") {
+          if (composing) {
+            instance->DispatchCompositionEndEvent(param->text);
+            composing = false;
+          } else {
+            instance->DispatchCompositionStartEvent("");
+            instance->DispatchCompositionUpdateEvent(param->text);
+            instance->DispatchCompositionEndEvent(param->text);
+          }
+        }
+        // preeditStart is a no-op; a composition is started lazily on the
+        // first non-empty preeditChanged.
+        delete param;
+      },
+      param);
+}
+
 void WebView::SetDirection(int direction) {
   // TODO: Implement if necessary.
 }
@@ -675,6 +754,13 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
     result->Success();
   } else if (method_name == "clearCache") {
     webview_instance_->ClearCache();
+    result->Success();
+  } else if (method_name == "imfEvent") {
+    std::string event_method;
+    std::string text;
+    GetValueFromEncodableMap(arguments, "method", &event_method);
+    GetValueFromEncodableMap(arguments, "text", &text);
+    HandleImfEvent(event_method, text);
     result->Success();
   } else if (method_name == "getTitle") {
     result->Success(flutter::EncodableValue(webview_instance_->GetTitle()));

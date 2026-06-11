@@ -44,11 +44,20 @@ class WebView : public PlatformView {
                      double dy) override;
   virtual void SetDirection(int direction) override;
 
-  virtual void ClearFocus() override {}
+  virtual void ClearFocus() override;
 
   virtual bool SendKey(const char* key, const char* string, const char* compose,
                        uint32_t modifiers, uint32_t scan_code,
                        bool is_down) override;
+
+  // Handles a text input event (preedit/commit) forwarded from the engine's
+  // input method context. |method| is one of preeditStart, preeditChanged,
+  // preeditEnd, and commit.
+  void HandleImfEvent(const std::string& method, const std::string& text);
+
+  // Notifies the engine (through the Dart side) that text editing has
+  // started or ended in this webview.
+  void NotifyTextInputActive(bool active);
 
   LWE::WebContainer* GetWebViewInstance() { return webview_instance_; }
 
@@ -87,6 +96,10 @@ class WebView : public PlatformView {
   std::mutex mutex_;
   std::unique_ptr<BufferPool> tbm_pool_;
   bool use_sw_backend_;
+  // Whether a composition is in progress in the LWE instance. Accessed only
+  // on the LWE thread (inside idle callbacks). Held as a shared_ptr so that
+  // pending callbacks outlive this object.
+  std::shared_ptr<bool> lwe_composing_ = std::make_shared<bool>(false);
 };
 
 #endif  // FLUTTER_PLUGIN_WEBVIEW_H_
