@@ -4,11 +4,11 @@
 
 #include "wakelock_plus_tizen_plugin.h"
 
-#include <Ecore.h>
 #include <dlfcn.h>
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar.h>
 #include <flutter/standard_method_codec.h>
+#include <glib.h>
 #include <tizen.h>
 
 #include <memory>
@@ -64,14 +64,14 @@ class WakelockPlusTizenPlugin : public flutter::Plugin {
             return;
           }
           if (timer_) {
-            ecore_timer_del(timer_);
+            g_source_remove(timer_);
           }
-          timer_ = ecore_timer_add(30, OnResetScreensaverTimeout, this);
+          timer_ = g_timeout_add_seconds(30, OnResetScreensaverTimeout, this);
           is_enabled_ = true;
         } else {
           if (timer_) {
-            ecore_timer_del(timer_);
-            timer_ = nullptr;
+            g_source_remove(timer_);
+            timer_ = 0;
           }
           is_enabled_ = false;
         }
@@ -114,23 +114,25 @@ class WakelockPlusTizenPlugin : public flutter::Plugin {
     }
   }
 
-  static Eina_Bool OnResetScreensaverTimeout(void *data) {
+  static gboolean OnResetScreensaverTimeout(gpointer data) {
     auto *plugin = static_cast<WakelockPlusTizenPlugin *>(data);
     if (!plugin->screensaver_reset_timeout_) {
-      return ECORE_CALLBACK_CANCEL;
+      plugin->timer_ = 0;
+      return G_SOURCE_REMOVE;
     }
     int ret = plugin->screensaver_reset_timeout_();
     if (ret != 0) {
       LOG_ERROR("screensaver_reset_timeout failed: %s", get_error_message(ret));
-      return ECORE_CALLBACK_CANCEL;
+      plugin->timer_ = 0;
+      return G_SOURCE_REMOVE;
     }
 
-    return ECORE_CALLBACK_RENEW;
+    return G_SOURCE_CONTINUE;
   }
 
   bool is_initialized_screensaver_api_ = false;
   void *screensaver_api_handle_ = nullptr;
-  Ecore_Timer *timer_ = nullptr;
+  guint timer_ = 0;
   FuncScreensaverResetTimeout screensaver_reset_timeout_;
   bool is_enabled_ = false;
 };
