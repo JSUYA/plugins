@@ -31,8 +31,8 @@ AudioPlayer::~AudioPlayer() {
     player_ = nullptr;
   }
   if (timer_) {
-    ecore_timer_del(timer_);
-    timer_ = nullptr;
+    g_source_remove(timer_);
+    timer_ = 0;
   }
 }
 
@@ -346,8 +346,9 @@ void AudioPlayer::OnPrepared(void *data) {
   // On TV devices, callbacks are not executed on the main loop. Therefore
   // we explicitly transfer the callback to the main loop to avoid any race
   // conditions and to allow creating timer objects in StartPositionUpdates.
-  ecore_main_loop_thread_safe_call_async(
-      [](void *data) {
+  g_main_context_invoke(
+      nullptr,
+      [](gpointer data) -> gboolean {
         auto *player = reinterpret_cast<AudioPlayer *>(data);
         player->preparing_ = false;
 
@@ -356,7 +357,7 @@ void AudioPlayer::OnPrepared(void *data) {
           player->prepared_listener_(player->player_id_, true);
         } catch (const AudioPlayerError &error) {
           player->log_listener_(player->player_id_, error.code());
-          return;
+          return G_SOURCE_REMOVE;
         }
         player_set_playback_rate(player->player_, player->playback_rate_);
 
@@ -364,7 +365,7 @@ void AudioPlayer::OnPrepared(void *data) {
           int ret = player_start(player->player_);
           if (ret != PLAYER_ERROR_NONE) {
             player->log_listener_(player->player_id_, "player_start failed.");
-            return;
+            return G_SOURCE_REMOVE;
           }
           player->StartPositionUpdates();
           player->should_play_ = false;
@@ -379,10 +380,11 @@ void AudioPlayer::OnPrepared(void *data) {
             player->seeking_ = false;
             player->log_listener_(player->player_id_,
                                   "player_set_play_position failed.");
-            return;
+            return G_SOURCE_REMOVE;
           }
           player->should_seek_to_ = -1;
         }
+        return G_SOURCE_REMOVE;
       },
       data);
 }
@@ -391,11 +393,13 @@ void AudioPlayer::OnSeekCompleted(void *data) {
   // On TV devices, callbacks are not executed on the main loop. Therefore
   // we explicitly transfer the callback to the main loop to avoid any race
   // conditions.
-  ecore_main_loop_thread_safe_call_async(
-      [](void *data) {
+  g_main_context_invoke(
+      nullptr,
+      [](gpointer data) -> gboolean {
         auto *player = reinterpret_cast<AudioPlayer *>(data);
         player->seek_completed_listener_(player->player_id_);
         player->seeking_ = false;
+        return G_SOURCE_REMOVE;
       },
       data);
 }
@@ -404,8 +408,9 @@ void AudioPlayer::OnPlayCompleted(void *data) {
   // On TV devices, callbacks are not executed on the main loop. Therefore
   // we explicitly transfer the callback to the main loop to avoid any race
   // conditions.
-  ecore_main_loop_thread_safe_call_async(
-      [](void *data) {
+  g_main_context_invoke(
+      nullptr,
+      [](gpointer data) -> gboolean {
         auto *player = reinterpret_cast<AudioPlayer *>(data);
         try {
           player->Seek(0);
@@ -414,6 +419,7 @@ void AudioPlayer::OnPlayCompleted(void *data) {
         } catch (const AudioPlayerError &error) {
           player->log_listener_(player->player_id_, error.code());
         }
+        return G_SOURCE_REMOVE;
       },
       data);
 }
@@ -436,24 +442,24 @@ void AudioPlayer::StartPositionUpdates() {
   if (!timer_) {
     // The audioplayers app facing package expects position
     // update events to fire roughly every 200 milliseconds.
-    const double kTimeInterval = 0.2;
-    timer_ = ecore_timer_add(kTimeInterval, OnPositionUpdate, this);
+    const guint kTimeInterval = 200;
+    timer_ = g_timeout_add(kTimeInterval, OnPositionUpdate, this);
     if (!timer_) {
       log_listener_(player_id_, "Failed to add a position update timer.");
     }
   }
 }
 
-Eina_Bool AudioPlayer::OnPositionUpdate(void *data) {
+gboolean AudioPlayer::OnPositionUpdate(gpointer data) {
   auto *player = reinterpret_cast<AudioPlayer *>(data);
   try {
     if (player->IsPlaying()) {
       player->duration_listener_(player->player_id_, player->GetDuration());
-      return ECORE_CALLBACK_RENEW;
+      return G_SOURCE_CONTINUE;
     }
   } catch (const AudioPlayerError &error) {
     player->log_listener_(player->player_id_, "Failed to update position.");
   }
-  player->timer_ = nullptr;
-  return ECORE_CALLBACK_CANCEL;
+  player->timer_ = 0;
+  return G_SOURCE_REMOVE;
 }
