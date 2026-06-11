@@ -4,7 +4,6 @@
 
 #include "tizen_package_manager_plugin.h"
 
-#include <Ecore.h>
 #include <flutter/encodable_value.h>
 #include <flutter/event_channel.h>
 #include <flutter/event_sink.h>
@@ -12,6 +11,7 @@
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar.h>
 #include <flutter/standard_method_codec.h>
+#include <glib.h>
 
 #include <cstdint>
 #include <memory>
@@ -244,8 +244,10 @@ class TizenPackageManagerPlugin : public flutter::Plugin {
     // TizenPackageManager::GetAllPackagesInfo() is an expensive operation and
     // might cause unresponsiveness on low-end devices if run on the platform
     // thread.
-    ecore_thread_run(
-        [](void *data, Ecore_Thread *thread) {
+    FlMethodResult *result_ptr = result.release();
+    GThread *thread = g_thread_try_new(
+        "GetAllPackagesInfo",
+        [](gpointer data) -> gpointer {
           auto *result = static_cast<FlMethodResult *>(data);
 
           TizenPackageManager &package_manager =
@@ -264,14 +266,15 @@ class TizenPackageManagerPlugin : public flutter::Plugin {
                           package_manager.GetLastErrorString());
           }
           delete result;
+          return nullptr;
         },
-        nullptr,
-        [](void *data, Ecore_Thread *thread) {
-          auto *result = static_cast<FlMethodResult *>(data);
-          result->Error("Operation failed", "Failed to start a thread.");
-          delete result;
-        },
-        result.release());
+        result_ptr, nullptr);
+    if (!thread) {
+      result_ptr->Error("Operation failed", "Failed to start a thread.");
+      delete result_ptr;
+      return;
+    }
+    g_thread_unref(thread);
   }
 
   void GetPackageSizeInfo(const flutter::EncodableMap *arguments,
