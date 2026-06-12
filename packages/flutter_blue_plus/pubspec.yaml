@@ -1,0 +1,23 @@
+name: flutter_blue_plus_tizen
+description: Tizen implementation of the flutter_blue_plus plugin.
+homepage: https://github.com/flutter-tizen/plugins
+repository: https://github.com/flutter-tizen/plugins/tree/master/packages/flutter_blue_plus
+version: 0.1.0
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_blue_plus_platform_interface: ">=8.2.1 <10.0.0"
+
+flutter:
+  plugin:
+    implements: flutter_blue_plus
+    platforms:
+      tizen:
+        pluginClass: FlutterBluePlusTizenPlugin
+        fileName: flutter_blue_plus_tizen_plugin.h
+        dartPluginClass: FlutterBluePlusTizen
