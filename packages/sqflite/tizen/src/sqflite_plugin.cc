@@ -510,8 +510,12 @@ class SqflitePlugin : public flutter::Plugin {
         }
       }
     }
-    // TODO: Safe check before delete.
-    std::filesystem::remove(path);
+    std::error_code error;
+    std::filesystem::remove(path, error);
+    if (error) {
+      result->Error(sqflite_constants::kErrorDatabase, error.message());
+      return;
+    }
     result->Success();
   }
 
@@ -524,7 +528,12 @@ class SqflitePlugin : public flutter::Plugin {
     GetValueFromEncodableMap(arguments, sqflite_constants::kParamPath, path);
 
     std::filesystem::path filesystem_path(path);
-    bool exists = std::filesystem::exists(filesystem_path);
+    std::error_code error;
+    bool exists = std::filesystem::exists(filesystem_path, error);
+    if (error) {
+      result->Error(sqflite_constants::kErrorDatabase, error.message());
+      return;
+    }
     result->Success(flutter::EncodableValue(exists));
   };
 

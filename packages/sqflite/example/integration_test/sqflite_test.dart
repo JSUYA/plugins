@@ -4,6 +4,7 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -250,6 +251,32 @@ void main() {
         {'?1 + ?2': 7},
       ]);
       await db.close();
+    });
+
+    test('typed and empty blob arguments', () async {
+      final db = await openDatabase(inMemoryDatabasePath);
+      try {
+        final typedValues = <TypedData>[
+          Int32List.fromList(<int>[1, 2]),
+          Int64List.fromList(<int>[1, 2]),
+          Float64List.fromList(<double>[1, 2]),
+        ];
+        for (final value in typedValues) {
+          final result = await db.rawQuery(
+            'SELECT length(?) AS byteCount',
+            <Object?>[value],
+          );
+          expect(result.single['byteCount'], value.lengthInBytes);
+        }
+
+        final result = await db.rawQuery('SELECT ? AS value', <Object?>[
+          Uint8List(0),
+        ]);
+        expect(result.single['value'], isA<Uint8List>());
+        expect((result.single['value']! as Uint8List), isEmpty);
+      } finally {
+        await db.close();
+      }
     });
 
     test('deleteDatabase', () async {

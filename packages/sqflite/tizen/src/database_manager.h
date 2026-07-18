@@ -29,7 +29,7 @@ class DatabaseManager {
         single_instance_(single_instance),
         log_level_(log_level),
         database_(nullptr){};
-  virtual ~DatabaseManager();
+  virtual ~DatabaseManager() noexcept;
 
   inline const std::string path() { return path_; };
   inline const int database_id() { return database_id_; };

@@ -1,3 +1,7 @@
+## 0.1.5
+
+* Fix BLOB handling and native database resource cleanup.
+
 ## 0.1.4
 
 * Update sqflite to 2.4.2.

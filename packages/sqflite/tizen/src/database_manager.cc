@@ -4,6 +4,7 @@
 #include <sqlite3.h>
 
 #include <list>
+#include <limits>
 #include <variant>
 
 #include "errors.h"
@@ -12,13 +13,39 @@
 
 namespace sqflite_database {
 
-DatabaseManager::~DatabaseManager() {
+namespace {
+
+template <typename T>
+int GetBlobByteCount(const std::vector<T> &value) {
+  if (value.size() >
+      static_cast<size_t>(std::numeric_limits<int>::max()) / sizeof(T)) {
+    throw sqflite_errors::DatabaseError(
+        sqflite_errors::kUnknownErrorCode,
+        "statement parameter is too large");
+  }
+  return static_cast<int>(value.size() * sizeof(T));
+}
+
+template <typename T>
+int BindBlob(sqlite3_stmt *statement, int index,
+             const std::vector<T> &value) {
+  if (value.empty()) {
+    return sqlite3_bind_zeroblob(statement, index, 0);
+  }
+  return sqlite3_bind_blob(statement, index, value.data(),
+                           GetBlobByteCount(value), SQLITE_TRANSIENT);
+}
+
+}  // namespace
+
+DatabaseManager::~DatabaseManager() noexcept {
   for (auto &&statement : statement_cache_) {
     FinalizeStmt(statement.second);
     statement.second = nullptr;
   }
+  statement_cache_.clear();
 
-  Close(true);
+  Close(false);
 }
 
 void DatabaseManager::ThrowCurrentDatabaseError() {
@@ -30,13 +57,17 @@ void DatabaseManager::Open() {
       sqlite3_open_v2(path_.c_str(), &database_,
                       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
   if (result_code != SQLITE_OK) {
+    const int error_code = GetErrorCode();
+    const std::string error_message = GetErrorMsg();
     Close(false);
-    ThrowCurrentDatabaseError();
+    throw sqflite_errors::DatabaseError(error_code, error_message.c_str());
   }
   result_code = sqlite3_busy_timeout(database_, kBusyTimeoutMs);
   if (result_code != SQLITE_OK) {
+    const int error_code = GetErrorCode();
+    const std::string error_message = GetErrorMsg();
     Close(false);
-    ThrowCurrentDatabaseError();
+    throw sqflite_errors::DatabaseError(error_code, error_message.c_str());
   }
 }
 
@@ -44,13 +75,17 @@ void DatabaseManager::OpenReadOnly() {
   int result_code =
       sqlite3_open_v2(path_.c_str(), &database_, SQLITE_OPEN_READONLY, NULL);
   if (result_code != SQLITE_OK) {
+    const int error_code = GetErrorCode();
+    const std::string error_message = GetErrorMsg();
     Close(false);
-    ThrowCurrentDatabaseError();
+    throw sqflite_errors::DatabaseError(error_code, error_message.c_str());
   }
   result_code = sqlite3_busy_timeout(database_, kBusyTimeoutMs);
   if (result_code != SQLITE_OK) {
+    const int error_code = GetErrorCode();
+    const std::string error_message = GetErrorMsg();
     Close(false);
-    ThrowCurrentDatabaseError();
+    throw sqflite_errors::DatabaseError(error_code, error_message.c_str());
   }
 }
 
@@ -61,10 +96,17 @@ int DatabaseManager::GetErrorCode() {
 }
 
 void DatabaseManager::Close(bool raise_error) {
-  int result_code = sqlite3_close_v2(database_);
-  database_ = nullptr;
+  if (!database_) {
+    return;
+  }
+  Database database = database_;
+  int result_code = sqlite3_close_v2(database);
   if (result_code != SQLITE_OK && raise_error) {
-    ThrowCurrentDatabaseError();
+    throw sqflite_errors::DatabaseError(sqlite3_extended_errcode(database),
+                                        sqlite3_errmsg(database));
+  }
+  if (result_code == SQLITE_OK) {
+    database_ = nullptr;
   }
 }
 
@@ -108,26 +150,22 @@ void DatabaseManager::BindStmtParams(DatabaseManager::Statement statement,
       }
       case 6: {
         auto vector = std::get<std::vector<uint8_t>>(parameter);
-        result_code = sqlite3_bind_blob(statement, idx, vector.data(),
-                                        (int)vector.size(), SQLITE_TRANSIENT);
+        result_code = BindBlob(statement, idx, vector);
         break;
       }
       case 7: {
         auto vector = std::get<std::vector<int32_t>>(parameter);
-        result_code = sqlite3_bind_blob(statement, idx, vector.data(),
-                                        (int)vector.size(), SQLITE_TRANSIENT);
+        result_code = BindBlob(statement, idx, vector);
         break;
       }
       case 8: {
         auto vector = std::get<std::vector<int64_t>>(parameter);
-        result_code = sqlite3_bind_blob(statement, idx, vector.data(),
-                                        (int)vector.size(), SQLITE_TRANSIENT);
+        result_code = BindBlob(statement, idx, vector);
         break;
       }
       case 9: {
         auto vector = std::get<std::vector<double>>(parameter);
-        result_code = sqlite3_bind_blob(statement, idx, vector.data(),
-                                        (int)vector.size(), SQLITE_TRANSIENT);
+        result_code = BindBlob(statement, idx, vector);
         break;
       }
       case 10: {
@@ -144,8 +182,7 @@ void DatabaseManager::BindStmtParams(DatabaseManager::Statement statement,
               sqflite_errors::kUnknownErrorCode,
               "statement parameter is not supported");
         }
-        result_code = sqlite3_bind_blob(statement, idx, vector.data(),
-                                        (int)vector.size(), SQLITE_TRANSIENT);
+        result_code = BindBlob(statement, idx, vector);
         break;
       }
       default: {
@@ -238,10 +275,13 @@ std::pair<Columns, Resultset> DatabaseManager::QueryStmt(
             result.push_back(value);
             break;
           case SQLITE_BLOB: {
+            const int byte_count = sqlite3_column_bytes(statement, i);
             const uint8_t *blob = reinterpret_cast<const uint8_t *>(
                 sqlite3_column_blob(statement, i));
-            std::vector<uint8_t> v(&blob[0],
-                                   &blob[sqlite3_column_bytes(statement, i)]);
+            std::vector<uint8_t> v;
+            if (byte_count > 0) {
+              v.assign(blob, blob + byte_count);
+            }
             result.push_back(v);
             break;
           }
@@ -267,7 +307,11 @@ void DatabaseManager::FinalizeStmt(DatabaseManager::Statement statement) {
 }
 
 void DatabaseManager::LogQuery(Statement statement) {
-  LOG_DEBUG("%s", sqlite3_expanded_sql(statement));
+  char *expanded_sql = sqlite3_expanded_sql(statement);
+  if (expanded_sql) {
+    LOG_DEBUG("%s", expanded_sql);
+    sqlite3_free(expanded_sql);
+  }
 }
 
 std::pair<Columns, Resultset> DatabaseManager::Query(std::string sql,
