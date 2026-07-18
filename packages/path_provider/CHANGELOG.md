@@ -1,3 +1,7 @@
+## 2.3.1
+
+* Fix native directory path validation and memory management.
+
 ## 2.3.0
 
 * Update path_provider to 2.1.5.

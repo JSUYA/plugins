@@ -57,17 +57,28 @@ class Storage {
   }
 
   /// Corresponds to `storage_get_directory()`.
-  Future<String> getDirectory(int type) {
-    return using((Arena arena) async {
+  Future<String> getDirectory(int type) async {
+    final int id = await storageId;
+    return using((Arena arena) {
       final Pointer<Pointer<Char>> path = arena();
-      final int ret = tizen.storage_get_directory(await storageId, type, path);
+      final int ret = tizen.storage_get_directory(id, type, path);
+      final Pointer<Char> pathValue = path.value;
+      if (pathValue != nullptr) {
+        arena.using(pathValue, calloc.free);
+      }
       if (ret != 0) {
         throw PlatformException(
           code: ret.toString(),
           message: tizen.get_error_message(ret).toDartString(),
         );
       }
-      return path.value.toDartString();
+      if (pathValue == nullptr) {
+        throw PlatformException(
+          code: 'storage_get_directory',
+          message: 'The directory path is null.',
+        );
+      }
+      return pathValue.toDartString();
     });
   }
 }
