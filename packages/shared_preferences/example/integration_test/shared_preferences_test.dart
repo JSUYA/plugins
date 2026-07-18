@@ -109,6 +109,22 @@ void main() {
       });
 
       runAllTests();
+
+      testWidgets('reload reads values written by the async API', (
+        WidgetTester _,
+      ) async {
+        const String key = 'reloadString';
+        const String updatedValue = 'updated';
+        final SharedPreferencesAsync asyncPreferences =
+            SharedPreferencesAsync();
+
+        await preferences.setString(key, testString);
+        await asyncPreferences.setString('flutter.$key', updatedValue);
+
+        expect(preferences.getString(key), testString);
+        await preferences.reload();
+        expect(preferences.getString(key), updatedValue);
+      });
     });
 
     group('setPrefix', () {

@@ -1,6 +1,7 @@
-## NEXT
+## 2.3.4
 
 * Add 12 integration test cases for the legacy-to-async migration utility.
+* Fix string list encoding and refresh legacy preferences when reloading.
 
 ## 2.3.3
 

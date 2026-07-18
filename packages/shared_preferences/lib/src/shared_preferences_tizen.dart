@@ -64,10 +64,7 @@ class SharedPreferencesPlugin extends SharedPreferencesStorePlatform {
     return true;
   }
 
-  Map<String, Object> get _preferences {
-    if (_cachedPreferences != null) {
-      return _cachedPreferences!;
-    }
+  Map<String, Object> _readPreferences() {
     _cachedPreferences = <String, Object>{};
 
     final int ret = tizen.preference_foreach_item(
@@ -77,8 +74,12 @@ class SharedPreferencesPlugin extends SharedPreferencesStorePlatform {
     if (ret == 0) {
       return _cachedPreferences!;
     }
+    _cachedPreferences = null;
     return <String, Object>{};
   }
+
+  Map<String, Object> get _preferences =>
+      _cachedPreferences ?? _readPreferences();
 
   @override
   Future<bool> clear() async {
@@ -97,7 +98,7 @@ class SharedPreferencesPlugin extends SharedPreferencesStorePlatform {
   @override
   Future<bool> clearWithParameters(ClearParameters parameters) async {
     final PreferencesFilter filter = parameters.filter;
-    final List<String> keys = List<String>.of(_preferences.keys);
+    final List<String> keys = List<String>.of(_readPreferences().keys);
 
     for (final String key in keys) {
       if (key.startsWith(filter.prefix) &&
@@ -130,12 +131,11 @@ class SharedPreferencesPlugin extends SharedPreferencesStorePlatform {
   ) async {
     final PreferencesFilter filter = parameters.filter;
     final Map<String, Object> withPrefix = Map<String, Object>.from(
-      _preferences,
+      _readPreferences(),
     );
     withPrefix.removeWhere(
-      (String key, _) =>
-          !(key.startsWith(filter.prefix) &&
-              (filter.allowList?.contains(key) ?? true)),
+      (String key, _) => !(key.startsWith(filter.prefix) &&
+          (filter.allowList?.contains(key) ?? true)),
     );
     return withPrefix;
   }
