@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <variant>
 
 #include "app_settings_manager.h"
@@ -72,6 +73,45 @@ class PermissionHandlerTizenPlugin : public flutter::Plugin {
   virtual ~PermissionHandlerTizenPlugin() {}
 
  private:
+  using FlMethodResult = flutter::MethodResult<flutter::EncodableValue>;
+
+  struct PermissionRequest {
+    flutter::EncodableList permissions;
+    flutter::EncodableMap results;
+    size_t index = 0;
+    std::shared_ptr<FlMethodResult> result;
+  };
+
+  static void RequestNextPermission(
+      const std::shared_ptr<PermissionRequest> &request) {
+    while (request->index < request->permissions.size()) {
+      flutter::EncodableValue argument = request->permissions[request->index++];
+      Permission permission = Permission(std::get<int32_t>(argument));
+      std::string privilege = PermissionToPrivilege(permission);
+
+      if (privilege.empty()) {
+        request->results[argument] = flutter::EncodableValue(
+            static_cast<int32_t>(PermissionStatus::kGranted));
+        continue;
+      }
+
+      PermissionManager::RequestPermission(
+          privilege, [request, argument](PermissionStatus status) {
+            if (status == PermissionStatus::kError) {
+              request->result->Error("Operation failed",
+                                     "Failed to request permission.");
+              return;
+            }
+            request->results[argument] =
+                flutter::EncodableValue(static_cast<int32_t>(status));
+            RequestNextPermission(request);
+          });
+      return;
+    }
+
+    request->result->Success(flutter::EncodableValue(request->results));
+  }
+
   void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue> &method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
@@ -109,28 +149,10 @@ class PermissionHandlerTizenPlugin : public flutter::Plugin {
       }
     } else if (method_name == "requestPermissions") {
       if (std::holds_alternative<flutter::EncodableList>(*arguments)) {
-        flutter::EncodableMap results;
-        for (flutter::EncodableValue argument :
-             std::get<flutter::EncodableList>(*arguments)) {
-          Permission permission = Permission(std::get<int32_t>(argument));
-          std::string privilege = PermissionToPrivilege(permission);
-
-          PermissionStatus status;
-          if (privilege.empty()) {
-            status = PermissionStatus::kGranted;
-          } else {
-            status = permission_manager_.RequestPermission(privilege);
-          }
-
-          if (status != PermissionStatus::kError) {
-            results[argument] =
-                flutter::EncodableValue(static_cast<int32_t>(status));
-          } else {
-            result->Error("Operation failed", "Failed to request permission.");
-            return;
-          }
-        }
-        result->Success(flutter::EncodableValue(results));
+        auto request = std::make_shared<PermissionRequest>();
+        request->permissions = std::get<flutter::EncodableList>(*arguments);
+        request->result = std::shared_ptr<FlMethodResult>(std::move(result));
+        RequestNextPermission(request);
       } else {
         result->Error("Invalid argument", "The argument must be a List.");
       }

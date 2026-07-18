@@ -5,10 +5,12 @@
 #include "permission_manager.h"
 
 #ifndef TV_PROFILE
-#include <glib.h>
 #include <privacy_privilege_manager.h>
 #include <tizen.h>
 #endif
+
+#include <memory>
+#include <utility>
 
 #include "log.h"
 
@@ -36,51 +38,47 @@ PermissionStatus PermissionManager::CheckPermission(
 #endif
 }
 
-PermissionStatus PermissionManager::RequestPermission(
-    const std::string &privilege) {
+void PermissionManager::RequestPermission(
+    const std::string &privilege,
+    std::function<void(PermissionStatus)> on_complete) {
 #ifdef TV_PROFILE
-  return PermissionStatus::kGranted;
+  on_complete(PermissionStatus::kGranted);
 #else
-  struct Response {
-    bool received = false;
-    ppm_call_cause_e cause;
-    ppm_request_result_e result;
-  } response;
+  auto request = std::make_unique<std::function<void(PermissionStatus)> >(
+      std::move(on_complete));
+  std::function<void(PermissionStatus)> *request_ptr = request.release();
 
   int ret = ppm_request_permission(
       privilege.c_str(),
       [](ppm_call_cause_e cause, ppm_request_result_e result,
          const char *privilege, void *user_data) {
-        auto *response = static_cast<Response *>(user_data);
-        response->received = true;
-        response->cause = cause;
-        response->result = result;
+        std::unique_ptr<std::function<void(PermissionStatus)> > request(
+            static_cast<std::function<void(PermissionStatus)> *>(user_data));
+        if (cause == PRIVACY_PRIVILEGE_MANAGER_CALL_CAUSE_ERROR) {
+          LOG_ERROR("Received an error response [%s].", privilege);
+          (*request)(PermissionStatus::kError);
+          return;
+        }
+
+        switch (result) {
+          case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_ALLOW_FOREVER:
+            (*request)(PermissionStatus::kGranted);
+            break;
+          case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_DENY_FOREVER:
+            (*request)(PermissionStatus::kPermanentlyDenied);
+            break;
+          case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_DENY_ONCE:
+          default:
+            (*request)(PermissionStatus::kDenied);
+            break;
+        }
       },
-      &response);
+      request_ptr);
   if (ret != PRIVACY_PRIVILEGE_MANAGER_ERROR_NONE) {
+    request.reset(request_ptr);
     LOG_ERROR("Permission request failed [%s]: %s", privilege.c_str(),
               get_error_message(ret));
-    return PermissionStatus::kError;
-  }
-
-  // Wait until ppm_request_permission() completes with a response.
-  while (!response.received) {
-    g_main_context_iteration(nullptr, FALSE);
-  }
-
-  if (response.cause == PRIVACY_PRIVILEGE_MANAGER_CALL_CAUSE_ERROR) {
-    LOG_ERROR("Received an error response [%s].", privilege.c_str());
-    return PermissionStatus::kError;
-  }
-
-  switch (response.result) {
-    case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_ALLOW_FOREVER:
-      return PermissionStatus::kGranted;
-    case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_DENY_FOREVER:
-      return PermissionStatus::kPermanentlyDenied;
-    case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_DENY_ONCE:
-    default:
-      return PermissionStatus::kDenied;
+    (*request)(PermissionStatus::kError);
   }
 #endif  // TV_PROFILE
 }

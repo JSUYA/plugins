@@ -1,6 +1,7 @@
-## NEXT
+## 1.4.5
 
 * Add 8 integration test cases.
+* Make permission requests asynchronous without blocking the platform thread.
 
 ## 1.4.4
 

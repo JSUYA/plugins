@@ -59,6 +59,14 @@ void main() {
       expect(statuses[Permission.microphone], PermissionStatus.granted);
       expect(statuses[Permission.location], PermissionStatus.granted);
     });
+
+    testWidgets('concurrent requests complete', (tester) async {
+      final statuses = await Future.wait([
+        Permission.camera.request(),
+        Permission.microphone.request(),
+      ]);
+      expect(statuses, everyElement(PermissionStatus.granted));
+    });
   });
 
   testWidgets('open app settings', (tester) async {
