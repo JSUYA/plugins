@@ -4,6 +4,9 @@
 
 #include "tizen_package_manager.h"
 
+#include <memory>
+#include <utility>
+
 #include "log.h"
 
 TizenPackageManager::TizenPackageManager() {
@@ -37,13 +40,17 @@ TizenPackageManager::TizenPackageManager() {
         switch (event_state) {
           case PACKAGE_MANAGER_EVENT_STATE_STARTED:
             state = PacakgeEventState::kStarted;
+            break;
           case PACKAGE_MANAGER_EVENT_STATE_PROCESSING:
             state = PacakgeEventState::kProcessing;
+            break;
           case PACKAGE_MANAGER_EVENT_STATE_FAILED:
             state = PacakgeEventState::kFailed;
+            break;
           case PACKAGE_MANAGER_EVENT_STATE_COMPLETED:
           default:
             state = PacakgeEventState::kCompleted;
+            break;
         }
 
         if (event_type == PACKAGE_MANAGER_EVENT_TYPE_INSTALL) {
@@ -70,21 +77,20 @@ TizenPackageManager::TizenPackageManager() {
 
 TizenPackageManager::~TizenPackageManager() {
   if (package_manager_) {
-    package_size_callbacks_.clear();
     package_manager_unset_event_cb(package_manager_);
     package_manager_destroy(package_manager_);
   }
 }
 
 std::optional<PackageInfo> TizenPackageManager::GetPackageData(
-    package_info_h handle) {
+    package_info_h handle, int &error) {
   PackageInfo result = {};
 
   char *name = nullptr;
   int ret = package_info_get_package(handle, &name);
   if (ret != PACKAGE_MANAGER_ERROR_NONE) {
     LOG_ERROR("package_info_get_package failed: %s", get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return std::nullopt;
   }
   result.package_id = name;
@@ -94,7 +100,7 @@ std::optional<PackageInfo> TizenPackageManager::GetPackageData(
   ret = package_info_get_label(handle, &label);
   if (ret != PACKAGE_MANAGER_ERROR_NONE) {
     LOG_ERROR("package_info_get_label failed: %s", get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return std::nullopt;
   }
   result.label = label;
@@ -104,7 +110,7 @@ std::optional<PackageInfo> TizenPackageManager::GetPackageData(
   ret = package_info_get_type(handle, &type);
   if (ret != PACKAGE_MANAGER_ERROR_NONE) {
     LOG_ERROR("package_info_get_type failed: %s", get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return std::nullopt;
   }
   result.type = type;
@@ -126,7 +132,7 @@ std::optional<PackageInfo> TizenPackageManager::GetPackageData(
   ret = package_info_get_version(handle, &version);
   if (ret != PACKAGE_MANAGER_ERROR_NONE) {
     LOG_ERROR("package_info_get_version failed: %s", get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return std::nullopt;
   }
   result.version = version;
@@ -138,7 +144,7 @@ std::optional<PackageInfo> TizenPackageManager::GetPackageData(
   if (ret != PACKAGE_MANAGER_ERROR_NONE) {
     LOG_ERROR("package_info_get_installed_storage failed: %s",
               get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return std::nullopt;
   }
   if (storage_type == PACKAGE_INFO_EXTERNAL_STORAGE) {
@@ -151,7 +157,7 @@ std::optional<PackageInfo> TizenPackageManager::GetPackageData(
   if (ret != PACKAGE_MANAGER_ERROR_NONE) {
     LOG_ERROR("package_info_is_system_package failed: %s",
               get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return std::nullopt;
   }
 
@@ -159,7 +165,7 @@ std::optional<PackageInfo> TizenPackageManager::GetPackageData(
   if (ret != PACKAGE_MANAGER_ERROR_NONE) {
     LOG_ERROR("package_info_is_preload_package failed: %s",
               get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return std::nullopt;
   }
 
@@ -167,7 +173,7 @@ std::optional<PackageInfo> TizenPackageManager::GetPackageData(
   if (ret != PACKAGE_MANAGER_ERROR_NONE) {
     LOG_ERROR("package_info_is_removable_package failed: %s",
               get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return std::nullopt;
   }
 
@@ -183,103 +189,105 @@ std::optional<PackageInfo> TizenPackageManager::GetPackageInfo(
     last_error_ = ret;
     return std::nullopt;
   }
-  std::optional<PackageInfo> package = GetPackageData(handle);
+  int error = PACKAGE_MANAGER_ERROR_NONE;
+  std::optional<PackageInfo> package = GetPackageData(handle, error);
   package_info_destroy(handle);
+  if (!package.has_value()) {
+    last_error_ = error;
+  }
   return package;
 }
 
-std::optional<std::vector<PackageInfo>>
-TizenPackageManager::GetAllPackagesInfo() {
-  packages_.clear();
-  last_error_ = PACKAGE_MANAGER_ERROR_NONE;
+std::optional<std::vector<PackageInfo>> TizenPackageManager::GetAllPackagesInfo(
+    int &error) {
+  struct EnumerationContext {
+    std::vector<PackageInfo> packages;
+    int error = PACKAGE_MANAGER_ERROR_NONE;
+  } context;
 
   int ret = package_manager_foreach_package_info(
       [](package_info_h handle, void *user_data) -> bool {
-        auto *self = static_cast<TizenPackageManager *>(user_data);
+        auto *context = static_cast<EnumerationContext *>(user_data);
         if (handle) {
-          std::optional<PackageInfo> package = self->GetPackageData(handle);
+          std::optional<PackageInfo> package =
+              TizenPackageManager::GetPackageData(handle, context->error);
           if (package.has_value()) {
-            self->packages_.push_back(package.value());
+            context->packages.push_back(package.value());
           } else {
             return false;
           }
         }
         return true;
       },
-      this);
+      &context);
   if (ret != PACKAGE_MANAGER_ERROR_NONE) {
     LOG_ERROR("package_manager_foreach_package_info failed: %s",
               get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return std::nullopt;
   }
 
-  if (last_error_ != PACKAGE_MANAGER_ERROR_NONE) {
+  if (context.error != PACKAGE_MANAGER_ERROR_NONE) {
     // GetPackageData() failed during the iteration.
+    error = context.error;
     return std::nullopt;
   }
-  return packages_;
+  error = PACKAGE_MANAGER_ERROR_NONE;
+  return std::move(context.packages);
 }
 
 void TizenPackageManager::GetPackageSizeInfo(
     const std::string &package_id, OnPackageSizeEvent on_package_size_result) {
-  package_size_callbacks_[package_id] =
-      std::make_unique<OnPackageSizeEvent>(on_package_size_result);
+  auto request =
+      std::make_unique<OnPackageSizeEvent>(std::move(on_package_size_result));
+  OnPackageSizeEvent *request_ptr = request.release();
 
   int ret = package_manager_get_package_size_info(
       package_id.c_str(),
-      [](const char *package_id, const package_size_info_h size_info,
-         void *user_data) {
-        auto *self = static_cast<TizenPackageManager *>(user_data);
+      [](const char *, const package_size_info_h size_info, void *user_data) {
+        std::unique_ptr<OnPackageSizeEvent> request(
+            static_cast<OnPackageSizeEvent *>(user_data));
         PackageSizeInfo package_size_info;
 
-        if (size_info) {
-          long long data_size = 0;
-          long long cache_size = 0;
-          long long app_size = 0;
-          long long external_data_size = 0;
-          long long external_cache_size = 0;
-          long long external_app_size = 0;
-          int ret = PACKAGE_MANAGER_ERROR_NONE;
-
-          if ((ret = package_size_info_get_data_size(size_info, &data_size)) !=
-                  PACKAGE_MANAGER_ERROR_NONE ||
-              (ret = package_size_info_get_cache_size(
-                   size_info, &cache_size)) != PACKAGE_MANAGER_ERROR_NONE ||
-              (ret = package_size_info_get_app_size(size_info, &app_size)) !=
-                  PACKAGE_MANAGER_ERROR_NONE ||
-              (ret = package_size_info_get_external_data_size(
-                   size_info, &external_data_size)) !=
-                  PACKAGE_MANAGER_ERROR_NONE ||
-              (ret = package_size_info_get_external_cache_size(
-                   size_info, &external_cache_size)) !=
-                  PACKAGE_MANAGER_ERROR_NONE ||
-              (ret = package_size_info_get_external_app_size(
-                   size_info, &external_app_size)) !=
-                  PACKAGE_MANAGER_ERROR_NONE) {
-            self->last_error_ = ret;
-            (*self->package_size_callbacks_[package_id])(package_size_info,
-                                                         false);
-            return;
-          }
-
-          package_size_info.data_size = data_size;
-          package_size_info.cache_size = cache_size;
-          package_size_info.app_size = app_size;
-          package_size_info.external_data_size = external_data_size;
-          package_size_info.external_cache_size = external_cache_size;
-          package_size_info.external_app_size = external_app_size;
-
-          (*self->package_size_callbacks_[package_id])(package_size_info, true);
+        if (!size_info) {
+          (*request)(package_size_info, false,
+                     PACKAGE_MANAGER_ERROR_SYSTEM_ERROR);
+          return;
         }
+
+        int error = PACKAGE_MANAGER_ERROR_NONE;
+        if ((error = package_size_info_get_data_size(
+                 size_info, &package_size_info.data_size)) !=
+                PACKAGE_MANAGER_ERROR_NONE ||
+            (error = package_size_info_get_cache_size(
+                 size_info, &package_size_info.cache_size)) !=
+                PACKAGE_MANAGER_ERROR_NONE ||
+            (error = package_size_info_get_app_size(
+                 size_info, &package_size_info.app_size)) !=
+                PACKAGE_MANAGER_ERROR_NONE ||
+            (error = package_size_info_get_external_data_size(
+                 size_info, &package_size_info.external_data_size)) !=
+                PACKAGE_MANAGER_ERROR_NONE ||
+            (error = package_size_info_get_external_cache_size(
+                 size_info, &package_size_info.external_cache_size)) !=
+                PACKAGE_MANAGER_ERROR_NONE ||
+            (error = package_size_info_get_external_app_size(
+                 size_info, &package_size_info.external_app_size)) !=
+                PACKAGE_MANAGER_ERROR_NONE) {
+          (*request)(package_size_info, false, error);
+          return;
+        }
+
+        (*request)(package_size_info, true, PACKAGE_MANAGER_ERROR_NONE);
       },
-      this);
+      request_ptr);
 
   if (ret != PACKAGE_MANAGER_ERROR_NONE) {
+    request.reset(request_ptr);
     LOG_ERROR("package_manager_get_package_size_info failed: %s",
               get_error_message(ret));
-    last_error_ = ret;
-    (*package_size_callbacks_[package_id])(PackageSizeInfo(), false);
+    (*request)(PackageSizeInfo(), false, ret);
+    return;
   }
 }
 

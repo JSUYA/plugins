@@ -1,3 +1,7 @@
+## 0.4.4
+
+* Fix package event states and isolate concurrent request state.
+
 ## 0.4.3
 
 * Return a null icon path (instead of an empty string) when a package has no

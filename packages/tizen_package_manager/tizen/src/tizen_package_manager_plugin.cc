@@ -253,8 +253,9 @@ class TizenPackageManagerPlugin : public flutter::Plugin {
 
           TizenPackageManager &package_manager =
               TizenPackageManager::GetInstance();
+          int error = PACKAGE_MANAGER_ERROR_NONE;
           std::optional<std::vector<PackageInfo>> packages =
-              package_manager.GetAllPackagesInfo();
+              package_manager.GetAllPackagesInfo(error);
           if (packages.has_value()) {
             flutter::EncodableList list;
             for (const PackageInfo &package : packages.value()) {
@@ -263,8 +264,7 @@ class TizenPackageManagerPlugin : public flutter::Plugin {
             }
             result->Success(flutter::EncodableValue(list));
           } else {
-            result->Error(std::to_string(package_manager.GetLastError()),
-                          package_manager.GetLastErrorString());
+            result->Error(std::to_string(error), get_error_message(error));
           }
           delete result;
           return nullptr;
@@ -296,11 +296,11 @@ class TizenPackageManagerPlugin : public flutter::Plugin {
     TizenPackageManager &package_manager = TizenPackageManager::GetInstance();
     auto shared_result = std::shared_ptr<FlMethodResult>(std::move(result));
     package_manager.GetPackageSizeInfo(
-        package_id, [shared_result, &package_manager](PackageSizeInfo size_info,
-                                                      bool success) {
+        package_id,
+        [shared_result](PackageSizeInfo size_info, bool success, int error) {
           if (!success) {
-            shared_result->Error(std::to_string(package_manager.GetLastError()),
-                                 package_manager.GetLastErrorString());
+            shared_result->Error(std::to_string(error),
+                                 get_error_message(error));
             return;
           }
           shared_result->Success(

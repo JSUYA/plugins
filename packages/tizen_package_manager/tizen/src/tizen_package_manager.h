@@ -10,8 +10,6 @@
 
 #include <cstdint>
 #include <functional>
-#include <map>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -44,7 +42,7 @@ using OnPackageEvent =
                        PacakgeEventState state, int32_t progress)>;
 
 using OnPackageSizeEvent =
-    std::function<void(PackageSizeInfo size_info, bool success)>;
+    std::function<void(PackageSizeInfo size_info, bool success, int error)>;
 
 class TizenPackageManager {
  public:
@@ -65,7 +63,7 @@ class TizenPackageManager {
   void GetPackageSizeInfo(const std::string& package_id,
                           OnPackageSizeEvent on_package_size_result);
 
-  std::optional<std::vector<PackageInfo>> GetAllPackagesInfo();
+  std::optional<std::vector<PackageInfo>> GetAllPackagesInfo(int& error);
 
   bool Install(const std::string& package_path);
 
@@ -90,15 +88,13 @@ class TizenPackageManager {
  private:
   explicit TizenPackageManager();
 
-  std::optional<PackageInfo> GetPackageData(package_info_h handle);
+  static std::optional<PackageInfo> GetPackageData(package_info_h handle,
+                                                   int& error);
 
   package_manager_h package_manager_ = nullptr;
   OnPackageEvent install_callback_;
   OnPackageEvent uninstall_callback_;
   OnPackageEvent update_callback_;
-  std::map<std::string, std::unique_ptr<OnPackageSizeEvent>>
-      package_size_callbacks_;
-  std::vector<PackageInfo> packages_;
 
   int last_error_ = PACKAGE_MANAGER_ERROR_NONE;
 };
