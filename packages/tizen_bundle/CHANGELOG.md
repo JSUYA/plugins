@@ -1,3 +1,8 @@
+## 0.1.4
+
+* Release temporary native allocations used by bundle encoding and decoding.
+* Reject invalid native bundle handles before attaching a finalizer.
+
 ## 0.1.3
 
 * Update code format.

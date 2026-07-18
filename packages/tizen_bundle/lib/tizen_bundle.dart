@@ -19,22 +19,37 @@ export 'dart:typed_data' show Uint8List;
 class Bundle extends MapMixin<String, Object> {
   /// Creates an empty [Bundle].
   Bundle() {
-    _handle = tizen.bundle_create();
+    final Pointer<bundle> handle = tizen.bundle_create();
+    if (handle == nullptr) {
+      throw _lastPlatformException('Failed to create bundle');
+    }
+    _handle = handle;
     _finalizer.attach(this, _handle, detach: this);
   }
 
   /// Creates a [Bundle] from the encoded bundle string.
   Bundle.decode(String raw) {
-    _handle = tizen.bundle_decode(
-      raw.toNativeInt8().cast<UnsignedChar>(),
-      raw.length,
-    );
+    final Pointer<bundle> handle = using((Arena arena) {
+      final Pointer<Int8> encoded = raw.toNativeInt8(allocator: arena);
+      return tizen.bundle_decode(encoded.cast<UnsignedChar>(), encoded.length);
+    });
+    if (handle == nullptr) {
+      final int ret = tizen.get_last_result();
+      throw FormatException(
+        'Failed to decode bundle: '
+        '${tizen.get_error_message(ret).toDartString()}',
+      );
+    }
+    _handle = handle;
     _finalizer.attach(this, _handle, detach: this);
   }
 
   /// Creates a copy of the given [bundle].
   Bundle.fromBundle(Bundle bundle) {
     _handle = tizen.bundle_dup(bundle._handle);
+    if (_handle == nullptr) {
+      throw _lastPlatformException('Failed to duplicate bundle');
+    }
     _finalizer.attach(this, _handle, detach: this);
   }
 
@@ -147,20 +162,43 @@ class Bundle extends MapMixin<String, Object> {
 
   /// Encodes this object to String.
   String encode() {
-    return using((Arena arena) {
-      final Pointer<Pointer<Char>> raw = arena<Pointer<Char>>();
-      final Pointer<Int> length = arena<Int>();
-      final int ret = tizen.bundle_encode(
-        _handle,
-        raw.cast<Pointer<UnsignedChar>>(),
-        length,
-      );
-      if (ret != bundle_error_e.BUNDLE_ERROR_NONE) {
-        _throwException(ret);
-      }
+    Pointer<Char> encoded = nullptr;
+    try {
+      return using((Arena arena) {
+        final Pointer<Pointer<Char>> raw = arena<Pointer<Char>>();
+        raw.value = nullptr;
+        final Pointer<Int> length = arena<Int>();
+        final int ret = tizen.bundle_encode(
+          _handle,
+          raw.cast<Pointer<UnsignedChar>>(),
+          length,
+        );
+        encoded = raw.value;
+        if (ret != bundle_error_e.BUNDLE_ERROR_NONE) {
+          _throwException(ret);
+        }
+        if (encoded == nullptr) {
+          throw PlatformException(
+            code: 'bundle_encode',
+            message: 'Bundle encoding returned no data.',
+          );
+        }
 
-      return raw.value.toDartString();
-    });
+        return encoded.toDartString();
+      });
+    } finally {
+      if (encoded != nullptr) {
+        malloc.free(encoded);
+      }
+    }
+  }
+
+  static PlatformException _lastPlatformException(String operation) {
+    final int ret = tizen.get_last_result();
+    return PlatformException(
+      code: ret.toString(),
+      message: '$operation: ${tizen.get_error_message(ret).toDartString()}',
+    );
   }
 
   void _throwException(int ret) {

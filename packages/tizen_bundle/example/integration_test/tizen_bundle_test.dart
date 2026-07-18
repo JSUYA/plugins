@@ -107,6 +107,15 @@ void main() {
   // Bundle.decode — constructor from encoded string
   // ---------------------------------------------------------------------------
   group('Bundle.decode', () {
+    testWidgets('throws FormatException for invalid encoded data', (
+      WidgetTester _,
+    ) async {
+      expect(
+        () => Bundle.decode('not-a-valid-encoded-bundle'),
+        throwsFormatException,
+      );
+    });
+
     testWidgets('round-trips a List<String> value through encode/decode', (
       WidgetTester _,
     ) async {
@@ -140,6 +149,16 @@ void main() {
       expect(decoded['s'], 'hello');
       expect(decoded['ss'], <String>['x', 'y']);
       expect(decoded['b'], Uint8List.fromList(<int>[1, 2, 3]));
+    });
+
+    testWidgets('repeatedly encodes and decodes a bundle', (
+      WidgetTester _,
+    ) async {
+      final Bundle bundle = Bundle.fromMap(<String, Object>{'key': 'value'});
+      for (int index = 0; index < 100; index++) {
+        final Bundle decoded = Bundle.decode(bundle.encode());
+        expect(decoded['key'], 'value');
+      }
     });
   });
 
