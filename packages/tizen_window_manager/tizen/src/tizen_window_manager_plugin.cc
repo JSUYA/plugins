@@ -61,13 +61,24 @@ class TizenWindowManagerPlugin : public flutter::Plugin {
     }
 
     if (method_name == "activate") {
-      window_manager_->Activate();
+      if (!window_manager_->Activate()) {
+        result->Error("Failed to activate window.");
+        return;
+      }
       result->Success();
     } else if (method_name == "lower") {
-      window_manager_->Lower();
+      if (!window_manager_->Lower()) {
+        result->Error("Failed to lower window.");
+        return;
+      }
       result->Success();
     } else if (method_name == "getGeometry") {
-      result->Success(flutter::EncodableValue(window_manager_->GetGeometry()));
+      flutter::EncodableMap geometry;
+      if (!window_manager_->GetGeometry(&geometry)) {
+        result->Error("Failed to get window geometry.");
+        return;
+      }
+      result->Success(flutter::EncodableValue(geometry));
     } else {
       result->NotImplemented();
     }

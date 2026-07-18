@@ -17,9 +17,9 @@ class TizenWindowManager {
   explicit TizenWindowManager(void* handle);
   virtual ~TizenWindowManager();
 
-  void Activate();
-  void Lower();
-  flutter::EncodableMap GetGeometry();
+  bool Activate();
+  bool Lower();
+  bool GetGeometry(flutter::EncodableMap* geometry);
 
  private:
   void* window_handle_;

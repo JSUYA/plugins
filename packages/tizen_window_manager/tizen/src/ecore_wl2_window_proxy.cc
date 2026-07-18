@@ -28,12 +28,12 @@ EcoreWl2WindowProxy::~EcoreWl2WindowProxy() {
   }
 }
 
-void EcoreWl2WindowProxy::ecore_wl2_window_geometry_get(void *window, int *x,
+bool EcoreWl2WindowProxy::ecore_wl2_window_geometry_get(void *window, int *x,
                                                         int *y, int *width,
                                                         int *height) {
   if (!ecore_wl2_window_handle_) {
     LOG_ERROR("ecore_wl2_window_handle_ not valid");
-    return;
+    return false;
   }
 
   FuncEcoreWl2WindowGeometryGet ecore_wl2_window_geometry_get =
@@ -41,15 +41,16 @@ void EcoreWl2WindowProxy::ecore_wl2_window_geometry_get(void *window, int *x,
           dlsym(ecore_wl2_window_handle_, "ecore_wl2_window_geometry_get"));
   if (!ecore_wl2_window_geometry_get) {
     LOG_ERROR("Fail to find ecore_wl2_window_geometry_get.");
-    return;
+    return false;
   }
   ecore_wl2_window_geometry_get(window, x, y, width, height);
+  return true;
 }
 
-void EcoreWl2WindowProxy::ecore_wl2_window_activate(void *window) {
+bool EcoreWl2WindowProxy::ecore_wl2_window_activate(void *window) {
   if (!ecore_wl2_window_handle_) {
     LOG_ERROR("ecore_wl2_window_handle_ not valid");
-    return;
+    return false;
   }
 
   FuncEcoreWl2WindowActivate ecore_wl2_window_activate =
@@ -57,15 +58,16 @@ void EcoreWl2WindowProxy::ecore_wl2_window_activate(void *window) {
           dlsym(ecore_wl2_window_handle_, "ecore_wl2_window_activate"));
   if (!ecore_wl2_window_activate) {
     LOG_ERROR("Fail to find ecore_wl2_window_activate.");
-    return;
+    return false;
   }
   ecore_wl2_window_activate(window);
+  return true;
 }
 
-void EcoreWl2WindowProxy::ecore_wl2_window_lower(void *window) {
+bool EcoreWl2WindowProxy::ecore_wl2_window_lower(void *window) {
   if (!ecore_wl2_window_handle_) {
     LOG_ERROR("ecore_wl2_window_handle_ not valid");
-    return;
+    return false;
   }
 
   FuncEcoreWl2WindowLower ecore_wl2_window_lower =
@@ -73,7 +75,8 @@ void EcoreWl2WindowProxy::ecore_wl2_window_lower(void *window) {
           dlsym(ecore_wl2_window_handle_, "ecore_wl2_window_lower"));
   if (!ecore_wl2_window_lower) {
     LOG_ERROR("Fail to find ecore_wl2_window_lower.");
-    return;
+    return false;
   }
   ecore_wl2_window_lower(window);
+  return true;
 }

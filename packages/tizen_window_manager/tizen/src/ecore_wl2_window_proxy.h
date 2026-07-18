@@ -9,11 +9,11 @@ class EcoreWl2WindowProxy {
  public:
   EcoreWl2WindowProxy();
   ~EcoreWl2WindowProxy();
-  void ecore_wl2_window_geometry_get(void *window, int *x, int *y, int *width,
+  bool ecore_wl2_window_geometry_get(void *window, int *x, int *y, int *width,
                                      int *height);
 
-  void ecore_wl2_window_activate(void *window);
-  void ecore_wl2_window_lower(void *window);
+  bool ecore_wl2_window_activate(void *window);
+  bool ecore_wl2_window_lower(void *window);
 
  private:
   void *ecore_wl2_window_handle_ = nullptr;

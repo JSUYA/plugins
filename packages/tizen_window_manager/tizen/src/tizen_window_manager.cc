@@ -17,42 +17,42 @@ TizenWindowManager::TizenWindowManager(void* handle)
 
 TizenWindowManager::~TizenWindowManager() {}
 
-void TizenWindowManager::Activate() {
+bool TizenWindowManager::Activate() {
   if (!window_handle_) {
     LOG_ERROR("Window handle is null");
+    return false;
   }
 
-  proxy_->ecore_wl2_window_activate(window_handle_);
+  return proxy_->ecore_wl2_window_activate(window_handle_);
 }
 
-void TizenWindowManager::Lower() {
+bool TizenWindowManager::Lower() {
   if (!window_handle_) {
     LOG_ERROR("Window handle is null");
+    return false;
   }
 
-  proxy_->ecore_wl2_window_lower(window_handle_);
+  return proxy_->ecore_wl2_window_lower(window_handle_);
 }
 
-flutter::EncodableMap TizenWindowManager::GetGeometry() {
-  flutter::EncodableMap geometry;
-
+bool TizenWindowManager::GetGeometry(flutter::EncodableMap* geometry) {
   if (!window_handle_) {
     LOG_ERROR("Window handle is null");
-    geometry[flutter::EncodableValue("x")] = flutter::EncodableValue(0);
-    geometry[flutter::EncodableValue("y")] = flutter::EncodableValue(0);
-    geometry[flutter::EncodableValue("width")] = flutter::EncodableValue(0);
-    geometry[flutter::EncodableValue("height")] = flutter::EncodableValue(0);
-    return geometry;
+    return false;
   }
 
-  int x, y, width, height;
-  proxy_->ecore_wl2_window_geometry_get(window_handle_, &x, &y, &width,
-                                        &height);
+  int x = 0, y = 0, width = 0, height = 0;
+  if (!proxy_->ecore_wl2_window_geometry_get(window_handle_, &x, &y, &width,
+                                             &height)) {
+    return false;
+  }
 
-  geometry[flutter::EncodableValue("x")] = flutter::EncodableValue(x);
-  geometry[flutter::EncodableValue("y")] = flutter::EncodableValue(y);
-  geometry[flutter::EncodableValue("width")] = flutter::EncodableValue(width);
-  geometry[flutter::EncodableValue("height")] = flutter::EncodableValue(height);
+  (*geometry)[flutter::EncodableValue("x")] = flutter::EncodableValue(x);
+  (*geometry)[flutter::EncodableValue("y")] = flutter::EncodableValue(y);
+  (*geometry)[flutter::EncodableValue("width")] =
+      flutter::EncodableValue(width);
+  (*geometry)[flutter::EncodableValue("height")] =
+      flutter::EncodableValue(height);
 
-  return geometry;
+  return true;
 }
