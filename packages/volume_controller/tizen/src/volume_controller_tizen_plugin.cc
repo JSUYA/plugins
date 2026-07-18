@@ -12,6 +12,7 @@
 #include <flutter/standard_method_codec.h>
 #include <sound_manager.h>
 
+#include <exception>
 #include <memory>
 #include <optional>
 #include <string>
@@ -61,6 +62,8 @@ class VolumeControllerStreamHandler : public FlStreamHandler {
   explicit VolumeControllerStreamHandler(std::optional<int>* previous_volume)
       : previous_volume_(previous_volume) {}
 
+  ~VolumeControllerStreamHandler() override { StopListening(); }
+
  protected:
   std::unique_ptr<FlStreamHandlerError> OnListenInternal(
       const EncodableValue* arguments,
@@ -73,49 +76,60 @@ class VolumeControllerStreamHandler : public FlStreamHandler {
                                fetch_initial_volume);
     }
 
+    const int ret = sound_manager_add_volume_changed_cb(
+        [](sound_type_e type, unsigned int volume, void* user_data) {
+          try {
+            auto* handler =
+                static_cast<VolumeControllerStreamHandler*>(user_data);
+            if (type != SOUND_TYPE_MEDIA || handler->events_ == nullptr) {
+              return;
+            }
+            if (volume > 0) {
+              *handler->previous_volume_ = static_cast<int>(volume);
+            }
+            const auto normalized = handler->NormalizeVolume(volume);
+            if (normalized.has_value()) {
+              handler->events_->Success(EncodableValue(normalized.value()));
+            }
+          } catch (const std::exception& error) {
+            LOG_ERROR("Volume changed callback failed: %s", error.what());
+          } catch (...) {
+            LOG_ERROR("Volume changed callback failed.");
+          }
+        },
+        this, &callback_id_);
+    if (ret != SOUND_MANAGER_ERROR_NONE) {
+      LOG_ERROR("Failed to register volume callback: %d", ret);
+      events_.reset();
+      return std::make_unique<FlStreamHandlerError>(
+          std::to_string(ret), "Failed to register volume callback", nullptr);
+    }
+    callback_registered_ = true;
+
     if (fetch_initial_volume) {
       const auto initial = GetNormalizedVolume();
       if (initial.has_value()) {
         events_->Success(EncodableValue(initial.value()));
       }
     }
-
-    const int ret = sound_manager_add_volume_changed_cb(
-        [](sound_type_e type, unsigned int volume, void* user_data) {
-          auto* handler =
-              static_cast<VolumeControllerStreamHandler*>(user_data);
-          if (type != SOUND_TYPE_MEDIA || handler->events_ == nullptr) {
-            return;
-          }
-          if (volume > 0) {
-            *handler->previous_volume_ = static_cast<int>(volume);
-          }
-          const auto normalized = handler->NormalizeVolume(volume);
-          if (normalized.has_value()) {
-            handler->events_->Success(EncodableValue(normalized.value()));
-          }
-        },
-        this, &callback_id_);
-    if (ret != SOUND_MANAGER_ERROR_NONE) {
-      LOG_ERROR("Failed to register volume callback: %d", ret);
-      return std::make_unique<FlStreamHandlerError>(
-          std::to_string(ret), "Failed to register volume callback", nullptr);
-    }
-    callback_registered_ = true;
     return nullptr;
   }
 
   std::unique_ptr<FlStreamHandlerError> OnCancelInternal(
       const EncodableValue* arguments) override {
+    StopListening();
+    return nullptr;
+  }
+
+ private:
+  void StopListening() {
     if (callback_registered_) {
       sound_manager_remove_volume_changed_cb(callback_id_);
       callback_registered_ = false;
     }
     events_.reset();
-    return nullptr;
   }
 
- private:
   std::optional<double> NormalizeVolume(unsigned int volume) const {
     int max_volume = 0;
     const int ret = sound_manager_get_max_volume(SOUND_TYPE_MEDIA, &max_volume);
@@ -166,7 +180,11 @@ class VolumeControllerTizenPlugin : public flutter::Plugin {
     registrar->AddPlugin(std::move(plugin));
   }
 
-  ~VolumeControllerTizenPlugin() override = default;
+  ~VolumeControllerTizenPlugin() override {
+    if (event_channel_) {
+      event_channel_->SetStreamHandler(nullptr);
+    }
+  }
 
  private:
   void InitializePreviousVolume() {

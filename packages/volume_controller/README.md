@@ -10,7 +10,7 @@ Add both packages to your `pubspec.yaml`:
 ```yaml
 dependencies:
   volume_controller: ^3.4.4
-  volume_controller_tizen: ^0.1.0
+  volume_controller_tizen: ^0.1.1
 ```
 
 Then import the original package:

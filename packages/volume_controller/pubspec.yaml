@@ -2,7 +2,7 @@ name: volume_controller_tizen
 description: Tizen implementation of the volume_controller plugin.
 homepage: https://github.com/flutter-tizen/plugins
 repository: https://github.com/flutter-tizen/plugins/tree/master/packages/volume_controller
-version: 0.1.0
+version: 0.1.1
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
