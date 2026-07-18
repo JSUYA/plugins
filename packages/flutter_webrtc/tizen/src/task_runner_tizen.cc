@@ -14,8 +14,7 @@ TaskRunnerTizen::~TaskRunnerTizen() {
     state->shutting_down = true;
     source_id = state->source_id;
     state->source_id = 0;
-    std::queue<TaskClosure> empty;
-    state->tasks.swap(empty);
+    state->tasks = {};
   }
   if (source_id != 0) {
     g_source_remove(source_id);
@@ -31,19 +30,16 @@ void TaskRunnerTizen::EnqueueTask(TaskClosure task) {
   state->tasks.push(std::move(task));
   if (state->source_id == 0) {
     auto* source_data = new std::shared_ptr<State>(state);
-    guint source_id = g_idle_add_full(G_PRIORITY_DEFAULT, RunTask, source_data,
-                                      DestroySourceData);
-    if (source_id == 0) {
+    state->source_id = g_idle_add_full(G_PRIORITY_DEFAULT, RunTask, source_data,
+                                       DestroySourceData);
+    if (state->source_id == 0) {
       delete source_data;
-    } else {
-      state->source_id = source_id;
     }
   }
 }
 
 gboolean TaskRunnerTizen::RunTask(gpointer data) {
-  std::shared_ptr<State> state =
-      *static_cast<std::shared_ptr<State>*>(data);
+  std::shared_ptr<State> state = *static_cast<std::shared_ptr<State>*>(data);
   while (true) {
     TaskClosure task;
     {

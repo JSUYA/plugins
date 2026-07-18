@@ -189,8 +189,7 @@ void FlutterVideoRendererManager::OnMediaStreamTrackAdded(
   }
   for (const auto& renderer : renderers_) {
     if (renderer.second->CheckMediaStream(stream_id)) {
-      renderer.second->SetVideoTrack(
-          static_cast<RTCVideoTrack*>(track.get()));
+      renderer.second->SetVideoTrack(static_cast<RTCVideoTrack*>(track.get()));
     }
   }
 }
