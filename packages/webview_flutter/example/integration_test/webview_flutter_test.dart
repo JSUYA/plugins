@@ -81,6 +81,70 @@ Future<void> main() async {
     );
   });
 
+  testWidgets('ignores a delayed navigation reply after disposal', (
+    WidgetTester tester,
+  ) async {
+    final Completer<void> navigationRequested = Completer<void>();
+    final Completer<void> releaseDecision = Completer<void>();
+    final WebViewController controller = WebViewController();
+    unawaited(
+      controller.setNavigationDelegate(
+        NavigationDelegate(
+          onNavigationRequest: (NavigationRequest request) async {
+            navigationRequested.complete();
+            await releaseDecision.future;
+            return NavigationDecision.navigate;
+          },
+        ),
+      ),
+    );
+    unawaited(controller.loadRequest(Uri.parse(primaryUrl)));
+
+    await tester.pumpWidget(WebViewWidget(controller: controller));
+    await navigationRequested.future;
+    await tester.pumpWidget(const SizedBox.shrink());
+
+    releaseDecision.complete();
+    await tester.pump();
+  });
+
+  testWidgets('cookie manager follows the remaining webview', (
+    WidgetTester tester,
+  ) async {
+    final WebViewController firstController = WebViewController();
+    final WebViewController secondController = WebViewController();
+    final WebViewCookieManager cookieManager = WebViewCookieManager();
+
+    await tester.pumpWidget(
+      Row(
+        textDirection: TextDirection.ltr,
+        children: <Widget>[
+          Expanded(
+            child: WebViewWidget(
+              key: const ValueKey<String>('first'),
+              controller: firstController,
+            ),
+          ),
+          Expanded(
+            child: WebViewWidget(
+              key: const ValueKey<String>('second'),
+              controller: secondController,
+            ),
+          ),
+        ],
+      ),
+    );
+    expect(await cookieManager.clearCookies(), isTrue);
+
+    await tester.pumpWidget(
+      WebViewWidget(
+        key: const ValueKey<String>('second'),
+        controller: secondController,
+      ),
+    );
+    expect(await cookieManager.clearCookies(), isTrue);
+  });
+
   testWidgets('loadRequest with headers', (WidgetTester tester) async {
     final Map<String, String> headers = <String, String>{
       'test_header': 'flutter_test_header',

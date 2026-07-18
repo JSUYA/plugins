@@ -6,6 +6,7 @@
 #define FLUTTER_PLUGIN_WEBVIEW_H_
 
 #include <EWebKit.h>
+#include <Ecore_Evas.h>
 #include <Evas.h>
 #include <flutter/encodable_value.h>
 #include <flutter/method_channel.h>
@@ -27,12 +28,15 @@ typedef flutter::MethodChannel<flutter::EncodableValue> FlMethodChannel;
 
 class BufferPool;
 class BufferUnit;
+class WebViewFactory;
+struct WebViewLifetime;
 
 class WebView : public PlatformView {
  public:
   WebView(flutter::PluginRegistrar* registrar, int view_id,
           flutter::TextureRegistrar* texture_registrar, double width,
-          double height, const flutter::EncodableValue& params, void* window);
+          double height, bool engine_policy, void* window,
+          WebViewFactory* factory);
   ~WebView();
 
   virtual void Dispose() override;
@@ -55,15 +59,14 @@ class WebView : public PlatformView {
 
   Evas_Object* GetWebViewInstance() { return webview_instance_; }
 
+  bool IsInitialized() const { return initialized_ && !disposed_; }
+
   FlutterDesktopGpuSurfaceDescriptor* ObtainGpuSurface(size_t width,
                                                        size_t height);
 
  private:
   void HandleWebViewMethodCall(const FlMethodCall& method_call,
                                std::unique_ptr<FlMethodResult> result);
-  void HandleCookieMethodCall(const FlMethodCall& method_call,
-                              std::unique_ptr<FlMethodResult> result);
-
   template <typename T>
   void SetBackgroundColor(const T& color);
 
@@ -99,8 +102,10 @@ class WebView : public PlatformView {
                       double dy);
 
   Evas_Object* webview_instance_ = nullptr;
+  Ecore_Evas* ecore_evas_ = nullptr;
   flutter::TextureRegistrar* texture_registrar_;
-  bool engine_policy_ = false;
+  WebViewFactory* factory_;
+  bool engine_policy_;
   double width_ = 0.0;
   double height_ = 0.0;
   double left_ = 0.0;
@@ -116,6 +121,9 @@ class WebView : public PlatformView {
   std::unique_ptr<flutter::TextureVariant> texture_variant_;
   std::mutex mutex_;
   std::unique_ptr<BufferPool> tbm_pool_;
+  std::shared_ptr<WebViewLifetime> lifetime_state_;
+  bool initialized_ = false;
+  bool texture_registered_ = false;
   bool disposed_ = false;
   Ewk_Mouse_Button_Type mouse_button_type_ = (Ewk_Mouse_Button_Type)0;
   bool scrollbar_enabled_ = true;

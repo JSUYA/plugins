@@ -54,6 +54,9 @@ class TizenWebViewController extends PlatformWebViewController {
 
   bool _enginePolicy = false;
 
+  /// Whether the upgraded Tizen web engine should be used.
+  bool get enginePolicy => _enginePolicy;
+
   /// Called when [TizenView] is created.
   void createWebviewControllerChannel(int viewId) {
     _webviewControllerChannel = MethodChannel(
@@ -138,7 +141,7 @@ class TizenWebViewController extends PlatformWebViewController {
 
   /// Called when [TizenView] is created.
   void onCreate(int viewId) {
-    _webview.onCreate(viewId, _enginePolicy);
+    _webview.onCreate(viewId);
     if (_webview.hasNavigationDelegate) {
       _tizenNavigationDelegate.createNavigationDelegateChannel(viewId);
     }
@@ -371,14 +374,16 @@ class TizenWebViewWidget extends PlatformWebViewWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TizenWebViewController controller =
+        params.controller as TizenWebViewController;
     return TizenView(
       key: params.key,
       viewType: 'plugins.flutter.io/webview',
       onPlatformViewCreated: (int id) {
-        final TizenWebViewController controller =
-            params.controller as TizenWebViewController;
         controller.onCreate(id);
       },
+      creationParams: controller.enginePolicy,
+      creationParamsCodec: const StandardMessageCodec(),
       layoutDirection: params.layoutDirection,
       gestureRecognizers: params.gestureRecognizers,
     );

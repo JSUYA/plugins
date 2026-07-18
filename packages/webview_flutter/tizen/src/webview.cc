@@ -14,6 +14,10 @@
 #include "log.h"
 #include "webview_factory.h"
 
+struct WebViewLifetime {
+  WebView* webview = nullptr;
+};
+
 namespace {
 
 constexpr size_t kBufferPoolSize = 5;
@@ -44,32 +48,48 @@ std::string ConvertLogLevelToString(Ewk_Console_Message_Level level) {
 
 class NavigationRequestResult : public FlMethodResult {
  public:
-  NavigationRequestResult(WebView* webview) : webview_(webview) {}
+  NavigationRequestResult(std::weak_ptr<WebViewLifetime> lifetime)
+      : lifetime_(std::move(lifetime)) {}
 
   void SuccessInternal(const flutter::EncodableValue* should_load) override {
-    if (std::holds_alternative<bool>(*should_load)) {
+    WebView* webview = GetWebView();
+    if (!webview) {
+      return;
+    }
+    if (should_load && std::holds_alternative<bool>(*should_load)) {
       if (std::get<bool>(*should_load)) {
-        webview_->Resume();
+        webview->Resume();
         return;
       }
     }
-    webview_->Stop();
+    webview->Stop();
   }
 
   void ErrorInternal(const std::string& error_code,
                      const std::string& error_message,
                      const flutter::EncodableValue* error_details) override {
     LOG_ERROR("The request unexpectedly completed with an error.");
-    webview_->Stop();
+    WebView* webview = GetWebView();
+    if (webview) {
+      webview->Stop();
+    }
   }
 
   void NotImplementedInternal() override {
     LOG_ERROR("The target method was unexpectedly unimplemented.");
-    webview_->Stop();
+    WebView* webview = GetWebView();
+    if (webview) {
+      webview->Stop();
+    }
   }
 
  private:
-  WebView* webview_;
+  WebView* GetWebView() {
+    const std::shared_ptr<WebViewLifetime> lifetime = lifetime_.lock();
+    return lifetime ? lifetime->webview : nullptr;
+  }
+
+  std::weak_ptr<WebViewLifetime> lifetime_;
 };
 
 template <typename T>
@@ -91,13 +111,17 @@ bool GetValueFromEncodableMap(const flutter::EncodableValue* arguments,
 
 WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
                  flutter::TextureRegistrar* texture_registrar, double width,
-                 double height, const flutter::EncodableValue& params,
-                 void* window)
+                 double height, bool engine_policy, void* window,
+                 WebViewFactory* factory)
     : PlatformView(registrar, view_id, nullptr),
       texture_registrar_(texture_registrar),
+      factory_(factory),
+      engine_policy_(engine_policy),
       width_(width),
       height_(height),
-      window_(window) {
+      window_(window),
+      lifetime_state_(std::make_shared<WebViewLifetime>()) {
+  lifetime_state_->webview = this;
   if (!EwkInternalApiBinding::GetInstance().Initialize()) {
     LOG_ERROR("Failed to initialize EWK internal APIs.");
     return;
@@ -113,6 +137,7 @@ WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
             return ObtainGpuSurface(width, height);
           }));
   SetTextureId(texture_registrar_->RegisterTexture(texture_variant_.get()));
+  texture_registered_ = true;
 
   webview_channel_ = std::make_unique<FlMethodChannel>(
       GetPluginRegistrar()->messenger(), GetWebViewChannelName(),
@@ -131,14 +156,11 @@ WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
       GetPluginRegistrar()->messenger(), GetNavigationDelegateChannelName(),
       &flutter::StandardMethodCodec::GetInstance());
 
-  auto cookie_channel = std::make_unique<FlMethodChannel>(
-      GetPluginRegistrar()->messenger(),
-      "plugins.flutter.io/tizen_cookie_manager",
-      &flutter::StandardMethodCodec::GetInstance());
-  cookie_channel->SetMethodCallHandler(
-      [webview = this](const auto& call, auto result) {
-        webview->HandleCookieMethodCall(call, std::move(result));
-      });
+  if (!InitWebView()) {
+    LOG_ERROR("Failed to initialize the webview instance.");
+    return;
+  }
+  initialized_ = true;
 }
 
 /**
@@ -173,8 +195,19 @@ void WebView::Dispose() {
   if (disposed_) {
     return;
   }
+  disposed_ = true;
+  initialized_ = false;
+  lifetime_state_->webview = nullptr;
+  factory_->UnregisterWebView(this);
 
-  texture_registrar_->UnregisterTexture(GetTextureId(), nullptr);
+  if (webview_channel_) {
+    webview_channel_->SetMethodCallHandler(nullptr);
+  }
+
+  if (texture_registered_) {
+    texture_registrar_->UnregisterTexture(GetTextureId(), nullptr);
+    texture_registered_ = false;
+  }
 
   if (webview_instance_) {
     evas_object_smart_callback_del(webview_instance_,
@@ -196,13 +229,20 @@ void WebView::Dispose() {
     evas_object_smart_callback_del(webview_instance_, "url,changed",
                                    &WebView::OnUrlChange);
     evas_object_del(webview_instance_);
+    webview_instance_ = nullptr;
+  }
+  if (ecore_evas_) {
+    ecore_evas_free(ecore_evas_);
+    ecore_evas_ = nullptr;
   }
 
   // ewk_shutdown();
-  disposed_ = true;
 }
 
 void WebView::Offset(double left, double top) {
+  if (!IsInitialized()) {
+    return;
+  }
   left_ = left;
   top_ = top;
 
@@ -211,6 +251,9 @@ void WebView::Offset(double left, double top) {
 }
 
 void WebView::Resize(double width, double height) {
+  if (!IsInitialized()) {
+    return;
+  }
   width_ = width;
   height_ = height;
 
@@ -224,6 +267,9 @@ void WebView::Resize(double width, double height) {
 
 void WebView::Touch(int event_type, int button_type, double x, double y,
                     double dx, double dy) {
+  if (!IsInitialized()) {
+    return;
+  }
 #ifdef WEBVIEW_TIZEN_TOUCH_EVENTS_ENABLED
   SendTouchEvent(event_type, x, y);
 #else
@@ -298,7 +344,7 @@ void WebView::SendMouseEvent(int event_type, int button_type, double x,
 
 bool WebView::SendKey(const char* key, const char* string, const char* compose,
                       uint32_t modifiers, uint32_t scan_code, bool is_down) {
-  if (!IsFocused()) {
+  if (!IsInitialized() || !IsFocused()) {
     return false;
   }
 
@@ -331,9 +377,17 @@ bool WebView::SendKey(const char* key, const char* string, const char* compose,
   return true;
 }
 
-void WebView::Resume() { ewk_view_resume(webview_instance_); }
+void WebView::Resume() {
+  if (IsInitialized()) {
+    ewk_view_resume(webview_instance_);
+  }
+}
 
-void WebView::Stop() { ewk_view_stop(webview_instance_); }
+void WebView::Stop() {
+  if (IsInitialized()) {
+    ewk_view_stop(webview_instance_);
+  }
+}
 
 void WebView::SetDirection(int direction) {
   // TODO: Implement if necessary.
@@ -364,18 +418,29 @@ bool WebView::InitWebView() {
   // temporarily comment out ewk_init() and ewk_shutdown(). It can be reverted
   // depending on updates to chromium-efl.
   // ewk_init();
-  Ecore_Evas* evas = ecore_evas_new("wayland_egl", 0, 0, 1, 1, 0);
+  ecore_evas_ = ecore_evas_new("wayland_egl", 0, 0, 1, 1, 0);
+  if (!ecore_evas_) {
+    return false;
+  }
+  Evas* evas = ecore_evas_get(ecore_evas_);
+  if (!evas) {
+    return false;
+  }
 
-  webview_instance_ = ewk_view_add(ecore_evas_get(evas));
+  webview_instance_ = ewk_view_add(evas);
   if (!webview_instance_) {
     return false;
   }
-  ecore_evas_focus_set(evas, true);
+  ecore_evas_focus_set(ecore_evas_, true);
   ewk_view_focus_set(webview_instance_, true);
   EwkInternalApiBinding::GetInstance().view.OffscreenRenderingEnabledSet(
       webview_instance_, true);
 
   Ewk_Context* context = ewk_view_context_get(webview_instance_);
+  Ewk_Settings* settings = ewk_view_settings_get(webview_instance_);
+  if (!context || !settings) {
+    return false;
+  }
   Ewk_Cookie_Manager* cookie_manager = ewk_context_cookie_manager_get(context);
   if (cookie_manager) {
     ewk_cookie_manager_accept_policy_set(
@@ -384,9 +449,9 @@ bool WebView::InitWebView() {
   ewk_context_cache_model_set(context, EWK_CACHE_MODEL_PRIMARY_WEBBROWSER);
 
   EwkInternalApiBinding::GetInstance().settings.ImePanelEnabledSet(
-      ewk_view_settings_get(webview_instance_), true);
+      settings, true);
   EwkInternalApiBinding::GetInstance().settings.ForceZoomSet(
-      ewk_view_settings_get(webview_instance_), true);
+      settings, true);
   EwkInternalApiBinding::GetInstance().view.ImeWindowSet(webview_instance_,
                                                          window_);
   EwkInternalApiBinding::GetInstance().view.KeyEventsEnabledSet(
@@ -432,7 +497,8 @@ bool WebView::InitWebView() {
   evas_object_smart_callback_add(webview_instance_, "url,changed",
                                  &WebView::OnUrlChange, this);
 
-  Resize(width_, height_);
+  tbm_pool_->Prepare(width_, height_);
+  evas_object_resize(webview_instance_, width_, height_);
   evas_object_show(webview_instance_);
 
   evas_object_data_set(webview_instance_, kEwkInstance, this);
@@ -452,21 +518,9 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
   const std::string& method_name = method_call.method_name();
   const flutter::EncodableValue* arguments = method_call.arguments();
 
-  if (method_name == "setEnginePolicy") {
-    const auto* engine_policy = std::get_if<bool>(arguments);
-    if (engine_policy) {
-      engine_policy_ = *engine_policy;
-    }
-    result->Success();
+  if (!IsInitialized()) {
+    result->Error("Invalid operation", "The webview is not available.");
     return;
-  }
-
-  if (!webview_instance_) {
-    if (!InitWebView()) {
-      result->Error("Invalid operation",
-                    "The webview instance initialize failed.");
-      return;
-    }
   }
 
   if (method_name == "javaScriptMode") {
@@ -717,33 +771,11 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
   }
 }
 
-void WebView::HandleCookieMethodCall(const FlMethodCall& method_call,
-                                     std::unique_ptr<FlMethodResult> result) {
-  if (!webview_instance_) {
-    result->Error("Invalid operation",
-                  "The webview instance has not been initialized.");
-    return;
-  }
-
-  const std::string& method_name = method_call.method_name();
-
-  if (method_name == "clearCookies") {
-    Ewk_Context* context = ewk_view_context_get(webview_instance_);
-    Ewk_Cookie_Manager* cookie_manager =
-        ewk_context_cookie_manager_get(context);
-    if (cookie_manager) {
-      ewk_cookie_manager_cookies_clear(cookie_manager);
-      result->Success(flutter::EncodableValue(true));
-    } else {
-      result->Error("Operation failed", "Failed to get cookie manager");
-    }
-  } else {
-    result->NotImplemented();
-  }
-}
-
 FlutterDesktopGpuSurfaceDescriptor* WebView::ObtainGpuSurface(size_t width,
                                                               size_t height) {
+  if (!IsInitialized()) {
+    return nullptr;
+  }
   std::lock_guard<std::mutex> lock(mutex_);
   if (!candidate_surface_) {
     if (rendered_surface_) {
@@ -865,7 +897,8 @@ void WebView::OnNavigationPolicy(void* data, Evas_Object* obj,
       {flutter::EncodableValue("isForMainFrame"),
        flutter::EncodableValue(true)},
   };
-  auto result = std::make_unique<NavigationRequestResult>(webview);
+  auto result =
+      std::make_unique<NavigationRequestResult>(webview->lifetime_state_);
   webview->navigation_delegate_channel_->InvokeMethod(
       "navigationRequest", std::make_unique<flutter::EncodableValue>(args),
       std::move(result));

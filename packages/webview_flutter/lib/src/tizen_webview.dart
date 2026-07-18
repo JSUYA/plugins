@@ -61,15 +61,13 @@ class TizenWebView {
   }
 
   /// Called when [TizenView] is created. Invokes the requested method call before [TizenWebView] is created.
-  void onCreate(int viewId, bool enginePolicy) {
+  void onCreate(int viewId) {
     _isCreated = true;
     _viewId = viewId;
     _tizenWebViewChannel = MethodChannel(
       kTizenWebViewChannelName + viewId.toString(),
     );
     _tizenWebViewChannel.setMethodCallHandler(_onMethodCall);
-    _invokeChannelMethod<void>('setEnginePolicy', enginePolicy);
-
     _callPendingMethodCalls();
   }
 
