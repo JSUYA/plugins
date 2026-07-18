@@ -217,15 +217,21 @@ class SpeechToTextTizenPlugin : public flutter::Plugin {
   }
 
   ~SpeechToTextTizenPlugin() override {
-    lifetime_->plugin = nullptr;
-    StopSoundLevelUpdates();
+    if (channel_) {
+      channel_->SetMethodCallHandler(nullptr);
+    }
 
     if (stt_ != nullptr) {
       stt_unset_speech_status_cb(stt_);
       stt_unset_error_cb(stt_);
       stt_unset_state_changed_cb(stt_);
       stt_unset_recognition_result_cb(stt_);
+    }
 
+    lifetime_->plugin = nullptr;
+    StopSoundLevelUpdates();
+
+    if (stt_ != nullptr) {
       stt_state_e state = STT_STATE_CREATED;
       if (stt_get_state(stt_, &state) == STT_ERROR_NONE) {
         if (state == STT_STATE_RECORDING || state == STT_STATE_PROCESSING) {
@@ -243,6 +249,13 @@ class SpeechToTextTizenPlugin : public flutter::Plugin {
  private:
   struct LifetimeState {
     SpeechToTextTizenPlugin* plugin = nullptr;
+  };
+
+  using PluginTask = std::function<void(SpeechToTextTizenPlugin&)>;
+
+  struct PendingTask {
+    std::weak_ptr<LifetimeState> lifetime;
+    PluginTask task;
   };
 
   void HandleMethodCall(const FlMethodCall& method_call,
@@ -564,29 +577,35 @@ class SpeechToTextTizenPlugin : public flutter::Plugin {
     return ECORE_CALLBACK_RENEW;
   }
 
-  void PostTask(std::function<void()> task) {
-    auto* heap_task = new std::function<void()>(std::move(task));
+  void PostTask(PluginTask task) {
+    auto* pending_task = new PendingTask{lifetime_, std::move(task)};
     ecore_main_loop_thread_safe_call_async(
         [](void* data) {
-          auto* task = static_cast<std::function<void()>*>(data);
-          (*task)();
-          delete task;
+          std::unique_ptr<PendingTask> pending_task(
+              static_cast<PendingTask*>(data));
+          std::shared_ptr<LifetimeState> lifetime =
+              pending_task->lifetime.lock();
+          if (lifetime && lifetime->plugin != nullptr) {
+            pending_task->task(*lifetime->plugin);
+          }
         },
-        heap_task);
+        pending_task);
   }
 
   void InvokeStringMethod(const std::string& method, const std::string& value) {
-    PostTask([this, method, value]() {
-      if (channel_) {
-        channel_->InvokeMethod(method, std::make_unique<EncodableValue>(value));
+    PostTask([method, value](SpeechToTextTizenPlugin& plugin) {
+      if (plugin.channel_) {
+        plugin.channel_->InvokeMethod(method,
+                                      std::make_unique<EncodableValue>(value));
       }
     });
   }
 
   void InvokeDoubleMethod(const std::string& method, double value) {
-    PostTask([this, method, value]() {
-      if (channel_) {
-        channel_->InvokeMethod(method, std::make_unique<EncodableValue>(value));
+    PostTask([method, value](SpeechToTextTizenPlugin& plugin) {
+      if (plugin.channel_) {
+        plugin.channel_->InvokeMethod(method,
+                                      std::make_unique<EncodableValue>(value));
       }
     });
   }
@@ -646,32 +665,36 @@ class SpeechToTextTizenPlugin : public flutter::Plugin {
                                   const char* msg, void* user_data) {
     auto* plugin = static_cast<SpeechToTextTizenPlugin*>(user_data);
     plugin->PostTask(
-        [plugin, event, data_copy = CopyStrings(data, data_count),
-         msg_copy = msg == nullptr ? std::string() : std::string(msg)]() {
-          plugin->HandleRecognitionResult(event, data_copy, msg_copy);
+        [event, data_copy = CopyStrings(data, data_count),
+         msg_copy = msg == nullptr ? std::string() : std::string(msg)](
+            SpeechToTextTizenPlugin& plugin) {
+          plugin.HandleRecognitionResult(event, data_copy, msg_copy);
         });
   }
 
   static void OnStateChanged(stt_h stt, stt_state_e previous,
                              stt_state_e current, void* user_data) {
     auto* plugin = static_cast<SpeechToTextTizenPlugin*>(user_data);
-    plugin->PostTask([plugin, previous, current]() {
-      plugin->HandleStateChanged(previous, current);
+    plugin->PostTask([previous, current](SpeechToTextTizenPlugin& plugin) {
+      plugin.HandleStateChanged(previous, current);
     });
   }
 
   static void OnError(stt_h stt, stt_error_e error, void* user_data) {
     auto* plugin = static_cast<SpeechToTextTizenPlugin*>(user_data);
-    plugin->PostTask([plugin, error]() { plugin->HandleError(error); });
+    plugin->PostTask([error](SpeechToTextTizenPlugin& plugin) {
+      plugin.HandleError(error);
+    });
   }
 
   static void OnSpeechStatusChanged(stt_h stt, stt_speech_status_e status,
                                     void* user_data) {
     auto* plugin = static_cast<SpeechToTextTizenPlugin*>(user_data);
-    if (plugin->debug_logging_) {
-      plugin->PostTask(
-          [status]() { LOG_INFO("Speech status changed: %d", status); });
-    }
+    plugin->PostTask([status](SpeechToTextTizenPlugin& plugin) {
+      if (plugin.debug_logging_) {
+        LOG_INFO("Speech status changed: %d", status);
+      }
+    });
   }
 
   static std::vector<std::string> CopyStrings(const char** data, int count) {
