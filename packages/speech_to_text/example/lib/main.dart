@@ -42,12 +42,10 @@ class _SpeechToTextExamplePageState extends State<SpeechToTextExamplePage> {
       onError: _onError,
       onStatus: _onStatus,
     );
-    final List<LocaleName> locales = available
-        ? await _speech.locales()
-        : const <LocaleName>[];
-    final LocaleName? systemLocale = available
-        ? await _speech.systemLocale()
-        : null;
+    final List<LocaleName> locales =
+        available ? await _speech.locales() : const <LocaleName>[];
+    final LocaleName? systemLocale =
+        available ? await _speech.systemLocale() : null;
 
     setState(() {
       _available = available;
@@ -111,9 +109,8 @@ class _SpeechToTextExamplePageState extends State<SpeechToTextExamplePage> {
                   child: const Text('Initialize'),
                 ),
                 ElevatedButton(
-                  onPressed: _available && !_speech.isListening
-                      ? _listen
-                      : null,
+                  onPressed:
+                      _available && !_speech.isListening ? _listen : null,
                   child: const Text('Listen'),
                 ),
                 ElevatedButton(

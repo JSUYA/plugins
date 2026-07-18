@@ -44,36 +44,32 @@ void PermissionManager::RequestPermission(
 #ifdef TV_PROFILE
   on_complete(PermissionStatus::kGranted);
 #else
-  struct Request {
-    std::string privilege;
-    std::function<void(PermissionStatus)> on_complete;
-  };
-  auto request =
-      std::make_unique<Request>(Request{privilege, std::move(on_complete)});
-  Request* request_ptr = request.release();
+  auto request = std::make_unique<std::function<void(PermissionStatus)> >(
+      std::move(on_complete));
+  std::function<void(PermissionStatus)>* request_ptr = request.release();
 
   int ret = ppm_request_permission(
       privilege.c_str(),
-      [](ppm_call_cause_e cause, ppm_request_result_e result, const char*,
-         void* user_data) {
-        std::unique_ptr<Request> request(static_cast<Request*>(user_data));
+      [](ppm_call_cause_e cause, ppm_request_result_e result,
+         const char* privilege, void* user_data) {
+        std::unique_ptr<std::function<void(PermissionStatus)> > request(
+            static_cast<std::function<void(PermissionStatus)>*>(user_data));
         if (cause == PRIVACY_PRIVILEGE_MANAGER_CALL_CAUSE_ERROR) {
-          LOG_ERROR("Received an error response [%s].",
-                    request->privilege.c_str());
-          request->on_complete(PermissionStatus::kError);
+          LOG_ERROR("Received an error response [%s].", privilege);
+          (*request)(PermissionStatus::kError);
           return;
         }
 
         switch (result) {
           case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_ALLOW_FOREVER:
-            request->on_complete(PermissionStatus::kGranted);
+            (*request)(PermissionStatus::kGranted);
             break;
           case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_DENY_FOREVER:
-            request->on_complete(PermissionStatus::kPermanentlyDenied);
+            (*request)(PermissionStatus::kPermanentlyDenied);
             break;
           case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_DENY_ONCE:
           default:
-            request->on_complete(PermissionStatus::kDenied);
+            (*request)(PermissionStatus::kDenied);
             break;
         }
       },
@@ -82,7 +78,7 @@ void PermissionManager::RequestPermission(
     request.reset(request_ptr);
     LOG_ERROR("Permission request failed [%s]: %s", privilege.c_str(),
               get_error_message(ret));
-    request->on_complete(PermissionStatus::kError);
+    (*request)(PermissionStatus::kError);
   }
 #endif
 }
