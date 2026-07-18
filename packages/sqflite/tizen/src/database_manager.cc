@@ -3,8 +3,8 @@
 #include <flutter/standard_method_codec.h>
 #include <sqlite3.h>
 
-#include <list>
 #include <limits>
+#include <list>
 #include <variant>
 
 #include "errors.h"
@@ -19,16 +19,14 @@ template <typename T>
 int GetBlobByteCount(const std::vector<T> &value) {
   if (value.size() >
       static_cast<size_t>(std::numeric_limits<int>::max()) / sizeof(T)) {
-    throw sqflite_errors::DatabaseError(
-        sqflite_errors::kUnknownErrorCode,
-        "statement parameter is too large");
+    throw sqflite_errors::DatabaseError(sqflite_errors::kUnknownErrorCode,
+                                        "statement parameter is too large");
   }
   return static_cast<int>(value.size() * sizeof(T));
 }
 
 template <typename T>
-int BindBlob(sqlite3_stmt *statement, int index,
-             const std::vector<T> &value) {
+int BindBlob(sqlite3_stmt *statement, int index, const std::vector<T> &value) {
   if (value.empty()) {
     return sqlite3_bind_zeroblob(statement, index, 0);
   }
@@ -43,8 +41,6 @@ DatabaseManager::~DatabaseManager() noexcept {
     FinalizeStmt(statement.second);
     statement.second = nullptr;
   }
-  statement_cache_.clear();
-
   Close(false);
 }
 
@@ -99,11 +95,10 @@ void DatabaseManager::Close(bool raise_error) {
   if (!database_) {
     return;
   }
-  Database database = database_;
-  int result_code = sqlite3_close_v2(database);
+  int result_code = sqlite3_close_v2(database_);
   if (result_code != SQLITE_OK && raise_error) {
-    throw sqflite_errors::DatabaseError(sqlite3_extended_errcode(database),
-                                        sqlite3_errmsg(database));
+    throw sqflite_errors::DatabaseError(sqlite3_extended_errcode(database_),
+                                        sqlite3_errmsg(database_));
   }
   if (result_code == SQLITE_OK) {
     database_ = nullptr;
