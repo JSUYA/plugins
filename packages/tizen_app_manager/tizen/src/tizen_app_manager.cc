@@ -56,53 +56,66 @@ TizenAppManager::~TizenAppManager() {
 }
 
 std::unique_ptr<TizenAppInfo> TizenAppManager::GetAppInfo(
-    const std::string &app_id) {
-  app_info_h app_info;
+    const std::string &app_id, int &error) {
+  app_info_h app_info = nullptr;
   int ret = app_manager_get_app_info(app_id.c_str(), &app_info);
   if (ret != APP_MANAGER_ERROR_NONE) {
     LOG_ERROR("Failed to retrieve app info: %s", get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return nullptr;
   }
+  error = APP_MANAGER_ERROR_NONE;
   return std::make_unique<TizenAppInfo>(app_info);
 }
 
-std::vector<std::unique_ptr<TizenAppInfo>> TizenAppManager::GetAllAppsInfo() {
-  std::vector<std::unique_ptr<TizenAppInfo>> list;
+std::optional<std::vector<std::unique_ptr<TizenAppInfo>>>
+TizenAppManager::GetAllAppsInfo(int &error) {
+  struct EnumerationContext {
+    std::vector<std::unique_ptr<TizenAppInfo>> apps;
+    int error = APP_MANAGER_ERROR_NONE;
+  } context;
+
   int ret = app_manager_foreach_app_info(
       [](app_info_h app_info, void *user_data) {
-        auto *list = static_cast<std::vector<std::unique_ptr<TizenAppInfo>> *>(
-            user_data);
+        auto *context = static_cast<EnumerationContext *>(user_data);
 
         app_info_h clone_info = nullptr;
         int ret = app_info_clone(&clone_info, app_info);
         if (ret != APP_MANAGER_ERROR_NONE) {
           LOG_ERROR("Failed to clone app info: %s", get_error_message(ret));
-          return true;
+          context->error = ret;
+          return false;
         }
 
-        list->push_back(std::make_unique<TizenAppInfo>(clone_info));
+        context->apps.push_back(std::make_unique<TizenAppInfo>(clone_info));
         return true;
       },
-      &list);
+      &context);
   if (ret != APP_MANAGER_ERROR_NONE) {
     LOG_ERROR("Failed to retrieve all app info: %s", get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
+    return std::nullopt;
   }
-  return list;
+  if (context.error != APP_MANAGER_ERROR_NONE) {
+    error = context.error;
+    return std::nullopt;
+  }
+  error = APP_MANAGER_ERROR_NONE;
+  return std::move(context.apps);
 }
 
 std::optional<std::string> TizenAppManager::GetSharedResourcePath(
-    const std::string &app_id) {
+    const std::string &app_id, int &error) {
   char *path = nullptr;
   int ret = app_manager_get_shared_resource_path(app_id.c_str(), &path);
   if (ret != APP_MANAGER_ERROR_NONE) {
     LOG_ERROR("Failed to get shared resource path: %s", get_error_message(ret));
-    last_error_ = ret;
+    error = ret;
     return std::nullopt;
   }
   std::string result = std::string(path);
   free(path);
+  error = APP_MANAGER_ERROR_NONE;
   return result;
 }
 

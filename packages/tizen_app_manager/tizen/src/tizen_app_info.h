@@ -31,7 +31,7 @@ class TizenAppInfo {
 
   std::optional<bool> IsNoDisplay();
 
-  std::map<std::string, std::string> GetMetadata();
+  std::optional<std::map<std::string, std::string>> GetMetadata();
 
   int GetLastError() { return last_error_; }
 

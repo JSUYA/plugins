@@ -49,6 +49,16 @@ void main() {
         final List<AppInfo> apps = await AppManager.getInstalledApps();
         expect(apps.any((AppInfo app) => app.appId == appId), isTrue);
       });
+
+      testWidgets('supports concurrent requests', (WidgetTester _) async {
+        final List<List<AppInfo>> results = await Future.wait(
+          <Future<List<AppInfo>>>[
+            AppManager.getInstalledApps(),
+            AppManager.getInstalledApps(),
+          ],
+        );
+        expect(results, everyElement(isNotEmpty));
+      });
     });
 
     group('isRunning', () {
@@ -58,14 +68,12 @@ void main() {
       });
 
       testWidgets('returns false for non-running app', (WidgetTester _) async {
-        expect(
-          await AppManager.isRunning('org.tizen.nonexistent'),
-          isFalse,
-        );
+        expect(await AppManager.isRunning('org.tizen.nonexistent'), isFalse);
       });
 
-      testWidgets('throws ArgumentError for empty appId',
-          (WidgetTester _) async {
+      testWidgets('throws ArgumentError for empty appId', (
+        WidgetTester _,
+      ) async {
         await expectLater(AppManager.isRunning(''), throwsArgumentError);
       });
     });
@@ -79,9 +87,19 @@ void main() {
         expect(appInfo.sharedResourcePath, isNotEmpty);
       });
 
-      testWidgets('throws ArgumentError for empty appId',
-          (WidgetTester _) async {
+      testWidgets('throws ArgumentError for empty appId', (
+        WidgetTester _,
+      ) async {
         await expectLater(AppManager.getAppInfo(''), throwsArgumentError);
+      });
+
+      testWidgets('throws PlatformException for unknown appId', (
+        WidgetTester _,
+      ) async {
+        await expectLater(
+          AppManager.getAppInfo('org.tizen.nonexistent'),
+          throwsA(isA<PlatformException>()),
+        );
       });
     });
   });

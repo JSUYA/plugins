@@ -101,7 +101,7 @@ std::optional<bool> TizenAppInfo::IsNoDisplay() {
   return result;
 }
 
-std::map<std::string, std::string> TizenAppInfo::GetMetadata() {
+std::optional<std::map<std::string, std::string>> TizenAppInfo::GetMetadata() {
   std::map<std::string, std::string> map;
   int ret = app_info_foreach_metadata(
       app_info_,
@@ -115,6 +115,7 @@ std::map<std::string, std::string> TizenAppInfo::GetMetadata() {
   if (ret != APP_MANAGER_ERROR_NONE) {
     LOG_ERROR("Failed to get app metadata: %s", get_error_message(ret));
     last_error_ = ret;
+    return std::nullopt;
   }
   return map;
 }

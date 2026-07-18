@@ -1,3 +1,7 @@
+## 0.2.6
+
+* Fix error handling for app information and concurrent enumeration requests.
+
 ## 0.2.5
 
 * Fix memory leak in `AppRunningContext.packageId` by freeing the native string

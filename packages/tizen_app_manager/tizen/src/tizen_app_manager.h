@@ -28,11 +28,14 @@ class TizenAppManager {
     return instance;
   }
 
-  std::unique_ptr<TizenAppInfo> GetAppInfo(const std::string& app_id);
+  std::unique_ptr<TizenAppInfo> GetAppInfo(const std::string& app_id,
+                                           int& error);
 
-  std::vector<std::unique_ptr<TizenAppInfo>> GetAllAppsInfo();
+  std::optional<std::vector<std::unique_ptr<TizenAppInfo>>> GetAllAppsInfo(
+      int& error);
 
-  std::optional<std::string> GetSharedResourcePath(const std::string& app_id);
+  std::optional<std::string> GetSharedResourcePath(const std::string& app_id,
+                                                   int& error);
 
   std::optional<bool> IsAppRunning(const std::string& app_id);
 

@@ -162,17 +162,28 @@ class TizenAppManagerPlugin : public flutter::Plugin {
     }
 
     TizenAppManager &app_manager = TizenAppManager::GetInstance();
+    int error = APP_MANAGER_ERROR_NONE;
     std::optional<std::string> shared_res_path =
-        app_manager.GetSharedResourcePath(app_id.value());
+        app_manager.GetSharedResourcePath(app_id.value(), error);
     if (!shared_res_path.has_value()) {
-      on_error(app_manager.GetLastError(), app_manager.GetLastErrorString());
+      on_error(error, get_error_message(error));
       return;
     }
 
     std::optional<bool> is_no_display = app_info->IsNoDisplay();
+    if (!is_no_display.has_value()) {
+      on_error(app_info->GetLastError(), app_info->GetLastErrorString());
+      return;
+    }
 
+    std::optional<std::map<std::string, std::string>> app_metadata =
+        app_info->GetMetadata();
+    if (!app_metadata.has_value()) {
+      on_error(app_info->GetLastError(), app_info->GetLastErrorString());
+      return;
+    }
     flutter::EncodableMap metadata;
-    for (const auto &[key, value] : app_info->GetMetadata()) {
+    for (const auto &[key, value] : app_metadata.value()) {
       metadata[flutter::EncodableValue(key)] = flutter::EncodableValue(value);
     }
 
@@ -240,8 +251,14 @@ class TizenAppManagerPlugin : public flutter::Plugin {
       return;
     }
 
+    TizenAppManager &app_manager = TizenAppManager::GetInstance();
+    int error = APP_MANAGER_ERROR_NONE;
     std::unique_ptr<TizenAppInfo> app_info =
-        TizenAppManager::GetInstance().GetAppInfo(app_id);
+        app_manager.GetAppInfo(app_id, error);
+    if (!app_info) {
+      result->Error(std::to_string(error), get_error_message(error));
+      return;
+    }
 
     AppInfoToEncodableMap(
         app_info.get(),
@@ -262,9 +279,17 @@ class TizenAppManagerPlugin : public flutter::Plugin {
         [](gpointer data) -> gpointer {
           auto *result = static_cast<FlMethodResult *>(data);
 
+          int error = APP_MANAGER_ERROR_NONE;
+          std::optional<std::vector<std::unique_ptr<TizenAppInfo>>> apps =
+              TizenAppManager::GetInstance().GetAllAppsInfo(error);
+          if (!apps.has_value()) {
+            result->Error(std::to_string(error), get_error_message(error));
+            delete result;
+            return nullptr;
+          }
+
           flutter::EncodableList list;
-          for (const auto &app_info :
-               TizenAppManager::GetInstance().GetAllAppsInfo()) {
+          for (const auto &app_info : apps.value()) {
             AppInfoToEncodableMap(
                 app_info.get(),
                 [&list](flutter::EncodableMap map) {
