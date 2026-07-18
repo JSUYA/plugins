@@ -91,6 +91,7 @@ class AudioPlayerStreamHandler : public FlStreamHandler {
 
   std::unique_ptr<FlStreamHandlerError> OnCancelInternal(
       const flutter::EncodableValue *arguments) override {
+    on_set_event_sink_(nullptr);
     return nullptr;
   }
 
@@ -280,8 +281,10 @@ class AudioplayersTizenPlugin : public flutter::Plugin {
       } else if (method_name == "emitError") {
         auto code = GetRequiredArg<std::string>(arguments, "code");
         auto message = GetRequiredArg<std::string>(arguments, "message");
-        event_sinks_[player_id]->Error(code, message,
-                                       flutter::EncodableValue());
+        FlEventSink *event_sink = GetEventSink(player_id);
+        if (event_sink) {
+          event_sink->Error(code, message, flutter::EncodableValue());
+        }
         result->Success();
       } else {
         result->NotImplemented();
@@ -300,10 +303,8 @@ class AudioplayersTizenPlugin : public flutter::Plugin {
     try {
       const std::string &method_name = method_call.method_name();
       if (method_name == "init") {
-        for (auto &pair : audio_players_) {
-          DisposeAudioPlayer(pair.first);
-        }
         audio_players_.clear();
+        event_sinks_.clear();
       } else if (method_name == "setAudioContext") {
         OnGlobalLog("Setting AudioContext is not supported on Tizen");
         result->Success();
@@ -317,7 +318,10 @@ class AudioplayersTizenPlugin : public flutter::Plugin {
         if (arguments) {
           auto code = GetRequiredArg<std::string>(arguments, "code");
           auto message = GetRequiredArg<std::string>(arguments, "message");
-          global_event_sinks_->Error(code, message, flutter::EncodableValue());
+          if (global_event_sinks_) {
+            global_event_sinks_->Error(code, message,
+                                       flutter::EncodableValue());
+          }
         }
       } else {
         result->NotImplemented();
@@ -339,13 +343,33 @@ class AudioplayersTizenPlugin : public flutter::Plugin {
     return nullptr;
   }
 
+  FlEventSink *GetEventSink(const std::string &player_id) {
+    auto iter = event_sinks_.find(player_id);
+    if (iter != event_sinks_.end() && iter->second) {
+      return iter->second.get();
+    }
+    return nullptr;
+  }
+
+  void SendPlayerEvent(const std::string &player_id,
+                       flutter::EncodableMap event) {
+    FlEventSink *event_sink = GetEventSink(player_id);
+    if (event_sink) {
+      event_sink->Success(flutter::EncodableValue(event));
+    }
+  }
+
   void CreateAudioPlayer(const std::string &player_id) {
     auto event_channel = std::make_unique<FlEventChannel>(
         registrar_->messenger(), "xyz.luan/audioplayers/events/" + player_id,
         &flutter::StandardMethodCodec::GetInstance());
     event_channel->SetStreamHandler(std::make_unique<AudioPlayerStreamHandler>(
         [this, id = player_id](std::unique_ptr<FlEventSink> event_sink) {
-          this->event_sinks_[id] = std::move(event_sink);
+          if (event_sink && GetAudioPlayer(id)) {
+            event_sinks_[id] = std::move(event_sink);
+          } else {
+            event_sinks_.erase(id);
+          }
         }));
 
     PreparedListener prepared_listener = [this](const std::string &player_id,
@@ -355,7 +379,7 @@ class AudioplayersTizenPlugin : public flutter::Plugin {
            flutter::EncodableValue(kAudioPreparedEvent)},
           {flutter::EncodableValue("value"),
            flutter::EncodableValue(is_prepared)}};
-      event_sinks_[player_id]->Success(flutter::EncodableValue(map));
+      SendPlayerEvent(player_id, std::move(map));
     };
 
     DurationListener duration_listener = [this](const std::string &player_id,
@@ -365,7 +389,7 @@ class AudioplayersTizenPlugin : public flutter::Plugin {
            flutter::EncodableValue(kAudioDurationEvent)},
           {flutter::EncodableValue("value"),
            flutter::EncodableValue(duration)}};
-      event_sinks_[player_id]->Success(flutter::EncodableValue(map));
+      SendPlayerEvent(player_id, std::move(map));
     };
 
     SeekCompletedListener seek_completed_listener =
@@ -373,7 +397,7 @@ class AudioplayersTizenPlugin : public flutter::Plugin {
           flutter::EncodableMap map = {
               {flutter::EncodableValue("event"),
                flutter::EncodableValue(kAudioSeekCompleteEvent)}};
-          event_sinks_[player_id]->Success(flutter::EncodableValue(map));
+          SendPlayerEvent(player_id, std::move(map));
         };
 
     PlayCompletedListener play_completed_listener =
@@ -381,7 +405,7 @@ class AudioplayersTizenPlugin : public flutter::Plugin {
           flutter::EncodableMap map = {
               {flutter::EncodableValue("event"),
                flutter::EncodableValue(kAudioCompleteEvent)}};
-          event_sinks_[player_id]->Success(flutter::EncodableValue(map));
+          SendPlayerEvent(player_id, std::move(map));
         };
 
     LogListener log_listener = [this](const std::string &player_id,
@@ -390,7 +414,7 @@ class AudioplayersTizenPlugin : public flutter::Plugin {
           {flutter::EncodableValue("event"),
            flutter::EncodableValue(kAudioLogEvent)},
           {flutter::EncodableValue("value"), flutter::EncodableValue(message)}};
-      event_sinks_[player_id]->Success(flutter::EncodableValue(map));
+      SendPlayerEvent(player_id, std::move(map));
     };
 
     auto player = std::make_unique<AudioPlayer>(
@@ -409,7 +433,9 @@ class AudioplayersTizenPlugin : public flutter::Plugin {
         {flutter::EncodableValue("event"),
          flutter::EncodableValue("audio.onLog")},
         {flutter::EncodableValue("value"), flutter::EncodableValue(message)}};
-    global_event_sinks_->Success(flutter::EncodableValue(map));
+    if (global_event_sinks_) {
+      global_event_sinks_->Success(flutter::EncodableValue(map));
+    }
   }
 
   std::map<std::string, std::unique_ptr<AudioPlayer>> audio_players_;

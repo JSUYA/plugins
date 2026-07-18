@@ -310,6 +310,25 @@ void main() {
       await platform.create(playerId);
     });
 
+    testWidgets('global init disposes all players', (tester) async {
+      const secondPlayerId = 'secondPlayerId';
+      await platform.create(secondPlayerId);
+
+      await GlobalAudioplayersPlatformInterface.instance.init();
+
+      await expectLater(
+        platform.stop(playerId),
+        throwsA(isA<PlatformException>()),
+      );
+      await expectLater(
+        platform.stop(secondPlayerId),
+        throwsA(isA<PlatformException>()),
+      );
+
+      // Recreate the primary player for tearDown.
+      await platform.create(playerId);
+    });
+
     if (features.hasVolume) {
       for (final td in assetTestDataList) {
         testWidgets('#volume ${td.source}', (tester) async {
@@ -477,6 +496,18 @@ void main() {
       }
     });
 
+    testWidgets('Drops events after cancel', (tester) async {
+      final eventSub = platform.getEventStream(playerId).listen(null);
+      await eventSub.cancel();
+
+      await platform.emitLog(playerId, 'IgnoredLog');
+      await platform.emitError(playerId, 'IgnoredCode', 'IgnoredMessage');
+    });
+
+    testWidgets('Drops errors before listen', (tester) async {
+      await platform.emitError(playerId, 'IgnoredCode', 'IgnoredMessage');
+    });
+
     testWidgets('Emit platform log', (tester) async {
       final eventStream = platform.getEventStream(playerId);
       expect(
@@ -565,7 +596,6 @@ void main() {
     });
   });
 }
-
 extension on WidgetTester {
   Future<void> prepareSource({
     required String playerId,

@@ -1,3 +1,7 @@
+## 3.1.6
+
+* Fix player cleanup and event delivery when streams are not listening.
+
 ## 3.1.5
 
 * Reset the play position to 0 after `stop` (best-effort) to match other platforms.
