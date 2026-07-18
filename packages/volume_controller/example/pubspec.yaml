@@ -1,0 +1,27 @@
+name: volume_controller_example
+description: Demonstrates how to use the volume_controller_tizen plugin.
+publish_to: "none"
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  volume_controller: ^3.4.4
+  volume_controller_tizen:
+    path: ../
+
+dev_dependencies:
+  flutter_driver:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  integration_test_tizen:
+    path: ../../integration_test/
+
+flutter:
+  uses-material-design: true
