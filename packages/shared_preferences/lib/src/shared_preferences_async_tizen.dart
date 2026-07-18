@@ -10,6 +10,8 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 import 'package:shared_preferences_platform_interface/types.dart';
 import 'package:tizen_interop/6.0/tizen.dart';
 
+import 'preference_value_codec.dart';
+
 /// The Tizen implementation of [SharedPreferencesAsyncPlatform].
 ///
 /// This class implements the `package:shared_preferences` functionality for Tizen.
@@ -18,8 +20,6 @@ base class SharedPreferencesAsyncTizen extends SharedPreferencesAsyncPlatform {
   static void register() {
     SharedPreferencesAsyncPlatform.instance = SharedPreferencesAsyncTizen();
   }
-
-  static const String _separator = '␞';
 
   @override
   Future<void> setString(
@@ -30,7 +30,12 @@ base class SharedPreferencesAsyncTizen extends SharedPreferencesAsyncPlatform {
     using((Arena arena) {
       final Pointer<Char> pKey = key.toNativeChar(allocator: arena);
       _checkResult(
-        tizen.preference_set_string(pKey, value.toNativeChar(allocator: arena)),
+        tizen.preference_set_string(
+          pKey,
+          PreferenceValueCodec.encodeString(
+            value,
+          ).toNativeChar(allocator: arena),
+        ),
       );
     });
   }
@@ -58,16 +63,12 @@ base class SharedPreferencesAsyncTizen extends SharedPreferencesAsyncPlatform {
       _checkResult(
         tizen.preference_set_string(
           pKey,
-          _joinStringList(value).toNativeChar(allocator: arena),
+          PreferenceValueCodec.encodeStringList(
+            value,
+          ).toNativeChar(allocator: arena),
         ),
       );
     });
-  }
-
-  String _joinStringList(List<String> list) {
-    return list.isEmpty
-        ? _separator
-        : _separator + list.join(_separator) + _separator;
   }
 
   @override
@@ -107,7 +108,11 @@ base class SharedPreferencesAsyncTizen extends SharedPreferencesAsyncPlatform {
         final Pointer<Char> pString = ppString.value;
         final String stringValue = pString.toDartString();
         arena.using(pString, calloc.free);
-        value = stringValue;
+        final Object decoded = PreferenceValueCodec.decode(stringValue);
+        if (decoded is! String) {
+          throw TypeError();
+        }
+        value = decoded;
       }
     });
     return value;
@@ -168,14 +173,11 @@ base class SharedPreferencesAsyncTizen extends SharedPreferencesAsyncPlatform {
         final Pointer<Char> pString = ppString.value;
         final String stringValue = pString.toDartString();
         arena.using(pString, calloc.free);
-        if (stringValue == _separator) {
-          value = <String>[];
-        } else if (stringValue.contains(_separator)) {
-          final List<String> list = stringValue.split(_separator);
-          value = list.getRange(1, list.length - 1).toList();
-        } else {
+        final Object decoded = PreferenceValueCodec.decode(stringValue);
+        if (decoded is! List<String>) {
           throw TypeError();
         }
+        value = decoded;
       }
     });
     return value;
@@ -273,14 +275,7 @@ base class SharedPreferencesAsyncTizen extends SharedPreferencesAsyncPlatform {
         if (tizen.preference_get_string(pKey, ppString) == 0) {
           final Pointer<Char> pString = ppString.value;
           final String stringValue = pString.toDartString();
-          if (stringValue == _separator) {
-            _preferences![key] = <String>[];
-          } else if (stringValue.contains(_separator)) {
-            final List<String> list = stringValue.split(_separator);
-            _preferences![key] = list.getRange(1, list.length - 1).toList();
-          } else {
-            _preferences![key] = stringValue;
-          }
+          _preferences![key] = PreferenceValueCodec.decode(stringValue);
           arena.using(pString, calloc.free);
           return;
         }

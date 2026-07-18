@@ -9,6 +9,8 @@ import 'package:ffi/ffi.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 import 'package:shared_preferences_platform_interface/types.dart';
 import 'package:tizen_interop/6.0/tizen.dart';
+
+import 'preference_value_codec.dart';
 import 'shared_preferences_async_tizen.dart';
 
 /// The Tizen implementation of [SharedPreferencesStorePlatform].
@@ -24,8 +26,6 @@ class SharedPreferencesPlugin extends SharedPreferencesStorePlatform {
   static const String _defaultPrefix = 'flutter.';
 
   static Map<String, Object>? _cachedPreferences;
-  static const String _separator = '␞';
-
   static bool _preferenceItemCallback(Pointer<Char> pKey, Pointer<Void> data) {
     if (pKey == nullptr) {
       return false;
@@ -55,14 +55,7 @@ class SharedPreferencesPlugin extends SharedPreferencesStorePlatform {
       if (tizen.preference_get_string(pKey, ppString) == 0) {
         final Pointer<Char> pString = ppString.value;
         final String stringValue = pString.toDartString();
-        if (stringValue == _separator) {
-          _cachedPreferences![key] = <String>[];
-        } else if (stringValue.contains(_separator)) {
-          final List<String> list = stringValue.split(_separator);
-          _cachedPreferences![key] = list.getRange(1, list.length - 1).toList();
-        } else {
-          _cachedPreferences![key] = stringValue;
-        }
+        _cachedPreferences![key] = PreferenceValueCodec.decode(stringValue);
         arena.using(pString, calloc.free);
         return;
       }
@@ -140,8 +133,9 @@ class SharedPreferencesPlugin extends SharedPreferencesStorePlatform {
       _preferences,
     );
     withPrefix.removeWhere(
-      (String key, _) => !(key.startsWith(filter.prefix) &&
-          (filter.allowList?.contains(key) ?? true)),
+      (String key, _) =>
+          !(key.startsWith(filter.prefix) &&
+              (filter.allowList?.contains(key) ?? true)),
     );
     return withPrefix;
   }
@@ -172,12 +166,14 @@ class SharedPreferencesPlugin extends SharedPreferencesStorePlatform {
         case 'String':
           return tizen.preference_set_string(
             pKey,
-            (value as String).toNativeChar(allocator: arena),
+            PreferenceValueCodec.encodeString(
+              value as String,
+            ).toNativeChar(allocator: arena),
           );
         case 'StringList':
           return tizen.preference_set_string(
             pKey,
-            _joinStringList(
+            PreferenceValueCodec.encodeStringList(
               value as List<String>,
             ).toNativeChar(allocator: arena),
           );
@@ -190,11 +186,5 @@ class SharedPreferencesPlugin extends SharedPreferencesStorePlatform {
       return true;
     }
     return false;
-  }
-
-  String _joinStringList(List<String> list) {
-    return list.isEmpty
-        ? _separator
-        : _separator + list.join(_separator) + _separator;
   }
 }
