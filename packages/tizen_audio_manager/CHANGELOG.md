@@ -1,5 +1,7 @@
-## NEXT
+## 0.1.2
 
+* Handle volume callback registration and teardown safely.
+* Prevent exceptions from escaping native volume callbacks.
 * Fix new lint warnings.
 * Update minimum Flutter and Dart version to 3.13 and 3.1.
 * Update code format.

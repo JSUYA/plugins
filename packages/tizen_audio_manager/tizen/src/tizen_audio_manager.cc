@@ -4,6 +4,7 @@
 
 #include "tizen_audio_manager.h"
 
+#include <exception>
 #include <memory>
 #include <string>
 #include <vector>
@@ -120,21 +121,31 @@ int32_t TizenAudioManager::GetVolume(const std::string &type) {
 
 void TizenAudioManager::RegisterVolumeChangedCallback(
     OnVolumeChanged volume_changed_callback) {
+  UnregisterVolumeChangedCallback();
   volume_changed_callback_ = volume_changed_callback;
   const int ret = sound_manager_add_volume_changed_cb(
       [](sound_type_e type, unsigned int volume, void *user_data) {
-        TizenAudioManager *audio_manager =
-            static_cast<TizenAudioManager *>(user_data);
-        std::string type_str;
-        if (!ConvertSoundTypeToString(type, type_str)) {
-          throw TizenAudioManagerError("UnknownType",
-                                       "Failed to convert type to string.");
+        try {
+          TizenAudioManager *audio_manager =
+              static_cast<TizenAudioManager *>(user_data);
+          std::string type_str;
+          if (!ConvertSoundTypeToString(type, type_str)) {
+            LOG_ERROR("Failed to convert type to string.");
+            return;
+          }
+          if (audio_manager->volume_changed_callback_) {
+            audio_manager->volume_changed_callback_(type_str, volume);
+          }
+        } catch (const std::exception &error) {
+          LOG_ERROR("Volume changed callback failed: %s", error.what());
+        } catch (...) {
+          LOG_ERROR("Volume changed callback failed.");
         }
-        audio_manager->volume_changed_callback_(type_str, volume);
       },
       this, &volume_changed_cb_id_);
   if (ret != SOUND_MANAGER_ERROR_NONE) {
     LOG_ERROR("Failed to get current audio type: %s", get_error_message(ret));
+    volume_changed_callback_ = nullptr;
     throw TizenAudioManagerError("sound_manager_add_volume_changed_cb",
                                  get_error_message(ret));
   }

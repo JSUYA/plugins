@@ -43,20 +43,32 @@ static bool GetValueFromEncodableMap(const flutter::EncodableMap *map,
 }
 
 class TizenAudioManagerStreamHandler : public FlStreamHandler {
+ public:
+  ~TizenAudioManagerStreamHandler() override {
+    audio_manager_.UnregisterVolumeChangedCallback();
+    events_.reset();
+  }
+
  protected:
   std::unique_ptr<FlStreamHandlerError> OnListenInternal(
       const flutter::EncodableValue *arguments,
       std::unique_ptr<FlEventSink> &&events) override {
     events_ = std::move(events);
-    audio_manager_.RegisterVolumeChangedCallback(
-        [events = events_.get()](std::string type_str, int32_t volume) {
-          flutter::EncodableMap msg;
-          msg[flutter::EncodableValue("type")] =
-              flutter::EncodableValue(type_str);
-          msg[flutter::EncodableValue("level")] =
-              flutter::EncodableValue(static_cast<int32_t>(volume));
-          events->Success(flutter::EncodableValue(msg));
-        });
+    try {
+      audio_manager_.RegisterVolumeChangedCallback(
+          [events = events_.get()](std::string type_str, int32_t volume) {
+            flutter::EncodableMap msg;
+            msg[flutter::EncodableValue("type")] =
+                flutter::EncodableValue(type_str);
+            msg[flutter::EncodableValue("level")] =
+                flutter::EncodableValue(static_cast<int32_t>(volume));
+            events->Success(flutter::EncodableValue(msg));
+          });
+    } catch (const TizenAudioManagerError &error) {
+      events_.reset();
+      return std::make_unique<FlStreamHandlerError>(error.code(),
+                                                    error.message(), nullptr);
+    }
     return nullptr;
   }
 
@@ -96,7 +108,11 @@ class TizenAudioManagerPlugin : public flutter::Plugin {
 
   TizenAudioManagerPlugin() {}
 
-  virtual ~TizenAudioManagerPlugin() {}
+  virtual ~TizenAudioManagerPlugin() {
+    if (event_channel_) {
+      event_channel_->SetStreamHandler(nullptr);
+    }
+  }
 
  private:
   void HandleMethodCall(const FlMethodCall &method_call,
