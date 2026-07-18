@@ -1,0 +1,26 @@
+name: flutter_local_notifications_tizen
+description: Tizen implementation of the flutter_local_notifications plugin.
+homepage: https://github.com/flutter-tizen/plugins
+repository: https://github.com/flutter-tizen/plugins/tree/master/packages/flutter_local_notifications
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.0
+  flutter: ">=3.38.1"
+
+dependencies:
+  ffi: ^2.1.4
+  flutter:
+    sdk: flutter
+  flutter_local_notifications_linux: ^8.0.1-dev.1
+  flutter_local_notifications_platform_interface: ^12.0.0-dev.1
+  timezone: ^0.11.0
+  tizen_app_control: ^0.2.3
+  tizen_app_manager: ^0.2.0
+  tizen_interop: ^0.3.0
+
+flutter:
+  plugin:
+    platforms:
+      tizen:
+        dartPluginClass: FlutterLocalNotificationsTizenPlugin
