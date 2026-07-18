@@ -277,10 +277,13 @@ std::string WebView::GetNavigationDelegateChannelName() {
 }
 
 void WebView::Dispose() {
-  if (disposed_) {
-    return;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (is_disposing_) {
+      return;
+    }
+    is_disposing_ = true;
   }
-  disposed_ = true;
   initialized_ = false;
 
   // Set this first so that dispatcher_ callbacks already queued on the main
@@ -303,7 +306,6 @@ void WebView::Dispose() {
   std::shared_ptr<BufferPool> pool;
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    is_disposing_ = true;
     working_surface_ = nullptr;
     candidate_surface_ = nullptr;
     rendered_surface_ = nullptr;
@@ -576,9 +578,9 @@ bool WebView::SendKey(const char* key, const char* string, const char* compose,
     std::shared_ptr<bool> is_alive;
   };
 
-  auto param = std::make_unique<Param>(Param{
-      webview_instance_, KeyToKeyValue(key, is_shift_pressed), is_down,
-      is_alive_});
+  auto param = std::make_unique<Param>(
+      Param{webview_instance_, KeyToKeyValue(key, is_shift_pressed), is_down,
+            is_alive_});
 
   if (param->key_value == LWE::KeyValue::TVReturnKey &&
       webview_instance_->CanGoBack()) {

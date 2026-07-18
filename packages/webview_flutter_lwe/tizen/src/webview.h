@@ -52,7 +52,7 @@ class WebView : public PlatformView {
 
   LWE::WebContainer* GetWebViewInstance() { return webview_instance_; }
 
-  bool IsInitialized() const { return initialized_ && !disposed_; }
+  bool IsInitialized() const { return initialized_; }
 
   FlutterDesktopGpuSurfaceDescriptor* ObtainGpuSurface(size_t width,
                                                        size_t height);
@@ -81,7 +81,6 @@ class WebView : public PlatformView {
   bool has_navigation_delegate_ = false;
   bool is_disposing_ = false;
   bool initialized_ = false;
-  bool disposed_ = false;
   bool texture_registered_ = false;
   // Set to false at the start of Dispose(). Every dispatcher_ callback that
   // captures `this` also captures a copy of this shared_ptr, so a callback
