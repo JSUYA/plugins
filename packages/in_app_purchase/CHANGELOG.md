@@ -1,3 +1,7 @@
+## 0.1.6
+
+* Fix billing initialization, callback, and response parsing errors.
+
 ## 0.1.5
 
 * Update in_app_purchase to 3.2.3

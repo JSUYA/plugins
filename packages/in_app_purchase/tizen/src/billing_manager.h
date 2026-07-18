@@ -215,7 +215,7 @@ class BillingManager {
   static void OnAvailable(const char *detail_result, void *user_data);
   static void OnVerify(const char *detail_result, void *user_data);
 
-  billing_server_type billing_server_type_;
+  billing_server_type billing_server_type_ = SERVERTYPE_NONE;
 
   FunctionResult<bool> is_available_callback_;
   FunctionResult<BillingBuyData> buy_item_callback_;

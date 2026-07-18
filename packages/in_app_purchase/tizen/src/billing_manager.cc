@@ -8,6 +8,7 @@
 #include <flutter/encodable_value.h>
 #include <flutter/standard_method_codec.h>
 
+#include <cstdlib>
 #include <mutex>
 #include <string>
 #include <variant>
@@ -75,18 +76,22 @@ std::string BillingManager::GetCustomId() {
 
 std::string BillingManager::GetCountryCode() {
   void *handle = dlopen("libvconf.so.0.3.1", RTLD_LAZY);
-  char *country_code = "";
+  std::string result;
   if (!handle) {
     LOG_ERROR("[BillingManager] Fail to open vconf APIs.");
   } else {
     FuncVconfGetStr vconf_get_str =
         reinterpret_cast<FuncVconfGetStr>(dlsym(handle, "vconf_get_str"));
     if (vconf_get_str) {
-      country_code = vconf_get_str("db/comss/countrycode");
+      char *country_code = vconf_get_str("db/comss/countrycode");
+      if (country_code) {
+        result = country_code;
+        free(country_code);
+      }
     }
     dlclose(handle);
   }
-  return country_code;
+  return result;
 }
 
 bool BillingManager::IsAvailable(FunctionResult<bool> result) {
@@ -237,26 +242,21 @@ void BillingManager::OnAvailable(const char *detail_result, void *user_data) {
 
   BillingManager *self = reinterpret_cast<BillingManager *>(user_data);
 
-  if (self->is_available_callback_) {
-    rapidjson::Document doc;
-    doc.Parse(detail_result);
-    if (doc.HasParseError()) {
-      self->is_available_callback_(
-          FlutterError("Operation failed", "OnAvailable parse error."));
-      self->is_available_callback_ = nullptr;
-      return;
-    }
-
-    std::string status = GetJsonValue<std::string>(doc, "status", "Unknown");
-    if (status == "100000")
-      self->is_available_callback_(true);
-    else
-      self->is_available_callback_(false);
-  } else {
-    self->is_available_callback_(
-        FlutterError("Invalid argument", "is_available_callback_ is null !"));
+  auto callback = std::move(self->is_available_callback_);
+  if (!callback) {
+    LOG_WARN("[BillingManager] Ignore duplicate availability callback.");
+    return;
   }
-  self->is_available_callback_ = nullptr;
+
+  rapidjson::Document doc;
+  doc.Parse(detail_result);
+  if (doc.HasParseError()) {
+    callback(FlutterError("Operation failed", "OnAvailable parse error."));
+    return;
+  }
+
+  std::string status = GetJsonValue<std::string>(doc, "status", "Unknown");
+  callback(status == "100000");
 }
 
 void BillingManager::OnProducts(const char *detail_result, void *user_data) {
@@ -264,13 +264,12 @@ void BillingManager::OnProducts(const char *detail_result, void *user_data) {
 
   BillingManager *self = reinterpret_cast<BillingManager *>(user_data);
 
-  if (self->get_product_list_callback_) {
+  auto callback = std::move(self->get_product_list_callback_);
+  if (callback) {
     rapidjson::Document doc;
     doc.Parse(detail_result);
     if (doc.HasParseError()) {
-      self->get_product_list_callback_(
-          FlutterError("Operation failed", "OnProducts parse error."));
-      self->get_product_list_callback_ = nullptr;
+      callback(FlutterError("Operation failed", "OnProducts parse error."));
       return;
     }
     std::string cp_status =
@@ -322,12 +321,10 @@ void BillingManager::OnProducts(const char *detail_result, void *user_data) {
     }
     ProductsListApiResult products_list(cp_status, &cp_result, total_count,
                                         check_value, item_details);
-    self->get_product_list_callback_(products_list);
+    callback(products_list);
   } else {
-    self->get_product_list_callback_(FlutterError(
-        "Invalid argument", "get_product_list_callback_ is null !"));
+    LOG_WARN("[BillingManager] Ignore duplicate product-list callback.");
   }
-  self->get_product_list_callback_ = nullptr;
 }
 
 void BillingManager::OnPurchase(const char *detail_result, void *user_data) {
@@ -335,13 +332,12 @@ void BillingManager::OnPurchase(const char *detail_result, void *user_data) {
 
   BillingManager *self = reinterpret_cast<BillingManager *>(user_data);
 
-  if (self->get_purchase_list_callback_) {
+  auto callback = std::move(self->get_purchase_list_callback_);
+  if (callback) {
     rapidjson::Document doc;
     doc.Parse(detail_result);
     if (doc.HasParseError()) {
-      self->get_purchase_list_callback_(
-          FlutterError("Operation failed", "OnPurchase parse error."));
-      self->get_purchase_list_callback_ = nullptr;
+      callback(FlutterError("Operation failed", "OnPurchase parse error."));
       return;
     }
     std::string cp_status =
@@ -366,7 +362,7 @@ void BillingManager::OnPurchase(const char *detail_result, void *user_data) {
             GetJsonValue<std::string>(jarray[i], "ItemID", "Unknown");
         std::string item_title =
             GetJsonValue<std::string>(jarray[i], "ItemTitle", "Unknown");
-        int64_t item_type = GetJsonValue<int64_t>(jarray[i], "ItemType" - 1);
+        int64_t item_type = GetJsonValue<int64_t>(jarray[i], "ItemType", -1);
         std::string order_time =
             GetJsonValue<std::string>(jarray[i], "OrderTime", "Unknown");
         int64_t period = GetJsonValue<int64_t>(jarray[i], "Period", -1);
@@ -420,12 +416,10 @@ void BillingManager::OnPurchase(const char *detail_result, void *user_data) {
     }
     GetUserPurchaseListAPIResult purchase_list(
         cp_status, &cp_result, total_count, check_value, invoice_details);
-    self->get_purchase_list_callback_(purchase_list);
+    callback(purchase_list);
   } else {
-    self->get_purchase_list_callback_(FlutterError(
-        "Invalid argument", "get_purchase_list_callback_ is null !"));
+    LOG_WARN("[BillingManager] Ignore duplicate purchase-list callback.");
   }
-  self->get_purchase_list_callback_ = nullptr;
 }
 
 bool BillingManager::OnBuyItem(const char *pay_result, const char *detail_info,
@@ -435,7 +429,12 @@ bool BillingManager::OnBuyItem(const char *pay_result, const char *detail_info,
 
   BillingManager *self = reinterpret_cast<BillingManager *>(user_data);
 
-  if (self->buy_item_callback_) {
+  FunctionResult<BillingBuyData> callback;
+  {
+    std::lock_guard<std::mutex> lock(self->mutex_);
+    callback = std::move(self->buy_item_callback_);
+  }
+  if (callback) {
     size_t len = strlen(pay_result);
     std::string pay_res(pay_result, len);
 
@@ -443,9 +442,7 @@ bool BillingManager::OnBuyItem(const char *pay_result, const char *detail_info,
     rapidjson::Document doc;
     doc.Parse(detail_info);
     if (doc.HasParseError()) {
-      self->buy_item_callback_(
-          FlutterError("Operation failed", "OnBuyItem parse error."));
-      self->buy_item_callback_ = nullptr;
+      callback(FlutterError("Operation failed", "OnBuyItem parse error."));
       return false;
     }
     for (auto it = doc.MemberBegin(); it != doc.MemberEnd(); ++it) {
@@ -465,12 +462,10 @@ bool BillingManager::OnBuyItem(const char *pay_result, const char *detail_info,
       }
     }
     BillingBuyData buy_data(pay_res, pay_details);
-    self->buy_item_callback_(buy_data);
+    callback(buy_data);
   } else {
-    self->buy_item_callback_(
-        FlutterError("Invalid argument", "buy_item_callback_ is null !"));
+    LOG_WARN("[BillingManager] Ignore duplicate buy-item callback.");
   }
-  self->buy_item_callback_ = nullptr;
   return true;
 }
 
@@ -479,13 +474,12 @@ void BillingManager::OnVerify(const char *detail_result, void *user_data) {
 
   BillingManager *self = reinterpret_cast<BillingManager *>(user_data);
 
-  if (self->verify_invoice_callback_) {
+  auto callback = std::move(self->verify_invoice_callback_);
+  if (callback) {
     rapidjson::Document doc;
     doc.Parse(detail_result);
     if (doc.HasParseError()) {
-      self->verify_invoice_callback_(
-          FlutterError("Operation failed", "OnVerify parse error."));
-      self->verify_invoice_callback_ = nullptr;
+      callback(FlutterError("Operation failed", "OnVerify parse error."));
       return;
     }
     std::string cp_status =
@@ -497,16 +491,19 @@ void BillingManager::OnVerify(const char *detail_result, void *user_data) {
         GetJsonValue<std::string>(doc, "InvoiceID", "Unknown");
     VerifyInvoiceAPIResult verify_invoice(cp_status, &cp_result, app_id,
                                           invoice_id);
-    self->verify_invoice_callback_(verify_invoice);
+    callback(verify_invoice);
   } else {
-    self->verify_invoice_callback_(
-        FlutterError("Invalid argument", "verify_invoice_callback_ is null !"));
+    LOG_WARN("[BillingManager] Ignore duplicate verify callback.");
   }
-  self->verify_invoice_callback_ = nullptr;
 }
 
 void BillingManager::Dispose() {
   LOG_INFO("[BillingManager] Dispose billing.");
+  BillingWrapper::GetInstance().service_billing_set_buyitem_cb(nullptr,
+                                                               nullptr);
+
+  std::lock_guard<std::mutex> lock(mutex_);
+  buy_item_callback_ = nullptr;
 }
 
 }  // namespace in_app_purchase_tizen

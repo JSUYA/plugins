@@ -76,6 +76,11 @@ void InAppPurchaseTizenPlugin::RegisterWithRegistrar(
 void InAppPurchaseTizenPlugin::GetProductsList(
     const ProductMessage &product,
     std::function<void(ErrorOr<ProductsListApiResult> reply)> result) {
+  if (!billing_) {
+    result(FlutterError("Operation failed", "Billing initialization failed."));
+    return;
+  }
+
   std::string app_id = product.app_id();
   std::string country_code = product.country_code();
   int64_t page_size = product.page_size();
@@ -83,8 +88,7 @@ void InAppPurchaseTizenPlugin::GetProductsList(
   std::string check_value = product.check_value();
 
   if (!billing_->GetProductList(app_id.c_str(), country_code.c_str(), page_size,
-                                page_num, check_value.c_str(),
-                                std::move(result))) {
+                                page_num, check_value.c_str(), result)) {
     result(FlutterError("Operation failed", "get product list failed"));
   }
 }
@@ -92,6 +96,11 @@ void InAppPurchaseTizenPlugin::GetProductsList(
 void InAppPurchaseTizenPlugin::GetUserPurchaseList(
     const PurchaseMessage &purchase,
     std::function<void(ErrorOr<GetUserPurchaseListAPIResult> reply)> result) {
+  if (!billing_) {
+    result(FlutterError("Operation failed", "Billing initialization failed."));
+    return;
+  }
+
   std::string app_id = purchase.app_id();
   std::string custom_id = purchase.custom_id();
   std::string country_code = purchase.country_code();
@@ -100,7 +109,7 @@ void InAppPurchaseTizenPlugin::GetUserPurchaseList(
 
   if (!billing_->GetPurchaseList(app_id.c_str(), custom_id.c_str(),
                                  country_code.c_str(), page_num,
-                                 check_value.c_str(), std::move(result))) {
+                                 check_value.c_str(), result)) {
     result(FlutterError("Operation failed", "get purchase list failed"));
   }
 }
@@ -108,6 +117,11 @@ void InAppPurchaseTizenPlugin::GetUserPurchaseList(
 void InAppPurchaseTizenPlugin::BuyItem(
     const BuyInfoMessage &buy_info,
     std::function<void(ErrorOr<BillingBuyData> reply)> result) {
+  if (!billing_) {
+    result(FlutterError("Operation failed", "Billing initialization failed."));
+    return;
+  }
+
   OrderDetails pay_details = buy_info.pay_detials();
   std::string app_id = buy_info.app_id();
   std::string pay_details_json;
@@ -139,8 +153,7 @@ void InAppPurchaseTizenPlugin::BuyItem(
     pay_details_json = buffer.GetString();
   }
 
-  if (!billing_->BuyItem(app_id.c_str(), pay_details_json.c_str(),
-                         std::move(result))) {
+  if (!billing_->BuyItem(app_id.c_str(), pay_details_json.c_str(), result)) {
     result(FlutterError("Operation failed", "buy item failed"));
   }
 }
@@ -148,6 +161,11 @@ void InAppPurchaseTizenPlugin::BuyItem(
 void InAppPurchaseTizenPlugin::VerifyInvoice(
     const InvoiceMessage &invoice,
     std::function<void(ErrorOr<VerifyInvoiceAPIResult> reply)> result) {
+  if (!billing_) {
+    result(FlutterError("Operation failed", "Billing initialization failed."));
+    return;
+  }
+
   std::string app_id = invoice.app_id();
   std::string custom_id = invoice.custom_id();
   std::string invoice_id = invoice.invoice_id();
@@ -155,23 +173,34 @@ void InAppPurchaseTizenPlugin::VerifyInvoice(
 
   if (!billing_->VerifyInvoice(app_id.c_str(), custom_id.c_str(),
                                invoice_id.c_str(), country_code.c_str(),
-                               std::move(result))) {
+                               result)) {
     result(FlutterError("Operation failed", "invoice verify failed"));
   }
 }
 
 void InAppPurchaseTizenPlugin::IsServiceAvailable(
     std::function<void(ErrorOr<bool> reply)> result) {
-  if (!billing_->IsAvailable(std::move(result))) {
+  if (!billing_) {
+    result(FlutterError("Operation failed", "Billing initialization failed."));
+    return;
+  }
+
+  if (!billing_->IsAvailable(result)) {
     result(FlutterError("Operation failed", "billing is not available"));
   }
 }
 
 ErrorOr<std::string> InAppPurchaseTizenPlugin::GetCustomId() {
+  if (!billing_) {
+    return FlutterError("Operation failed", "Billing initialization failed.");
+  }
   return billing_->GetCustomId();
 }
 
 ErrorOr<std::string> InAppPurchaseTizenPlugin::GetCountryCode() {
+  if (!billing_) {
+    return FlutterError("Operation failed", "Billing initialization failed.");
+  }
   return billing_->GetCountryCode();
 }
 
