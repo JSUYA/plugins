@@ -33,17 +33,13 @@ class MessagePortError {
 template <class T>
 class ErrorOr {
  public:
-  ErrorOr(const T& other) { new (&vlaue_or_error_) T(other); }
+  ErrorOr(const T& other) : vlaue_or_error_(other) {}
 
-  ErrorOr(const T&& other) { vlaue_or_error_ = std::move(other); }
+  ErrorOr(T&& other) : vlaue_or_error_(std::move(other)) {}
 
-  ErrorOr(const MessagePortError& other) {
-    new (&vlaue_or_error_) MessagePortError(other);
-  }
+  ErrorOr(const MessagePortError& other) : vlaue_or_error_(other) {}
 
-  ErrorOr(const MessagePortError&& other) {
-    vlaue_or_error_ = std::move(other);
-  }
+  ErrorOr(MessagePortError&& other) : vlaue_or_error_(std::move(other)) {}
 
   bool has_error() const {
     return std::holds_alternative<MessagePortError>(vlaue_or_error_);

@@ -5,6 +5,10 @@
 * Update code format.
 * Add 5 integration test cases.
 
+## 0.3.3
+
+* Fix native result construction and malformed message handling.
+
 ## 0.3.2
 
 * Remove unnecessary `StreamHandlerError` implementation.
