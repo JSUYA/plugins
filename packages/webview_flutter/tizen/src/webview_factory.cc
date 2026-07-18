@@ -23,10 +23,9 @@ WebViewFactory::WebViewFactory(flutter::PluginRegistrar* registrar,
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           registrar->messenger(), "plugins.flutter.io/tizen_cookie_manager",
           &flutter::StandardMethodCodec::GetInstance());
-  cookie_channel_->SetMethodCallHandler(
-      [this](const auto& call, auto result) {
-        HandleCookieMethodCall(call, std::move(result));
-      });
+  cookie_channel_->SetMethodCallHandler([this](const auto& call, auto result) {
+    HandleCookieMethodCall(call, std::move(result));
+  });
 }
 
 PlatformView* WebViewFactory::Create(int view_id, double width, double height,
@@ -41,9 +40,9 @@ PlatformView* WebViewFactory::Create(int view_id, double width, double height,
     }
   }
 
-  auto webview = std::make_unique<WebView>(
-      GetPluginRegistrar(), view_id, texture_registrar_, width, height,
-      engine_policy, window_, this);
+  auto webview = std::make_unique<WebView>(GetPluginRegistrar(), view_id,
+                                           texture_registrar_, width, height,
+                                           engine_policy, window_, this);
   if (!webview->IsInitialized()) {
     return nullptr;
   }

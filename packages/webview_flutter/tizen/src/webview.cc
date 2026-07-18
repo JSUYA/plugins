@@ -448,10 +448,9 @@ bool WebView::InitWebView() {
   }
   ewk_context_cache_model_set(context, EWK_CACHE_MODEL_PRIMARY_WEBBROWSER);
 
-  EwkInternalApiBinding::GetInstance().settings.ImePanelEnabledSet(
-      settings, true);
-  EwkInternalApiBinding::GetInstance().settings.ForceZoomSet(
-      settings, true);
+  EwkInternalApiBinding::GetInstance().settings.ImePanelEnabledSet(settings,
+                                                                   true);
+  EwkInternalApiBinding::GetInstance().settings.ForceZoomSet(settings, true);
   EwkInternalApiBinding::GetInstance().view.ImeWindowSet(webview_instance_,
                                                          window_);
   EwkInternalApiBinding::GetInstance().view.KeyEventsEnabledSet(
