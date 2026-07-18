@@ -251,10 +251,9 @@ class TizenAppManagerPlugin : public flutter::Plugin {
       return;
     }
 
-    TizenAppManager &app_manager = TizenAppManager::GetInstance();
     int error = APP_MANAGER_ERROR_NONE;
     std::unique_ptr<TizenAppInfo> app_info =
-        app_manager.GetAppInfo(app_id, error);
+        TizenAppManager::GetInstance().GetAppInfo(app_id, error);
     if (!app_info) {
       result->Error(std::to_string(error), get_error_message(error));
       return;

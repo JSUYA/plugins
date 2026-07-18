@@ -68,12 +68,14 @@ void main() {
       });
 
       testWidgets('returns false for non-running app', (WidgetTester _) async {
-        expect(await AppManager.isRunning('org.tizen.nonexistent'), isFalse);
+        expect(
+          await AppManager.isRunning('org.tizen.nonexistent'),
+          isFalse,
+        );
       });
 
-      testWidgets('throws ArgumentError for empty appId', (
-        WidgetTester _,
-      ) async {
+      testWidgets('throws ArgumentError for empty appId',
+          (WidgetTester _) async {
         await expectLater(AppManager.isRunning(''), throwsArgumentError);
       });
     });
@@ -87,15 +89,13 @@ void main() {
         expect(appInfo.sharedResourcePath, isNotEmpty);
       });
 
-      testWidgets('throws ArgumentError for empty appId', (
-        WidgetTester _,
-      ) async {
+      testWidgets('throws ArgumentError for empty appId',
+          (WidgetTester _) async {
         await expectLater(AppManager.getAppInfo(''), throwsArgumentError);
       });
 
-      testWidgets('throws PlatformException for unknown appId', (
-        WidgetTester _,
-      ) async {
+      testWidgets('throws PlatformException for unknown appId',
+          (WidgetTester _) async {
         await expectLater(
           AppManager.getAppInfo('org.tizen.nonexistent'),
           throwsA(isA<PlatformException>()),
