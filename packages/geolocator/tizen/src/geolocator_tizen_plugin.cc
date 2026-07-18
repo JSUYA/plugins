@@ -139,7 +139,8 @@ class GeolocatorTizenPlugin : public flutter::Plugin {
 
   GeolocatorTizenPlugin()
       : permission_manager_(std::make_unique<PermissionManager>()),
-        location_manager_(std::make_unique<LocationManager>()) {}
+        location_manager_(std::make_unique<LocationManager>()),
+        app_settings_manager_(std::make_unique<AppSettingsManager>()) {}
 
   virtual ~GeolocatorTizenPlugin() {}
 
@@ -148,107 +149,97 @@ class GeolocatorTizenPlugin : public flutter::Plugin {
                         std::unique_ptr<FlMethodResult> result) {
     std::string method_name = method_call.method_name();
 
-    result_ = std::move(result);
-
     if (method_name == "checkPermission") {
-      OnCheckPermission();
+      OnCheckPermission(std::move(result));
     } else if (method_name == "isLocationServiceEnabled") {
-      OnIsLocationServiceEnabled();
+      OnIsLocationServiceEnabled(std::move(result));
     } else if (method_name == "requestPermission") {
-      OnRequestPermission();
+      OnRequestPermission(std::move(result));
     } else if (method_name == "getLastKnownPosition") {
-      OnGetLastKnownPosition();
+      OnGetLastKnownPosition(std::move(result));
     } else if (method_name == "getCurrentPosition") {
-      OnGetCurrentPosition();
+      OnGetCurrentPosition(std::move(result));
     } else if (method_name == "openAppSettings") {
       bool opened = app_settings_manager_->OpenAppSettings();
-      SendResult(flutter::EncodableValue(opened));
+      result->Success(flutter::EncodableValue(opened));
     } else if (method_name == "openLocationSettings") {
       bool opened = app_settings_manager_->OpenLocationSettings();
-      SendResult(flutter::EncodableValue(opened));
+      result->Success(flutter::EncodableValue(opened));
     } else {
       result->NotImplemented();
     }
   }
 
-  void OnCheckPermission() {
-    PermissionStatus result =
+  void OnCheckPermission(std::unique_ptr<FlMethodResult> result) {
+    PermissionStatus permission_status =
         permission_manager_->CheckPermission(kPrivilegeLocation);
-    if (result == PermissionStatus::kError) {
-      SendErrorResult("Operation failed", "Permission check failed.");
+    if (permission_status == PermissionStatus::kError) {
+      result->Error("Operation failed", "Permission check failed.");
       return;
     }
-    SendResult(flutter::EncodableValue(static_cast<int>(result)));
+    result->Success(
+        flutter::EncodableValue(static_cast<int>(permission_status)));
   }
 
-  void OnIsLocationServiceEnabled() {
+  void OnIsLocationServiceEnabled(std::unique_ptr<FlMethodResult> result) {
     try {
       bool is_enabled = location_manager_->IsLocationServiceEnabled();
-      SendResult(flutter::EncodableValue(is_enabled));
+      result->Success(flutter::EncodableValue(is_enabled));
     } catch (const LocationManagerError &error) {
-      SendErrorResult("Operation failed", error.GetErrorString());
+      result->Error("Operation failed", error.GetErrorString());
     }
   }
 
-  void OnRequestPermission() {
-    PermissionStatus result =
+  void OnRequestPermission(std::unique_ptr<FlMethodResult> result) {
+    PermissionStatus permission_status =
         permission_manager_->RequestPermission(kPrivilegeLocation);
 
-    if (result == PermissionStatus::kError) {
-      SendErrorResult("Operation failed", "Permission request failed.");
+    if (permission_status == PermissionStatus::kError) {
+      result->Error("Operation failed", "Permission request failed.");
       return;
-    } else if (result == PermissionStatus::kDeniedForever ||
-               result == PermissionStatus::kDenied) {
-      SendErrorResult("Permission denied", "Permission denied by user.");
+    } else if (permission_status == PermissionStatus::kDeniedForever ||
+               permission_status == PermissionStatus::kDenied) {
+      result->Error("Permission denied", "Permission denied by user.");
       return;
     }
-    SendResult(flutter::EncodableValue(static_cast<int>(result)));
+    result->Success(
+        flutter::EncodableValue(static_cast<int>(permission_status)));
   }
 
-  void OnGetLastKnownPosition() {
+  void OnGetLastKnownPosition(std::unique_ptr<FlMethodResult> result) {
     try {
       Position position = location_manager_->GetLastKnownPosition();
-      SendResult(position.ToEncodableValue());
+      result->Success(position.ToEncodableValue());
     } catch (const LocationManagerError &error) {
-      SendErrorResult("Operation failed", error.GetErrorString());
+      result->Error("Operation failed", error.GetErrorString());
     }
   }
 
-  void OnGetCurrentPosition() {
-    auto result_ptr = result_.release();
+  void OnGetCurrentPosition(std::unique_ptr<FlMethodResult> result) {
+    if (current_position_result_) {
+      result->Error("Operation failed",
+                    "A position request is already in progress.");
+      return;
+    }
+
+    current_position_result_ = std::move(result);
     location_manager_->GetCurrentPosition(
-        [result_ptr](Position position) {
-          if (result_ptr) {
-            result_ptr->Success(position.ToEncodableValue());
-            delete result_ptr;
+        [this](Position position) {
+          if (current_position_result_) {
+            current_position_result_->Success(position.ToEncodableValue());
+            current_position_result_.reset();
           }
         },
-        [result_ptr](LocationManagerError error) {
-          if (result_ptr) {
-            result_ptr->Error("Operation failed", error.GetErrorString());
-            delete result_ptr;
+        [this](LocationManagerError error) {
+          if (current_position_result_) {
+            current_position_result_->Error("Operation failed",
+                                            error.GetErrorString());
+            current_position_result_.reset();
           }
         });
   }
 
-  void SendResult(const flutter::EncodableValue &result) {
-    if (!result_) {
-      return;
-    }
-    result_->Success(result);
-    result_ = nullptr;
-  }
-
-  void SendErrorResult(const std::string &error_code,
-                       const std::string &error_message) {
-    if (!result_) {
-      return;
-    }
-    result_->Error(error_code, error_message);
-    result_ = nullptr;
-  }
-
-  std::unique_ptr<FlMethodResult> result_;
+  std::unique_ptr<FlMethodResult> current_position_result_;
   std::unique_ptr<PermissionManager> permission_manager_;
   std::unique_ptr<LocationManager> location_manager_;
   std::unique_ptr<AppSettingsManager> app_settings_manager_;

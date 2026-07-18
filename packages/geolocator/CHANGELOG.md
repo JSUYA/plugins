@@ -1,3 +1,7 @@
+## 1.0.9
+
+* Fix crashes and incomplete results in geolocation method calls.
+
 ## 1.0.8
 
 * Remove Ecore API.
