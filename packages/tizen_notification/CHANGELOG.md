@@ -1,3 +1,7 @@
+## 0.2.2
+
+* Fix notification input validation and native handle cleanup.
+
 ## 0.2.1
 
 * Add regression integration tests.

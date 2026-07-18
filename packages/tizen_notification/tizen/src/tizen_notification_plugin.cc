@@ -104,15 +104,18 @@ class TizenNotificationPlugin : public flutter::Plugin {
     return NOTIFICATION_VIBRATION_TYPE_NONE;
   }
 
-  std::string ToAbsolutePath(const std::string &path) {
+  bool ToAbsolutePath(std::string &path) {
     std::filesystem::path filesystem_path(path);
     if (filesystem_path.is_absolute()) {
-      return path;
+      return true;
     }
     char *res_path = app_get_shared_resource_path();
-    std::string result = std::string(res_path) + path;
+    if (!res_path) {
+      return false;
+    }
+    path = std::string(res_path) + path;
     free(res_path);
-    return result;
+    return true;
   }
 
   void HandleMethodCall(
@@ -125,6 +128,7 @@ class TizenNotificationPlugin : public flutter::Plugin {
           std::get_if<flutter::EncodableMap>(method_call.arguments());
       if (!arguments) {
         result->Error("Invalid argument", "The argument must be a map.");
+        return;
       }
 
       std::string id;
@@ -137,6 +141,8 @@ class TizenNotificationPlugin : public flutter::Plugin {
       if (handle) {
         // The notification with the ID already exists. Delete it.
         int ret = notification_delete(handle);
+        FreeNotification(handle);
+        handle = nullptr;
         if (ret != NOTIFICATION_ERROR_NONE) {
           result->Error("notification_delete failed", get_error_message(ret));
           return;
@@ -203,13 +209,28 @@ class TizenNotificationPlugin : public flutter::Plugin {
       flutter::EncodableMap images;
       if (GetValueFromEncodableMap(arguments, "image", images)) {
         for (const auto &image : images) {
-          std::string type;
-          if (std::holds_alternative<std::string>(image.first)) {
-            type = std::get<std::string>(image.first);
+          if (!std::holds_alternative<std::string>(image.first)) {
+            FreeNotification(handle);
+            result->Error("Invalid argument",
+                          "Notification image keys must be strings.");
+            return;
           }
-          std::string path;
-          if (std::holds_alternative<std::string>(image.second)) {
-            path = ToAbsolutePath(std::get<std::string>(image.second));
+          const std::string &type = std::get<std::string>(image.first);
+          if (image.second.IsNull()) {
+            continue;
+          }
+          if (!std::holds_alternative<std::string>(image.second)) {
+            FreeNotification(handle);
+            result->Error("Invalid argument",
+                          "Notification image paths must be strings.");
+            return;
+          }
+          std::string path = std::get<std::string>(image.second);
+          if (!ToAbsolutePath(path)) {
+            FreeNotification(handle);
+            result->Error("storage_error",
+                          "Failed to get the shared resource path.");
+            return;
           }
           ret = notification_set_image(handle, StringToImageType(type),
                                        path.c_str());
@@ -251,7 +272,12 @@ class TizenNotificationPlugin : public flutter::Plugin {
         GetValueFromEncodableMap(&sound, "type", type);
         std::string path;
         if (GetValueFromEncodableMap(&sound, "path", path)) {
-          path = ToAbsolutePath(path);
+          if (!ToAbsolutePath(path)) {
+            FreeNotification(handle);
+            result->Error("storage_error",
+                          "Failed to get the shared resource path.");
+            return;
+          }
         }
         ret = notification_set_sound(handle, StringToSoundType(type),
                                      path.c_str());
@@ -269,7 +295,12 @@ class TizenNotificationPlugin : public flutter::Plugin {
         GetValueFromEncodableMap(&vibration, "type", type);
         std::string path;
         if (GetValueFromEncodableMap(&vibration, "path", path)) {
-          path = ToAbsolutePath(path);
+          if (!ToAbsolutePath(path)) {
+            FreeNotification(handle);
+            result->Error("storage_error",
+                          "Failed to get the shared resource path.");
+            return;
+          }
         }
         ret = notification_set_vibration(handle, StringToVibrationType(type),
                                          path.c_str());
@@ -354,26 +385,61 @@ class TizenNotificationPlugin : public flutter::Plugin {
         flutter::EncodableMap extras;
         if (GetValueFromEncodableMap(&app_control_data, "extraData", extras)) {
           for (const auto &extra : extras) {
-            if (std::holds_alternative<std::string>(extra.first)) {
-              const std::string &key = std::get<std::string>(extra.first);
-              flutter::EncodableList value_list;
-              std::string value;
-              if (GetValueFromEncodableMap(&extras, key.c_str(), value_list)) {
-                std::vector<std::string> dummy;
-                for (const flutter::EncodableValue &value : value_list) {
-                  dummy.push_back(std::get<std::string>(value));
-                }
-                std::vector<const char *> values;
-                for (const std::string &value : dummy) {
-                  values.push_back(value.c_str());
-                }
-                app_control_add_extra_data_array(app_control, key.c_str(),
-                                                 values.data(), values.size());
-              } else if (GetValueFromEncodableMap(&extras, key.c_str(),
-                                                  value)) {
-                app_control_add_extra_data(app_control, key.c_str(),
-                                           value.c_str());
+            if (!std::holds_alternative<std::string>(extra.first)) {
+              DestroyAppControl(app_control);
+              FreeNotification(handle);
+              result->Error("Invalid argument",
+                            "App control extra data keys must be strings.");
+              return;
+            }
+            const std::string &key = std::get<std::string>(extra.first);
+            int extra_result = APP_CONTROL_ERROR_NONE;
+            if (const auto *value = std::get_if<std::string>(&extra.second)) {
+              extra_result = app_control_add_extra_data(
+                  app_control, key.c_str(), value->c_str());
+            } else if (const auto *value_list =
+                           std::get_if<flutter::EncodableList>(&extra.second)) {
+              if (value_list->empty()) {
+                DestroyAppControl(app_control);
+                FreeNotification(handle);
+                result->Error(
+                    "Invalid argument",
+                    "App control extra data lists must not be empty.");
+                return;
               }
+              std::vector<std::string> string_values;
+              for (const flutter::EncodableValue &value : *value_list) {
+                const auto *string_value = std::get_if<std::string>(&value);
+                if (!string_value) {
+                  DestroyAppControl(app_control);
+                  FreeNotification(handle);
+                  result->Error(
+                      "Invalid argument",
+                      "App control extra data values must be strings.");
+                  return;
+                }
+                string_values.push_back(*string_value);
+              }
+              std::vector<const char *> values;
+              for (const std::string &value : string_values) {
+                values.push_back(value.c_str());
+              }
+              extra_result = app_control_add_extra_data_array(
+                  app_control, key.c_str(), values.data(), values.size());
+            } else {
+              DestroyAppControl(app_control);
+              FreeNotification(handle);
+              result->Error(
+                  "Invalid argument",
+                  "App control extra data must be a string or string list.");
+              return;
+            }
+            if (extra_result != APP_CONTROL_ERROR_NONE) {
+              DestroyAppControl(app_control);
+              FreeNotification(handle);
+              result->Error("app_control_add_extra_data failed",
+                            get_error_message(extra_result));
+              return;
             }
           }
         }
@@ -403,6 +469,7 @@ class TizenNotificationPlugin : public flutter::Plugin {
       const auto *id = std::get_if<std::string>(method_call.arguments());
       if (!id) {
         result->Error("Invalid argument", "The argument must be a string.");
+        return;
       }
 
       notification_h handle = notification_load_by_tag(id->c_str());
@@ -413,6 +480,7 @@ class TizenNotificationPlugin : public flutter::Plugin {
       }
 
       int ret = notification_delete(handle);
+      FreeNotification(handle);
       if (ret != NOTIFICATION_ERROR_NONE) {
         result->Error(std::to_string(ret), get_error_message(ret));
         return;

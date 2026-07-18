@@ -137,6 +137,7 @@ extension _AppControlToMap on AppControl {
         'operation': operation,
         'uri': uri,
         'mime': mime,
+        'category': category,
         'extraData': extraData,
       };
 }
