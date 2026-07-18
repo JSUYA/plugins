@@ -42,10 +42,7 @@ class WakelockPlusTizenPlugin : public flutter::Plugin {
   WakelockPlusTizenPlugin() {}
 
   virtual ~WakelockPlusTizenPlugin() {
-    if (timer_id_ != 0) {
-      g_source_remove(timer_id_);
-      timer_id_ = 0;
-    }
+    Disable();
     if (screensaver_api_handle_) {
       dlclose(screensaver_api_handle_);
       screensaver_api_handle_ = nullptr;
@@ -74,20 +71,20 @@ class WakelockPlusTizenPlugin : public flutter::Plugin {
           }
           int ret = screensaver_reset_timeout_();
           if (ret != 0) {
+            Disable();
             result->Error(std::to_string(ret), get_error_message(ret));
             return;
           }
-          if (timer_id_ != 0) {
-            g_source_remove(timer_id_);
-          }
+          Disable();
           timer_id_ = g_timeout_add(30000, OnResetScreensaverTimeout, this);
+          if (timer_id_ == 0) {
+            result->Error("Failed to create timer",
+                          "Failed to schedule screensaver timeout resets.");
+            return;
+          }
           is_enabled_ = true;
         } else {
-          if (timer_id_ != 0) {
-            g_source_remove(timer_id_);
-            timer_id_ = 0;
-          }
-          is_enabled_ = false;
+          Disable();
         }
         result->Success();
       } else {
@@ -128,16 +125,26 @@ class WakelockPlusTizenPlugin : public flutter::Plugin {
     }
   }
 
+  void Disable() {
+    if (timer_id_ != 0) {
+      g_source_remove(timer_id_);
+      timer_id_ = 0;
+    }
+    is_enabled_ = false;
+  }
+
   static gboolean OnResetScreensaverTimeout(gpointer data) {
     auto *plugin = static_cast<WakelockPlusTizenPlugin *>(data);
     if (!plugin->screensaver_reset_timeout_) {
       plugin->timer_id_ = 0;
+      plugin->is_enabled_ = false;
       return G_SOURCE_REMOVE;
     }
     int ret = plugin->screensaver_reset_timeout_();
     if (ret != 0) {
       LOG_ERROR("screensaver_reset_timeout failed: %s", get_error_message(ret));
       plugin->timer_id_ = 0;
+      plugin->is_enabled_ = false;
       return G_SOURCE_REMOVE;
     }
 

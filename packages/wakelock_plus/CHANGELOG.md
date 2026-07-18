@@ -1,3 +1,7 @@
+## 2.1.2
+
+* Keep the reported wakelock state synchronized with timer failures.
+
 ## 2.1.1
 
 * Remove Ecore API.
