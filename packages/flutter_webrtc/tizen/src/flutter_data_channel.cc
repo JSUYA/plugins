@@ -13,7 +13,11 @@ FlutterRTCDataChannelObserver::FlutterRTCDataChannelObserver(
   data_channel_->RegisterObserver(this);
 }
 
-FlutterRTCDataChannelObserver::~FlutterRTCDataChannelObserver() {}
+FlutterRTCDataChannelObserver::~FlutterRTCDataChannelObserver() {
+  if (data_channel_) {
+    data_channel_->UnregisterObserver();
+  }
+}
 
 void FlutterDataChannel::CreateDataChannel(
     const std::string& peerConnectionId, const std::string& label,
@@ -32,10 +36,9 @@ void FlutterDataChannel::CreateDataChannel(
 
   std::string protocol = "sctp";
 
-  if (dataChannelDict.find(EncodableValue("protocol")) ==
-      dataChannelDict.end()) {
-    protocol = GetValue<std::string>(
-        dataChannelDict.find(EncodableValue("protocol"))->second);
+  auto protocol_it = dataChannelDict.find(EncodableValue("protocol"));
+  if (protocol_it != dataChannelDict.end()) {
+    protocol = GetValue<std::string>(protocol_it->second);
   }
 
   init.protocol = protocol;
@@ -45,6 +48,11 @@ void FlutterDataChannel::CreateDataChannel(
 
   scoped_refptr<RTCDataChannel> data_channel =
       pc->CreateDataChannel(label.c_str(), &init);
+  if (!data_channel) {
+    result->Error("createDataChannelFailed",
+                  "createDataChannel() native channel is null");
+    return;
+  }
 
   std::string uuid = base_->GenerateUUID();
   std::string event_channel =
@@ -94,21 +102,28 @@ void FlutterDataChannel::DataChannelClose(
     RTCDataChannel* data_channel, const std::string& data_channel_uuid,
     std::unique_ptr<MethodResultProxy> result) {
   data_channel->Close();
+  std::shared_ptr<FlutterRTCDataChannelObserver> observer;
+  base_->lock();
   auto it = base_->data_channel_observers_.find(data_channel_uuid);
-  if (it != base_->data_channel_observers_.end())
+  if (it != base_->data_channel_observers_.end()) {
+    observer = std::move(it->second);
     base_->data_channel_observers_.erase(it);
+  }
+  base_->unlock();
+  observer.reset();
   result->Success();
 }
 
-RTCDataChannel* FlutterDataChannel::DataChannelForId(const std::string& uuid) {
+scoped_refptr<RTCDataChannel> FlutterDataChannel::DataChannelForId(
+    const std::string& uuid) {
+  scoped_refptr<RTCDataChannel> data_channel;
+  base_->lock();
   auto it = base_->data_channel_observers_.find(uuid);
-
   if (it != base_->data_channel_observers_.end()) {
-    FlutterRTCDataChannelObserver* observer = it->second.get();
-    scoped_refptr<RTCDataChannel> data_channel = observer->data_channel();
-    return data_channel.get();
+    data_channel = it->second->data_channel();
   }
-  return nullptr;
+  base_->unlock();
+  return data_channel;
 }
 
 static const char* DataStateString(RTCDataChannelState state) {

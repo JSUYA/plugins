@@ -46,7 +46,7 @@ class FlutterDataChannel {
                         const std::string& data_channel_uuid,
                         std::unique_ptr<MethodResultProxy>);
 
-  RTCDataChannel* DataChannelForId(const std::string& id);
+  scoped_refptr<RTCDataChannel> DataChannelForId(const std::string& id);
 
  private:
   FlutterWebRTCBase* base_;

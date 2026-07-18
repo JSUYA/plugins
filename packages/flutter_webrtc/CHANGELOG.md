@@ -1,3 +1,7 @@
+## 0.2.3
+
+* Fix data channel creation and observer lifecycle errors.
+
 ## 0.2.2
 
 * Support x86_64
