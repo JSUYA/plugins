@@ -41,7 +41,8 @@ class Connection {
  private:
   int last_error_ = TIZEN_ERROR_NONE;
   ConnectionTypeCallback callback_ = nullptr;
-  connection_h connection_;
+  connection_h connection_ = nullptr;
+  bool listening_ = false;
 };
 
 #endif  // FLUTTER_PLUGIN_CONNECTION_H_

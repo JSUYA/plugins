@@ -1,3 +1,7 @@
+## 1.3.1
+
+* Handle native connection creation and callback registration failures safely.
+
 ## 1.3.0
 
 * Update minimum Dart version to 3.2.
