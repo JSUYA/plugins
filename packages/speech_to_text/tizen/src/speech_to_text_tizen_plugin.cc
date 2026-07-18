@@ -206,6 +206,8 @@ class SpeechToTextTizenPlugin : public flutter::Plugin {
   }
 
   explicit SpeechToTextTizenPlugin(flutter::PluginRegistrar* registrar) {
+    lifetime_ = std::make_shared<LifetimeState>();
+    lifetime_->plugin = this;
     channel_ = std::make_unique<FlMethodChannel>(
         registrar->messenger(), kChannelName,
         &flutter::StandardMethodCodec::GetInstance());
@@ -215,6 +217,7 @@ class SpeechToTextTizenPlugin : public flutter::Plugin {
   }
 
   ~SpeechToTextTizenPlugin() override {
+    lifetime_->plugin = nullptr;
     StopSoundLevelUpdates();
 
     if (stt_ != nullptr) {
@@ -238,6 +241,10 @@ class SpeechToTextTizenPlugin : public flutter::Plugin {
   }
 
  private:
+  struct LifetimeState {
+    SpeechToTextTizenPlugin* plugin = nullptr;
+  };
+
   void HandleMethodCall(const FlMethodCall& method_call,
                         std::unique_ptr<FlMethodResult> result) {
     const std::string& method_name = method_call.method_name();
@@ -286,11 +293,27 @@ class SpeechToTextTizenPlugin : public flutter::Plugin {
 
     PermissionStatus permission_status =
         permission_manager_.CheckPermission(kPrivilegeRecorder);
-    if (permission_status != PermissionStatus::kGranted) {
-      permission_status =
-          permission_manager_.RequestPermission(kPrivilegeRecorder);
+    if (permission_status == PermissionStatus::kGranted) {
+      CompleteInitialize(permission_status, result.get());
+      return;
     }
 
+    auto shared_result = std::shared_ptr<FlMethodResult>(std::move(result));
+    std::weak_ptr<LifetimeState> weak_lifetime = lifetime_;
+    PermissionManager::RequestPermission(
+        kPrivilegeRecorder,
+        [weak_lifetime, shared_result](PermissionStatus status) {
+          std::shared_ptr<LifetimeState> lifetime = weak_lifetime.lock();
+          if (!lifetime || lifetime->plugin == nullptr) {
+            shared_result->Success(EncodableValue(false));
+            return;
+          }
+          lifetime->plugin->CompleteInitialize(status, shared_result.get());
+        });
+  }
+
+  void CompleteInitialize(PermissionStatus permission_status,
+                          FlMethodResult* result) {
     if (permission_status != PermissionStatus::kGranted) {
       result->Success(EncodableValue(false));
       return;
@@ -665,6 +688,7 @@ class SpeechToTextTizenPlugin : public flutter::Plugin {
   }
 
   std::unique_ptr<FlMethodChannel> channel_;
+  std::shared_ptr<LifetimeState> lifetime_;
   PermissionManager permission_manager_;
   stt_h stt_ = nullptr;
   Ecore_Timer* sound_level_timer_ = nullptr;

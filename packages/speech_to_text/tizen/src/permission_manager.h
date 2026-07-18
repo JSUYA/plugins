@@ -5,6 +5,7 @@
 #ifndef FLUTTER_PLUGIN_SPEECH_TO_TEXT_PERMISSION_MANAGER_H_
 #define FLUTTER_PLUGIN_SPEECH_TO_TEXT_PERMISSION_MANAGER_H_
 
+#include <functional>
 #include <string>
 
 enum class PermissionStatus {
@@ -21,7 +22,9 @@ class PermissionManager {
  public:
   PermissionStatus CheckPermission(const std::string& privilege);
 
-  PermissionStatus RequestPermission(const std::string& privilege);
+  static void RequestPermission(
+      const std::string& privilege,
+      std::function<void(PermissionStatus)> on_complete);
 };
 
 #endif  // FLUTTER_PLUGIN_SPEECH_TO_TEXT_PERMISSION_MANAGER_H_

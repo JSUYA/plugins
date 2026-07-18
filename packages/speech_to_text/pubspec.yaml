@@ -2,7 +2,7 @@ name: speech_to_text_tizen
 description: Tizen implementation of the speech_to_text plugin.
 homepage: https://github.com/flutter-tizen/plugins
 repository: https://github.com/flutter-tizen/plugins/tree/master/packages/speech_to_text
-version: 0.1.0
+version: 0.1.1
 
 environment:
   sdk: ">=3.3.0 <4.0.0"

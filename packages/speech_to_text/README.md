@@ -10,7 +10,7 @@ Add both packages to your `pubspec.yaml`:
 ```yaml
 dependencies:
   speech_to_text: ^7.4.0-beta.8
-  speech_to_text_tizen: ^0.1.0
+  speech_to_text_tizen: ^0.1.1
 ```
 
 Then import the original package:
