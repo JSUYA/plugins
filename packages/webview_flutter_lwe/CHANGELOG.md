@@ -1,3 +1,7 @@
+## 0.5.2
+
+* Fix native webview creation, disposal, key event, and cookie handler safety.
+
 ## 0.5.1
 
 * Update the README.md.

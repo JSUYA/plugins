@@ -110,11 +110,12 @@ static bool IsRunningOnEmulator() {
 
 WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
                  flutter::TextureRegistrar* texture_registrar, double width,
-                 double height, const flutter::EncodableValue& params)
+                 double height)
     : PlatformView(registrar, view_id, nullptr),
       texture_registrar_(texture_registrar),
       width_(width),
       height_(height) {
+  dispatcher_ = std::make_shared<MessageDispatcher>();
   use_sw_backend_ = IsRunningOnEmulator();
   if (use_sw_backend_) {
     tbm_pool_ = std::make_unique<SingleBufferPool>(width, height);
@@ -130,10 +131,12 @@ WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
             return ObtainGpuSurface(width, height);
           }));
   SetTextureId(texture_registrar_->RegisterTexture(texture_variant_.get()));
+  texture_registered_ = true;
 
-  InitWebView();
-
-  dispatcher_ = std::make_shared<MessageDispatcher>();
+  if (!InitWebView()) {
+    LOG_ERROR("Failed to create the webview instance.");
+    return;
+  }
 
   webview_channel_ = std::make_unique<FlMethodChannel>(
       GetPluginRegistrar()->messenger(), GetWebViewChannelName(),
@@ -146,15 +149,6 @@ WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
   navigation_delegate_channel_ = std::make_unique<FlMethodChannel>(
       GetPluginRegistrar()->messenger(), GetNavigationDelegateChannelName(),
       &flutter::StandardMethodCodec::GetInstance());
-
-  auto cookie_channel = std::make_unique<FlMethodChannel>(
-      GetPluginRegistrar()->messenger(),
-      "plugins.flutter.io/lwe_cookie_manager",
-      &flutter::StandardMethodCodec::GetInstance());
-  cookie_channel->SetMethodCallHandler(
-      [webview = this](const auto& call, auto result) {
-        webview->HandleCookieMethodCall(call, std::move(result));
-      });
 
   webview_instance_->RegisterOnPageStartedHandler(
       [this](LWE::WebContainer* container, const std::string& url) {
@@ -239,6 +233,7 @@ WebView::WebView(flutter::PluginRegistrar* registrar, int view_id,
             });
         return true;
       });
+  initialized_ = true;
 }
 
 /**
@@ -282,9 +277,19 @@ std::string WebView::GetNavigationDelegateChannelName() {
 }
 
 void WebView::Dispose() {
+  if (disposed_) {
+    return;
+  }
+  disposed_ = true;
+  initialized_ = false;
+
   // Set this first so that dispatcher_ callbacks already queued on the main
   // loop bail out instead of touching a destroyed WebView.
   *is_alive_ = false;
+
+  if (webview_channel_) {
+    webview_channel_->SetMethodCallHandler(nullptr);
+  }
 
   // Stop the web engine first so its renderer thread stops writing into the
   // shared TBM surfaces before anything is torn down.
@@ -309,15 +314,21 @@ void WebView::Dispose() {
   // done with the TBM surfaces, so the pool is destroyed in a main-thread
   // task. dispatcher_ is captured as a shared_ptr copy because the WebView
   // may already be destroyed by the time the callback fires.
-  texture_registrar_->UnregisterTexture(
-      GetTextureId(), [pool, dispatcher = dispatcher_]() {
-        dispatcher->dispatchTaskOnMainThread([pool]() {
-          // The pool destructor frees all TBM surfaces.
+  if (texture_registered_) {
+    texture_registered_ = false;
+    texture_registrar_->UnregisterTexture(
+        GetTextureId(), [pool, dispatcher = dispatcher_]() {
+          dispatcher->dispatchTaskOnMainThread([pool]() {
+            // The pool destructor frees all TBM surfaces.
+          });
         });
-      });
+  }
 }
 
 void WebView::Resize(double width, double height) {
+  if (!IsInitialized()) {
+    return;
+  }
   width_ = width;
   height_ = height;
 
@@ -331,6 +342,9 @@ void WebView::Resize(double width, double height) {
 
 void WebView::Touch(int type, int button, double x, double y, double dx,
                     double dy) {
+  if (!IsInitialized()) {
+    return;
+  }
   if (type == 0) {  // down event
     webview_instance_->DispatchMouseDownEvent(
         LWE::MouseButtonValue::LeftButton,
@@ -549,7 +563,7 @@ static LWE::KeyValue KeyToKeyValue(const std::string& key,
 
 bool WebView::SendKey(const char* key, const char* string, const char* compose,
                       uint32_t modifiers, uint32_t scan_code, bool is_down) {
-  if (!IsFocused()) {
+  if (!IsInitialized() || !IsFocused()) {
     return false;
   }
 
@@ -559,12 +573,12 @@ bool WebView::SendKey(const char* key, const char* string, const char* compose,
     LWE::WebContainer* webview_instance;
     LWE::KeyValue key_value;
     bool is_down;
+    std::shared_ptr<bool> is_alive;
   };
 
-  Param* param = new Param();
-  param->webview_instance = webview_instance_;
-  param->key_value = KeyToKeyValue(key, is_shift_pressed);
-  param->is_down = is_down;
+  auto param = std::make_unique<Param>(Param{
+      webview_instance_, KeyToKeyValue(key, is_shift_pressed), is_down,
+      is_alive_});
 
   if (param->key_value == LWE::KeyValue::TVReturnKey &&
       webview_instance_->CanGoBack()) {
@@ -574,16 +588,17 @@ bool WebView::SendKey(const char* key, const char* string, const char* compose,
 
   webview_instance_->AddIdleCallback(
       [](void* data) {
-        Param* param = reinterpret_cast<Param*>(data);
-        if (param->is_down) {
-          param->webview_instance->DispatchKeyDownEvent(param->key_value);
-          param->webview_instance->DispatchKeyPressEvent(param->key_value);
-        } else {
-          param->webview_instance->DispatchKeyUpEvent(param->key_value);
+        std::unique_ptr<Param> param(reinterpret_cast<Param*>(data));
+        if (*param->is_alive) {
+          if (param->is_down) {
+            param->webview_instance->DispatchKeyDownEvent(param->key_value);
+            param->webview_instance->DispatchKeyPressEvent(param->key_value);
+          } else {
+            param->webview_instance->DispatchKeyUpEvent(param->key_value);
+          }
         }
-        delete param;
       },
-      param);
+      param.release());
 
   return false;
 }
@@ -592,7 +607,7 @@ void WebView::SetDirection(int direction) {
   // TODO: Implement if necessary.
 }
 
-void WebView::InitWebView() {
+bool WebView::InitWebView() {
   if (webview_instance_) {
     webview_instance_->Destroy();
     webview_instance_ = nullptr;
@@ -630,6 +645,9 @@ void WebView::InitWebView() {
       reinterpret_cast<LWE::WebContainer*>(createWebViewInstance(
           0, 0, width_, height_, pixel_ratio, "SamsungOneUI", "ko-KR",
           "Asia/Seoul", on_prepare_image, on_flush, use_sw_backend_));
+  if (!webview_instance_) {
+    return false;
+  }
 
 #ifndef TV_PROFILE
   LWE::Settings settings = webview_instance_->GetSettings();
@@ -637,6 +655,7 @@ void WebView::InitWebView() {
       "Mozilla/5.0 (like Gecko/54.0 Firefox/54.0) Mobile");
   webview_instance_->SetSettings(settings);
 #endif
+  return true;
 }
 
 template <typename T>
@@ -827,25 +846,6 @@ void WebView::HandleWebViewMethodCall(const FlMethodCall& method_call,
       webview_instance_->SetSettings(settings);
     }
     result->Success();
-  } else {
-    result->NotImplemented();
-  }
-}
-
-void WebView::HandleCookieMethodCall(const FlMethodCall& method_call,
-                                     std::unique_ptr<FlMethodResult> result) {
-  if (!webview_instance_) {
-    result->Error("Invalid operation",
-                  "The webview instance has not been initialized.");
-    return;
-  }
-
-  const std::string& method_name = method_call.method_name();
-
-  if (method_name == "clearCookies") {
-    LWE::CookieManager* cookie = LWE::CookieManager::GetInstance();
-    cookie->ClearCookies();
-    result->Success(flutter::EncodableValue(true));
   } else {
     result->NotImplemented();
   }

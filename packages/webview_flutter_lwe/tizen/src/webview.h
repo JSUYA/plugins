@@ -34,7 +34,7 @@ class WebView : public PlatformView {
  public:
   WebView(flutter::PluginRegistrar* registrar, int view_id,
           flutter::TextureRegistrar* texture_registrar, double width,
-          double height, const flutter::EncodableValue& params);
+          double height);
   ~WebView();
 
   virtual void Dispose() override;
@@ -52,15 +52,14 @@ class WebView : public PlatformView {
 
   LWE::WebContainer* GetWebViewInstance() { return webview_instance_; }
 
+  bool IsInitialized() const { return initialized_ && !disposed_; }
+
   FlutterDesktopGpuSurfaceDescriptor* ObtainGpuSurface(size_t width,
                                                        size_t height);
 
  private:
   void HandleWebViewMethodCall(const FlMethodCall& method_call,
                                std::unique_ptr<FlMethodResult> result);
-  void HandleCookieMethodCall(const FlMethodCall& method_call,
-                              std::unique_ptr<FlMethodResult> result);
-
   template <typename T>
   void SetBackgroundColor(const T& color);
 
@@ -69,7 +68,7 @@ class WebView : public PlatformView {
   std::string GetWebViewChannelName();
   std::string GetNavigationDelegateChannelName();
 
-  void InitWebView();
+  bool InitWebView();
 
   LWE::WebContainer* webview_instance_ = nullptr;
   flutter::TextureRegistrar* texture_registrar_;
@@ -81,6 +80,9 @@ class WebView : public PlatformView {
   bool is_mouse_lbutton_down_ = false;
   bool has_navigation_delegate_ = false;
   bool is_disposing_ = false;
+  bool initialized_ = false;
+  bool disposed_ = false;
+  bool texture_registered_ = false;
   // Set to false at the start of Dispose(). Every dispatcher_ callback that
   // captures `this` also captures a copy of this shared_ptr, so a callback
   // still queued on the main-loop when the WebView is disposed can check it

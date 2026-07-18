@@ -80,6 +80,18 @@ Future<void> main() async {
     );
   });
 
+  testWidgets('cookie manager remains usable after webview disposal', (
+    WidgetTester tester,
+  ) async {
+    final WebViewController controller = WebViewController();
+    final WebViewCookieManager cookieManager = WebViewCookieManager();
+
+    await tester.pumpWidget(WebViewWidget(controller: controller));
+    await tester.pumpWidget(const SizedBox.shrink());
+
+    expect(await cookieManager.clearCookies(), isTrue);
+  });
+
   testWidgets('JavascriptChannel', (WidgetTester tester) async {
     final Completer<void> pageFinished = Completer<void>();
     final WebViewController controller = WebViewController();
