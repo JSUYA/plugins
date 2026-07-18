@@ -596,6 +596,7 @@ void main() {
     });
   });
 }
+
 extension on WidgetTester {
   Future<void> prepareSource({
     required String playerId,
