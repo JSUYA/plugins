@@ -53,6 +53,7 @@ class VideoPlayer {
   void PushEvent(const flutter::EncodableValue &encodable_value);
   void SendError(const std::string &error_code,
                  const std::string &error_message);
+  void CleanupFailedInitialization();
   FlutterDesktopGpuSurfaceDescriptor *ObtainGpuSurface(size_t width,
                                                        size_t height);
 

@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <stdexcept>
 
 #include "log.h"
 #include "video_player_error.h"
@@ -141,6 +142,7 @@ VideoPlayer::VideoPlayer(flutter::PluginRegistrar *plugin_registrar,
 
   int ret = player_create(&player_);
   if (ret != PLAYER_ERROR_NONE) {
+    CleanupFailedInitialization();
     throw VideoPlayerError("player_create failed", get_error_message(ret));
   }
 
@@ -174,14 +176,14 @@ VideoPlayer::VideoPlayer(flutter::PluginRegistrar *plugin_registrar,
 
   ret = player_set_uri(player_, uri.c_str());
   if (ret != PLAYER_ERROR_NONE) {
-    player_destroy(player_);
+    CleanupFailedInitialization();
     throw VideoPlayerError("player_set_uri failed", get_error_message(ret));
   }
   uri_ = uri;
 
   ret = player_set_display_visible(player_, true);
   if (ret != PLAYER_ERROR_NONE) {
-    player_destroy(player_);
+    CleanupFailedInitialization();
     throw VideoPlayerError("player_set_display_visible failed",
                            get_error_message(ret));
   }
@@ -189,7 +191,7 @@ VideoPlayer::VideoPlayer(flutter::PluginRegistrar *plugin_registrar,
   ret = player_set_media_packet_video_frame_decoded_cb(
       player_, OnVideoFrameDecoded, this);
   if (ret != PLAYER_ERROR_NONE) {
-    player_destroy(player_);
+    CleanupFailedInitialization();
     throw VideoPlayerError(
         "player_set_media_packet_video_frame_decoded_cb failed",
         get_error_message(ret));
@@ -197,35 +199,35 @@ VideoPlayer::VideoPlayer(flutter::PluginRegistrar *plugin_registrar,
 
   ret = player_set_buffering_cb(player_, OnBuffering, this);
   if (ret != PLAYER_ERROR_NONE) {
-    player_destroy(player_);
+    CleanupFailedInitialization();
     throw VideoPlayerError("player_set_buffering_cb failed",
                            get_error_message(ret));
   }
 
   ret = player_set_completed_cb(player_, OnPlayCompleted, this);
   if (ret != PLAYER_ERROR_NONE) {
-    player_destroy(player_);
+    CleanupFailedInitialization();
     throw VideoPlayerError("player_set_completed_cb failed",
                            get_error_message(ret));
   }
 
   ret = player_set_interrupted_cb(player_, OnInterrupted, this);
   if (ret != PLAYER_ERROR_NONE) {
-    player_destroy(player_);
+    CleanupFailedInitialization();
     throw VideoPlayerError("player_set_interrupted_cb failed",
                            get_error_message(ret));
   }
 
   ret = player_set_error_cb(player_, OnError, this);
   if (ret != PLAYER_ERROR_NONE) {
-    player_destroy(player_);
+    CleanupFailedInitialization();
     throw VideoPlayerError("player_set_error_cb failed",
                            get_error_message(ret));
   }
 
   ret = player_prepare_async(player_, OnPrepared, this);
   if (ret != PLAYER_ERROR_NONE) {
-    player_destroy(player_);
+    CleanupFailedInitialization();
     throw VideoPlayerError("player_prepare_async failed",
                            get_error_message(ret));
   }
@@ -234,6 +236,18 @@ VideoPlayer::VideoPlayer(flutter::PluginRegistrar *plugin_registrar,
   InitScreenSaverApi();
 #endif
   SetUpEventChannel(plugin_registrar->messenger());
+}
+
+void VideoPlayer::CleanupFailedInitialization() {
+  if (player_) {
+    player_destroy(player_);
+    player_ = nullptr;
+  }
+  if (texture_registrar_ && texture_id_ >= 0) {
+    texture_registrar_->UnregisterTexture(texture_id_, nullptr);
+    texture_registrar_ = nullptr;
+    texture_id_ = -1;
+  }
 }
 
 VideoPlayer::~VideoPlayer() {
@@ -761,7 +775,29 @@ int64_t VideoPlayer::GetLiveDuration() {
     return 0;
   }
   std::vector<std::string> time_vec = split(live_duration_str, '|');
-  return std::stoll(time_vec[1]);
+  if (time_vec.size() != 2) {
+    LOG_ERROR("[MediaPlayer] Invalid live duration: %s",
+              live_duration_str.c_str());
+    return 0;
+  }
+
+  try {
+    size_t parsed_length = 0;
+    int64_t duration = std::stoll(time_vec[1], &parsed_length);
+    if (parsed_length != time_vec[1].size() || duration < 0) {
+      LOG_ERROR("[MediaPlayer] Invalid live duration: %s",
+                live_duration_str.c_str());
+      return 0;
+    }
+    return duration;
+  } catch (const std::invalid_argument &) {
+    LOG_ERROR("[MediaPlayer] Invalid live duration: %s",
+              live_duration_str.c_str());
+  } catch (const std::out_of_range &) {
+    LOG_ERROR("[MediaPlayer] Live duration is out of range: %s",
+              live_duration_str.c_str());
+  }
+  return 0;
 }
 
 bool VideoPlayer::IsLive() {

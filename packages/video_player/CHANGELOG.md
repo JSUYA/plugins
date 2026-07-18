@@ -1,3 +1,8 @@
+## 2.5.13
+
+* Roll back native resources when player initialization fails.
+* Handle malformed live stream duration values safely.
+
 ## 2.5.12
 
 * Remove Ecore API.
