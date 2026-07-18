@@ -1,3 +1,9 @@
+## 1.7.1
+
+* Roll back partial native initialization when callback registration or TTS
+  preparation fails.
+* Handle unknown native TTS states safely.
+
 ## 1.7.0
 
 * Return a boolean from `isLanguageAvailable` to match the behavior of other platforms.

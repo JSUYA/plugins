@@ -82,9 +82,10 @@ class TextToSpeech {
   int32_t GetUttId() { return utt_id_; }
 
  private:
-  void Prepare();
-  void RegisterCallbacks();
+  bool Prepare();
+  bool RegisterCallbacks();
   void UnregisterCallbacks();
+  void Reset();
 
   void ClearUttId() { utt_id_ = 0; }
 

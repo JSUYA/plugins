@@ -41,7 +41,7 @@ int32_t GetVoiceType(std::string voice_name) {
   }
 }
 
-TtsState ConvertTtsState(tts_state_e state) {
+std::optional<TtsState> ConvertTtsState(tts_state_e state) {
   switch (state) {
     case TTS_STATE_CREATED:
       return TtsState::kCreated;
@@ -51,19 +51,14 @@ TtsState ConvertTtsState(tts_state_e state) {
       return TtsState::kPlaying;
     case TTS_STATE_PAUSED:
       return TtsState::kPaused;
+    default:
+      return std::nullopt;
   }
 }
 
 }  // namespace
 
-TextToSpeech::~TextToSpeech() {
-  UnregisterCallbacks();
-
-  if (tts_) {
-    tts_destroy(tts_);
-    tts_ = nullptr;
-  }
-}
+TextToSpeech::~TextToSpeech() { Reset(); }
 
 bool TextToSpeech::Initialize() {
   int ret = tts_create(&tts_);
@@ -73,14 +68,21 @@ bool TextToSpeech::Initialize() {
     return false;
   }
 
-  RegisterCallbacks();
-  Prepare();
+  if (!RegisterCallbacks()) {
+    tts_destroy(tts_);
+    tts_ = nullptr;
+    return false;
+  }
+  if (!Prepare()) {
+    Reset();
+    return false;
+  }
   InitializeSupportedLanaguagesAndVoiceType();
 
   return true;
 }
 
-void TextToSpeech::Prepare() {
+bool TextToSpeech::Prepare() {
   char *language = nullptr;
   int voice_type = 0;
   int ret = tts_get_default_voice(tts_, &language, &voice_type);
@@ -101,21 +103,33 @@ void TextToSpeech::Prepare() {
   ret = tts_prepare(tts_);
   if (ret != TTS_ERROR_NONE) {
     LOG_ERROR("tts_prepare failed: %s", get_error_message(ret));
+    return false;
   }
+  return true;
 }
 
-void TextToSpeech::RegisterCallbacks() {
-  tts_set_state_changed_cb(
+bool TextToSpeech::RegisterCallbacks() {
+  int ret = tts_set_state_changed_cb(
       tts_,
       [](tts_h tts, tts_state_e previous, tts_state_e current,
          void *user_data) {
         TextToSpeech *self = static_cast<TextToSpeech *>(user_data);
         self->SwitchVolumeOnStateChange(previous, current);
-        self->state_changed_callback_(ConvertTtsState(previous),
-                                      ConvertTtsState(current));
+        std::optional<TtsState> previous_state = ConvertTtsState(previous);
+        std::optional<TtsState> current_state = ConvertTtsState(current);
+        if (!previous_state || !current_state) {
+          LOG_ERROR("Unknown TTS state transition: %d -> %d", previous,
+                    current);
+          return;
+        }
+        self->state_changed_callback_(*previous_state, *current_state);
       },
       this);
-  tts_set_utterance_completed_cb(
+  if (ret != TTS_ERROR_NONE) {
+    LOG_ERROR("tts_set_state_changed_cb failed: %s", get_error_message(ret));
+    return false;
+  }
+  ret = tts_set_utterance_completed_cb(
       tts_,
       [](tts_h tts, int32_t utt_id, void *user_data) {
         TextToSpeech *self = static_cast<TextToSpeech *>(user_data);
@@ -125,7 +139,14 @@ void TextToSpeech::RegisterCallbacks() {
         self->Stop();
       },
       this);
-  tts_set_error_cb(
+  if (ret != TTS_ERROR_NONE) {
+    LOG_ERROR("tts_set_utterance_completed_cb failed: %s",
+              get_error_message(ret));
+    tts_unset_state_changed_cb(tts_);
+    return false;
+  }
+
+  ret = tts_set_error_cb(
       tts_,
       [](tts_h tts, int32_t utt_id, tts_error_e reason, void *user_data) {
         TextToSpeech *self = static_cast<TextToSpeech *>(user_data);
@@ -143,12 +164,30 @@ void TextToSpeech::RegisterCallbacks() {
         }
       },
       this);
+  if (ret != TTS_ERROR_NONE) {
+    LOG_ERROR("tts_set_error_cb failed: %s", get_error_message(ret));
+    tts_unset_utterance_completed_cb(tts_);
+    tts_unset_state_changed_cb(tts_);
+    return false;
+  }
+  return true;
 }
 
 void TextToSpeech::UnregisterCallbacks() {
+  if (!tts_) {
+    return;
+  }
   tts_unset_state_changed_cb(tts_);
   tts_unset_utterance_completed_cb(tts_);
   tts_unset_error_cb(tts_);
+}
+
+void TextToSpeech::Reset() {
+  UnregisterCallbacks();
+  if (tts_) {
+    tts_destroy(tts_);
+    tts_ = nullptr;
+  }
 }
 
 void TextToSpeech::InitializeSupportedLanaguagesAndVoiceType() {
