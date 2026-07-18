@@ -1,6 +1,7 @@
-## NEXT
+## 0.1.4
 
 * Update integration tests based on upstream flutter_secure_storage v10.2.0 (12 test cases).
+* Handle secure storage failures and generate AES-GCM IVs securely.
 
 ## 0.1.3
 

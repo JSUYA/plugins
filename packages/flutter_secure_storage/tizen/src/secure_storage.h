@@ -8,8 +8,19 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+class SecureStorageException : public std::runtime_error {
+ public:
+  SecureStorageException(const std::string &operation, int error_code);
+
+  int error_code() const { return error_code_; }
+
+ private:
+  int error_code_;
+};
 
 class SecureStorage {
  public:

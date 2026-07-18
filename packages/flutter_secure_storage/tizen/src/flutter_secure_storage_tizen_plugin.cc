@@ -56,6 +56,17 @@ class FlutterSecureStorageTizenPlugin : public flutter::Plugin {
   void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue> &method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+    try {
+      HandleMethodCallInternal(method_call, result.get());
+    } catch (const SecureStorageException &error) {
+      result->Error("Secure storage error", error.what(),
+                    flutter::EncodableValue(error.error_code()));
+    }
+  }
+
+  void HandleMethodCallInternal(
+      const flutter::MethodCall<flutter::EncodableValue> &method_call,
+      flutter::MethodResult<flutter::EncodableValue> *result) {
     const auto &method_name = method_call.method_name();
     const auto *arguments =
         std::get_if<flutter::EncodableMap>(method_call.arguments());
