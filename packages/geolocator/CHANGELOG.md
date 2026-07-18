@@ -1,6 +1,7 @@
 ## 1.0.9
 
 * Fix crashes and incomplete results in geolocation method calls.
+* Make permission requests asynchronous.
 
 ## 1.0.8
 

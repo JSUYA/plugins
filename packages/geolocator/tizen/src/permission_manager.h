@@ -5,6 +5,7 @@
 #ifndef FLUTTER_PLUGIN_PERMISSION_MANAGER_H_
 #define FLUTTER_PLUGIN_PERMISSION_MANAGER_H_
 
+#include <functional>
 #include <string>
 
 // Keep in sync with the enum values implemented in:
@@ -18,6 +19,8 @@ enum class PermissionStatus {
   kError = 4  // tizen only.
 };
 
+typedef std::function<void(PermissionStatus)> PermissionResultCallback;
+
 class PermissionManager {
  public:
   PermissionManager() {}
@@ -25,7 +28,8 @@ class PermissionManager {
 
   PermissionStatus CheckPermission(const std::string &privilege);
 
-  PermissionStatus RequestPermission(const std::string &privilege);
+  void RequestPermission(const std::string &privilege,
+                         PermissionResultCallback callback);
 };
 
 #endif  // FLUTTER_PLUGIN_PERMISSION_MANAGER_H_

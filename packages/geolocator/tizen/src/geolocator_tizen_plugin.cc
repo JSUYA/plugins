@@ -140,9 +140,10 @@ class GeolocatorTizenPlugin : public flutter::Plugin {
   GeolocatorTizenPlugin()
       : permission_manager_(std::make_unique<PermissionManager>()),
         location_manager_(std::make_unique<LocationManager>()),
-        app_settings_manager_(std::make_unique<AppSettingsManager>()) {}
+        app_settings_manager_(std::make_unique<AppSettingsManager>()),
+        permission_request_pending_(std::make_shared<bool>(false)) {}
 
-  virtual ~GeolocatorTizenPlugin() {}
+  virtual ~GeolocatorTizenPlugin() = default;
 
  private:
   void HandleMethodCall(const FlMethodCall &method_call,
@@ -191,19 +192,37 @@ class GeolocatorTizenPlugin : public flutter::Plugin {
   }
 
   void OnRequestPermission(std::unique_ptr<FlMethodResult> result) {
-    PermissionStatus permission_status =
-        permission_manager_->RequestPermission(kPrivilegeLocation);
-
-    if (permission_status == PermissionStatus::kError) {
-      result->Error("Operation failed", "Permission request failed.");
-      return;
-    } else if (permission_status == PermissionStatus::kDeniedForever ||
-               permission_status == PermissionStatus::kDenied) {
-      result->Error("Permission denied", "Permission denied by user.");
+    if (*permission_request_pending_) {
+      result->Error("Operation failed",
+                    "A permission request is already in progress.");
       return;
     }
-    result->Success(
-        flutter::EncodableValue(static_cast<int>(permission_status)));
+
+    *permission_request_pending_ = true;
+    std::weak_ptr<bool> permission_request_pending =
+        permission_request_pending_;
+    auto shared_result = std::shared_ptr<FlMethodResult>(std::move(result));
+    permission_manager_->RequestPermission(
+        kPrivilegeLocation, [permission_request_pending, shared_result](
+                                PermissionStatus permission_status) {
+          std::shared_ptr<bool> pending = permission_request_pending.lock();
+          if (!pending) {
+            return;
+          }
+          *pending = false;
+
+          if (permission_status == PermissionStatus::kError) {
+            shared_result->Error("Operation failed",
+                                 "Permission request failed.");
+          } else if (permission_status == PermissionStatus::kDeniedForever ||
+                     permission_status == PermissionStatus::kDenied) {
+            shared_result->Error("Permission denied",
+                                 "Permission denied by user.");
+          } else {
+            shared_result->Success(
+                flutter::EncodableValue(static_cast<int>(permission_status)));
+          }
+        });
   }
 
   void OnGetLastKnownPosition(std::unique_ptr<FlMethodResult> result) {
@@ -243,6 +262,7 @@ class GeolocatorTizenPlugin : public flutter::Plugin {
   std::unique_ptr<PermissionManager> permission_manager_;
   std::unique_ptr<LocationManager> location_manager_;
   std::unique_ptr<AppSettingsManager> app_settings_manager_;
+  std::shared_ptr<bool> permission_request_pending_;
   std::unique_ptr<FlEventChannel> service_updates_channel_;
   std::unique_ptr<FlEventChannel> updates_channel_;
 };
