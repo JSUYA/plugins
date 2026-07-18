@@ -1,6 +1,7 @@
 ## 0.2.3
 
 * Fix data channel creation and observer lifecycle errors.
+* Fix task runner teardown and video renderer track updates.
 
 ## 0.2.2
 

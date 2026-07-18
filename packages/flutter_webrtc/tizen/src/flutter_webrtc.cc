@@ -626,13 +626,7 @@ void FlutterWebRTC::HandleMethodCall(
     }
 
     MediaStreamAddTrack(stream, track, std::move(result));
-    std::string kind = track->kind().std_string();
-    for (int i = 0; i < renders_.size(); i++) {
-      FlutterVideoRenderer* renderer = renders_.at(i).get();
-      if (renderer->CheckMediaStream(streamId) && 0 == kind.compare("video")) {
-        renderer->SetVideoTrack(static_cast<RTCVideoTrack*>(track.get()));
-      }
-    }
+    OnMediaStreamTrackAdded(streamId, track);
   } else if (method_call.method_name().compare("mediaStreamRemoveTrack") == 0) {
     if (!method_call.arguments()) {
       result->Error("Bad Arguments", "Null constraints arguments received");
@@ -659,13 +653,7 @@ void FlutterWebRTC::HandleMethodCall(
     }
 
     MediaStreamRemoveTrack(stream, track, std::move(result));
-
-    for (int i = 0; i < renders_.size(); i++) {
-      FlutterVideoRenderer* renderer = renders_.at(i).get();
-      if (renderer->CheckVideoTrack(streamId)) {
-        renderer->SetVideoTrack(nullptr);
-      }
-    }
+    OnMediaStreamTrackRemoved(trackId);
   } else if (method_call.method_name().compare("addTrack") == 0) {
     if (!method_call.arguments()) {
       result->Error("Bad Arguments", "Null constraints arguments received");

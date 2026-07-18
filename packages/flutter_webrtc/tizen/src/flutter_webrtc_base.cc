@@ -22,7 +22,24 @@ FlutterWebRTCBase::FlutterWebRTCBase(BinaryMessenger* messenger,
       EventChannelProxy::Create(messenger_, task_runner_, kEventChannelName);
 }
 
-FlutterWebRTCBase::~FlutterWebRTCBase() { LibWebRTC::Terminate(); }
+FlutterWebRTCBase::~FlutterWebRTCBase() {
+  data_channel_observers_.clear();
+  peerconnection_observers_.clear();
+  for (const auto& peerconnection : peerconnections_) {
+    peerconnection.second->Close();
+  }
+  peerconnections_.clear();
+  video_capturers_.clear();
+  local_tracks_.clear();
+  local_streams_.clear();
+  key_providers_.clear();
+  event_channel_.reset();
+  audio_processing_ = nullptr;
+  video_device_ = nullptr;
+  audio_device_ = nullptr;
+  factory_ = nullptr;
+  LibWebRTC::Terminate();
+}
 
 EventChannelProxy* FlutterWebRTCBase::event_channel() {
   return event_channel_ ? event_channel_.get() : nullptr;

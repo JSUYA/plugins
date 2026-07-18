@@ -1154,6 +1154,12 @@ FlutterPeerConnectionObserver::FlutterPeerConnectionObserver(
   peerconnection->RegisterRTCPeerConnectionObserver(this);
 }
 
+FlutterPeerConnectionObserver::~FlutterPeerConnectionObserver() {
+  if (peerconnection_) {
+    peerconnection_->DeRegisterRTCPeerConnectionObserver();
+  }
+}
+
 void FlutterPeerConnectionObserver::OnSignalingState(RTCSignalingState state) {
   EncodableMap params;
   params[EncodableValue("event")] = "signalingState";

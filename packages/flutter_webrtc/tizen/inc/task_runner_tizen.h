@@ -6,6 +6,7 @@
 
 #include <glib.h>
 
+#include <memory>
 #include <mutex>
 #include <queue>
 
@@ -19,9 +20,17 @@ class TaskRunnerTizen : public TaskRunner {
   void EnqueueTask(TaskClosure task) override;
 
  private:
+  struct State {
+    std::mutex tasks_mutex;
+    std::queue<TaskClosure> tasks;
+    guint source_id = 0;
+    bool shutting_down = false;
+  };
+
   static gboolean RunTask(gpointer data);
-  std::mutex tasks_mutex_;
-  std::queue<TaskClosure> tasks_;
+  static void DestroySourceData(gpointer data);
+
+  std::shared_ptr<State> state_;
 };
 
 #endif  // PACKAGES_FLUTTER_WEBRTC_TASK_RUNNER_TIZEN_H_

@@ -61,6 +61,7 @@ class FlutterVideoRenderer
 class FlutterVideoRendererManager {
  public:
   FlutterVideoRendererManager(FlutterWebRTCBase* base);
+  ~FlutterVideoRendererManager();
 
   void CreateVideoRendererTexture(std::unique_ptr<MethodResultProxy> result);
 
@@ -71,6 +72,11 @@ class FlutterVideoRendererManager {
 
   void VideoRendererDispose(int64_t texture_id,
                             std::unique_ptr<MethodResultProxy> result);
+
+  void OnMediaStreamTrackAdded(const std::string& stream_id,
+                               scoped_refptr<RTCMediaTrack> track);
+
+  void OnMediaStreamTrackRemoved(const std::string& track_id);
 
  private:
   FlutterWebRTCBase* base_;

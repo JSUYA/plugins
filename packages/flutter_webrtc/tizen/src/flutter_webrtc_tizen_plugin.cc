@@ -45,9 +45,9 @@ class FlutterWebRtcTizenPlugin : public FlutterWebRTCPlugin {
   FlutterWebRtcTizenPlugin(flutter::PluginRegistrar* registrar,
                            std::unique_ptr<MethodChannel> channel)
       : channel_(std::move(channel)),
+        task_runner_(std::make_unique<TaskRunnerTizen>()),
         messenger_(registrar->messenger()),
-        textures_(registrar->texture_registrar()),
-        task_runner_(std::make_unique<TaskRunnerTizen>()) {
+        textures_(registrar->texture_registrar()) {
     webrtc_ = std::make_unique<FlutterWebRTC>(this);
   }
 
@@ -62,10 +62,10 @@ class FlutterWebRtcTizenPlugin : public FlutterWebRTCPlugin {
 
  private:
   std::unique_ptr<MethodChannel> channel_;
+  std::unique_ptr<TaskRunner> task_runner_;
   std::unique_ptr<FlutterWebRTC> webrtc_;
   BinaryMessenger* messenger_;
   TextureRegistrar* textures_;
-  std::unique_ptr<TaskRunner> task_runner_;
 };
 
 }  // namespace flutter_webrtc_plugin

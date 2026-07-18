@@ -4,23 +4,61 @@
 
 #include "task_runner_tizen.h"
 
-TaskRunnerTizen::TaskRunnerTizen() = default;
+TaskRunnerTizen::TaskRunnerTizen() : state_(std::make_shared<State>()) {}
 
-TaskRunnerTizen::~TaskRunnerTizen() = default;
+TaskRunnerTizen::~TaskRunnerTizen() {
+  std::shared_ptr<State> state = std::move(state_);
+  guint source_id = 0;
+  {
+    std::lock_guard<std::mutex> lock(state->tasks_mutex);
+    state->shutting_down = true;
+    source_id = state->source_id;
+    state->source_id = 0;
+    std::queue<TaskClosure> empty;
+    state->tasks.swap(empty);
+  }
+  if (source_id != 0) {
+    g_source_remove(source_id);
+  }
+}
 
 void TaskRunnerTizen::EnqueueTask(TaskClosure task) {
-  std::lock_guard<std::mutex> lock(tasks_mutex_);
-  tasks_.push(std::move(task));
-  g_idle_add_full(G_PRIORITY_DEFAULT, RunTask, this, nullptr);
+  std::shared_ptr<State> state = state_;
+  std::lock_guard<std::mutex> lock(state->tasks_mutex);
+  if (state->shutting_down) {
+    return;
+  }
+  state->tasks.push(std::move(task));
+  if (state->source_id == 0) {
+    auto* source_data = new std::shared_ptr<State>(state);
+    guint source_id = g_idle_add_full(G_PRIORITY_DEFAULT, RunTask, source_data,
+                                      DestroySourceData);
+    if (source_id == 0) {
+      delete source_data;
+    } else {
+      state->source_id = source_id;
+    }
+  }
 }
 
 gboolean TaskRunnerTizen::RunTask(gpointer data) {
-  TaskRunnerTizen* runner = static_cast<TaskRunnerTizen*>(data);
-  std::lock_guard<std::mutex> lock(runner->tasks_mutex_);
-  while (!runner->tasks_.empty()) {
-    TaskClosure task = std::move(runner->tasks_.front());
-    runner->tasks_.pop();
+  std::shared_ptr<State> state =
+      *static_cast<std::shared_ptr<State>*>(data);
+  while (true) {
+    TaskClosure task;
+    {
+      std::lock_guard<std::mutex> lock(state->tasks_mutex);
+      if (state->shutting_down || state->tasks.empty()) {
+        state->source_id = 0;
+        return G_SOURCE_REMOVE;
+      }
+      task = std::move(state->tasks.front());
+      state->tasks.pop();
+    }
     task();
   }
-  return G_SOURCE_REMOVE;
+}
+
+void TaskRunnerTizen::DestroySourceData(gpointer data) {
+  delete static_cast<std::shared_ptr<State>*>(data);
 }
