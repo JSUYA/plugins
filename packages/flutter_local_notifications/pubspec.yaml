@@ -2,7 +2,7 @@ name: flutter_local_notifications_tizen
 description: Tizen implementation of the flutter_local_notifications plugin.
 homepage: https://github.com/flutter-tizen/plugins
 repository: https://github.com/flutter-tizen/plugins/tree/master/packages/flutter_local_notifications
-version: 0.1.0
+version: 0.1.1
 
 environment:
   sdk: ^3.10.0

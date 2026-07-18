@@ -11,7 +11,7 @@ This package is not an endorsed implementation of
 ```yaml
 dependencies:
   flutter_local_notifications: ^22.0.0-dev.2
-  flutter_local_notifications_tizen: ^0.1.0
+  flutter_local_notifications_tizen: ^0.1.1
 ```
 
 Then import the original package:

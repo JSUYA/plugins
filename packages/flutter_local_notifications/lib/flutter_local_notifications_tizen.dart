@@ -895,7 +895,14 @@ class FlutterLocalNotificationsTizenPlugin
     try {
       final notification_h handle = tizen.notification_load_by_tag(tag);
       if (handle != nullptr) {
-        _checkResult(tizen.notification_delete(handle), 'notification_delete');
+        try {
+          _checkResult(
+            tizen.notification_delete(handle),
+            'notification_delete',
+          );
+        } finally {
+          tizen.notification_free(handle);
+        }
       }
     } finally {
       calloc.free(tag);
