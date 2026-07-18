@@ -1,3 +1,9 @@
+## 0.1.15
+
+* Preserve the traffic layer across map option updates so that it can be
+  enabled and disabled reliably.
+* Fix circle tap event controller validation.
+
 ## 0.1.14
 
 * Update google_maps_flutter to 2.16.0.

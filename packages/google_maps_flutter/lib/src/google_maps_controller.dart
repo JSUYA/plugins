@@ -458,7 +458,7 @@ class GoogleMapsController {
   void _onCircleClick(JavaScriptMessage message) {
     try {
       final dynamic id = json.decode(message.message);
-      if (_polygonsController != null && id is int) {
+      if (_circlesController != null && id is int) {
         final CircleId? circleId = _circlesController!._idToCircleId[id];
         final CircleController? circle =
             _circlesController!._circleIdToController[circleId];
@@ -614,15 +614,14 @@ class GoogleMapsController {
   // Attaches/detaches a Traffic Layer on the `map` if `attach` is true/false.
   Future<void> _setTrafficLayer(bool attach) async {
     final String command = '''
-      var trafficLayer;
-      if ($attach == true && trafficLayer == null) {
-        trafficLayer = new google.maps.TrafficLayer();
-        trafficLayer.setMap(map);
+      if ($attach == true && window.tizenTrafficLayer == null) {
+        window.tizenTrafficLayer = new google.maps.TrafficLayer();
+        window.tizenTrafficLayer.setMap(map);
         console.log('trafficLayer attached!!');
       }
-      if ($attach == false && trafficLayer != null) {
-        trafficLayer.setMap(null);
-        trafficLayer = null;
+      if ($attach == false && window.tizenTrafficLayer != null) {
+        window.tizenTrafficLayer.setMap(null);
+        window.tizenTrafficLayer = null;
         console.log('trafficLayer detached!!');
       }
     ''';
