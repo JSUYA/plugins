@@ -58,6 +58,13 @@ void main() {
       final _TestStub stub = _TestStub();
       stub.addPrivilege('http://tizen.org/privilege/datasharing');
     });
+
+    testWidgets('close is idempotent', (WidgetTester _) async {
+      final _TestStub stub = _TestStub();
+
+      await stub.close();
+      await stub.close();
+    });
   });
 
   // ---------------------------------------------------------------------------

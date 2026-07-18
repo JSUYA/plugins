@@ -34,7 +34,7 @@ class Port {
       );
 
       for (int i = 0; i < paths.length; ++i) {
-        pPaths[i] = paths[i].toNativeChar();
+        pPaths[i] = paths[i].toNativeChar(allocator: arena);
       }
 
       final int ret = tizen.rpc_port_set_private_sharing_array(
@@ -56,7 +56,7 @@ class Port {
   /// application.
   void shareFile(String path) {
     using((Arena arena) {
-      final Pointer<Char> pPath = path.toNativeChar();
+      final Pointer<Char> pPath = path.toNativeChar(allocator: arena);
       final int ret = tizen.rpc_port_set_private_sharing(handle, pPath);
       if (ret != 0) {
         throw PlatformException(

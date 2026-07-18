@@ -1,3 +1,7 @@
+## 0.1.7
+
+* Fix stub finalizer ownership and temporary native string leaks.
+
 ## 0.1.6
 
 * Read byte values as unsigned (0-255) so `Parcel.readByte` is consistent

@@ -33,10 +33,10 @@ abstract class StubBase {
       return pStub.value;
     });
 
-    _finalizer.attach(this, _handle);
+    _finalizer.attach(this, _handle, detach: this);
   }
 
-  late final rpc_port_stub_h _handle;
+  late rpc_port_stub_h _handle;
 
   final Finalizer<rpc_port_stub_h> _finalizer = Finalizer<rpc_port_stub_h>(
     (rpc_port_stub_h handle) => tizen.rpc_port_stub_destroy(handle),
@@ -113,7 +113,7 @@ abstract class StubBase {
   /// Gets a [Port] associated with a specific client [instance].
   Port getPort(String instance, PortType portType) {
     return using((Arena arena) {
-      final Pointer<Char> pInstance = instance.toNativeChar();
+      final Pointer<Char> pInstance = instance.toNativeChar(allocator: arena);
       final Pointer<rpc_port_h> pPort = arena();
       final int ret = tizen.rpc_port_stub_get_port(
         _handle,
@@ -136,8 +136,18 @@ abstract class StubBase {
   /// All active connections will be closed immediately. No operation can be
   /// made to this stub after this call.
   Future<void> close() async {
-    await _streamSubscription?.cancel();
-    tizen.rpc_port_stub_destroy(_handle);
+    final rpc_port_stub_h handle = _handle;
+    if (handle == nullptr) {
+      return;
+    }
+    _handle = nullptr;
+    try {
+      await _streamSubscription?.cancel();
+    } finally {
+      _streamSubscription = null;
+      _finalizer.detach(this);
+      tizen.rpc_port_stub_destroy(handle);
+    }
   }
 
   /// Called when a connection is established by a client.
