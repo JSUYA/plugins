@@ -17,6 +17,8 @@
 #include "image_resize.h"
 #include "permission_manager.h"
 
+using namespace image_picker_tizen;
+
 namespace {
 
 enum class ImageSource {

@@ -18,6 +18,8 @@
 #include "location_manager.h"
 #include "permission_manager.h"
 
+using namespace geolocator_tizen;
+
 namespace {
 
 typedef flutter::MethodChannel<flutter::EncodableValue> FlMethodChannel;

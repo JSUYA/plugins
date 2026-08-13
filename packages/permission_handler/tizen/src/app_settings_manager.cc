@@ -12,6 +12,8 @@
 
 #include "log.h"
 
+namespace permission_handler_tizen {
+
 namespace {
 
 constexpr char kSettingAppId[] = "com.samsung.clocksetting.apps";
@@ -84,3 +86,5 @@ bool AppSettingsManager::OpenAppSettings() {
 
   return true;
 }
+
+}  // namespace permission_handler_tizen

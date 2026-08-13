@@ -12,6 +12,8 @@
 
 #include "log.h"
 
+namespace permission_handler_tizen {
+
 PermissionStatus PermissionManager::CheckPermission(
     const std::string &privilege) {
 #ifdef TV_PROFILE
@@ -84,3 +86,5 @@ PermissionStatus PermissionManager::RequestPermission(
   }
 #endif  // TV_PROFILE
 }
+
+}  // namespace permission_handler_tizen

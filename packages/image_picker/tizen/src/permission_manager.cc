@@ -12,6 +12,8 @@
 
 #include "log.h"
 
+namespace image_picker_tizen {
+
 PermissionStatus PermissionManager::CheckPermission(
     const std::string &privilege) {
 #ifdef TV_PROFILE
@@ -85,3 +87,5 @@ PermissionResult PermissionManager::RequestPermission(
   }
 #endif  // TV_PROFILE
 }
+
+}  // namespace image_picker_tizen

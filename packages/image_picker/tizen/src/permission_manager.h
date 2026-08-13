@@ -7,6 +7,8 @@
 
 #include <string>
 
+namespace image_picker_tizen {
+
 // The result of permission check.
 enum class PermissionStatus { kAllow, kDeny, kAsk, kError };
 
@@ -22,5 +24,7 @@ class PermissionManager {
 
   PermissionResult RequestPermission(const std::string &privilege);
 };
+
+}  // namespace image_picker_tizen
 
 #endif  // FLUTTER_PLUGIN_PERMISSION_MANAGER_H_

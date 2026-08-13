@@ -12,6 +12,8 @@
 
 #include "log.h"
 
+namespace geolocator_tizen {
+
 namespace {
 
 constexpr char kSettingAppId[] = "com.samsung.clocksetting.apps";
@@ -124,3 +126,5 @@ bool AppSettingsManager::OpenLocationSettings() {
 
   return true;
 }
+
+}  // namespace geolocator_tizen

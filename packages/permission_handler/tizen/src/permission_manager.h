@@ -7,6 +7,8 @@
 
 #include <string>
 
+namespace permission_handler_tizen {
+
 // The result of permission check and request.
 //
 // Originally defined in permission_status.dart of the platform interface
@@ -30,5 +32,7 @@ class PermissionManager {
 
   PermissionStatus RequestPermission(const std::string &privilege);
 };
+
+}  // namespace permission_handler_tizen
 
 #endif  // FLUTTER_PLUGIN_PERMISSION_MANAGER_H_

@@ -17,6 +17,8 @@
 #include "permissions.h"
 #include "service_manager.h"
 
+using namespace permission_handler_tizen;
+
 namespace {
 
 std::string PermissionToPrivilege(Permission permission) {

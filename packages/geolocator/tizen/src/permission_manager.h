@@ -7,6 +7,8 @@
 
 #include <string>
 
+namespace geolocator_tizen {
+
 // Keep in sync with the enum values implemented in:
 // https://github.com/Baseflow/flutter-geolocator/blob/master/geolocator_platform_interface/lib/src/enums/location_permission.dart
 // https://github.com/Baseflow/flutter-geolocator/blob/master/geolocator_android/android/src/main/java/com/baseflow/geolocator/permission/LocationPermission.java
@@ -27,5 +29,7 @@ class PermissionManager {
 
   PermissionStatus RequestPermission(const std::string &privilege);
 };
+
+}  // namespace geolocator_tizen
 
 #endif  // FLUTTER_PLUGIN_PERMISSION_MANAGER_H_

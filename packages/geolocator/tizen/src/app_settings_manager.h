@@ -1,3 +1,5 @@
+
+namespace geolocator_tizen {
 // Copyright 2021 Samsung Electronics Co., Ltd. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -13,5 +15,7 @@ class AppSettingsManager {
   bool OpenAppSettings();
   bool OpenLocationSettings();
 };
+
+}  // namespace geolocator_tizen
 
 #endif  // FLUTTER_PLUGIN_APP_SETTINGS_MANAGER_H_
