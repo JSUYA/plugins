@@ -12,6 +12,8 @@
 #include "ecore_wl2_window_proxy.h"
 #include "log.h"
 
+using namespace tizen_window_manager;
+
 TizenWindowManager::TizenWindowManager(void* handle)
     : window_handle_(handle), proxy_(std::make_unique<EcoreWl2WindowProxy>()) {}
 

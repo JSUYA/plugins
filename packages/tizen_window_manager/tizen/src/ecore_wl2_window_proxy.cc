@@ -8,6 +8,8 @@
 
 #include "log.h"
 
+namespace tizen_window_manager {
+
 typedef void (*FuncEcoreWl2WindowGeometryGet)(void *window, int *x, int *y,
                                               int *width, int *height);
 typedef void (*FuncEcoreWl2WindowActivate)(void *window);
@@ -77,3 +79,5 @@ void EcoreWl2WindowProxy::ecore_wl2_window_lower(void *window) {
   }
   ecore_wl2_window_lower(window);
 }
+
+}  // namespace tizen_window_manager

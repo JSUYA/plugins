@@ -10,7 +10,9 @@
 
 #include <memory>
 
+namespace tizen_window_manager {
 class EcoreWl2WindowProxy;
+}  // namespace tizen_window_manager
 
 class TizenWindowManager {
  public:
@@ -23,7 +25,7 @@ class TizenWindowManager {
 
  private:
   void* window_handle_;
-  std::unique_ptr<EcoreWl2WindowProxy> proxy_;
+  std::unique_ptr<tizen_window_manager::EcoreWl2WindowProxy> proxy_;
 };
 
 #endif  // FLUTTER_PLUGIN_TIZEN_WINDOW_MANAGER_H_

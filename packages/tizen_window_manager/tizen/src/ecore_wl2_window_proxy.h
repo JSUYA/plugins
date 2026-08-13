@@ -1,3 +1,5 @@
+
+namespace tizen_window_manager {
 // Copyright 2025 Samsung Electronics Co., Ltd. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -18,5 +20,7 @@ class EcoreWl2WindowProxy {
  private:
   void *ecore_wl2_window_handle_ = nullptr;
 };
+
+}  // namespace tizen_window_manager
 
 #endif  // FLUTTER_PLUGIN_ECORE_WL2_WINDOW_PROXY_H_
