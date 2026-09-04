@@ -77,11 +77,11 @@ String? _getCameraBounds(dynamic option) {
     return null;
   }
 
-  final List<Object> bound = option[0]! as List<Object>;
+  final bound = option[0]! as List<Object>;
   final LatLng? southwest = LatLng.fromJson(bound[0]);
   final LatLng? northeast = LatLng.fromJson(bound[1]);
 
-  final String restrictedBound =
+  final restrictedBound =
       '{south:${southwest?.latitude}, west:${southwest?.longitude}, north:${northeast?.latitude}, east:${northeast?.longitude}}';
 
   return restrictedBound;
@@ -107,7 +107,7 @@ String? _getCameraBounds(dynamic option) {
 String _rawOptionsToString(Map<String, dynamic> rawOptions) {
   // These don't have any rawOptions entry, but they seem to be off in the
   // native maps.
-  String options =
+  var options =
       'mapTypeControl: false, fullscreenControl: false, streetViewControl: false';
 
   if (_mapTypeToMapTypeId.containsKey(rawOptions['mapType'])) {
@@ -279,7 +279,7 @@ LatLng _convertToLatLng(String value) {
 ScreenCoordinate _convertToPoint(String value) {
   try {
     final dynamic latlng = json.decode(value);
-    int x = 0, y = 0;
+    var x = 0, y = 0;
 
     if (latlng is Map<String, dynamic>) {
       x = latlng['x'] is int
@@ -310,7 +310,7 @@ util.GInfoWindowOptions? _infoWindowOptionsFromMarker(Marker marker) {
   // Add an outer wrapper to the contents of the infowindow. The content is
   // JSON-encoded by its consumers (GInfoWindowOptions.toString and
   // GInfoWindow._setContent), so it must be raw, unquoted HTML here.
-  final StringBuffer buffer = StringBuffer();
+  final buffer = StringBuffer();
   buffer.write('<div id="marker-${marker.markerId.value}-infowindow">');
   if (markerTitle.isNotEmpty) {
     buffer.write('<h3 class="infowindow-title">');
@@ -337,14 +337,13 @@ util.GMarkerOptions _markerOptionsFromMarker(
   Marker marker,
   util.GMarker? currentMarker,
 ) {
-  final List<Object?> iconConfig = marker.icon.toJson() as List<Object?>;
+  final iconConfig = marker.icon.toJson() as List<Object?>;
   util.GIcon? icon;
 
   if (iconConfig.isNotEmpty) {
     if (iconConfig[0] == 'asset') {
       assert(iconConfig.length >= 2);
-      final Map<String, Object?> assetConfig =
-          iconConfig[1]! as Map<String, Object?>;
+      final assetConfig = iconConfig[1]! as Map<String, Object?>;
       icon = util.GIcon()..url = '../${assetConfig['assetName']}';
       if (assetConfig['width'] != null || assetConfig['height'] != null) {
         icon.size = util.GSize(
@@ -358,8 +357,7 @@ util.GMarkerOptions _markerOptionsFromMarker(
       }
     } else if (iconConfig[0] == 'bytes') {
       assert(iconConfig.length >= 2);
-      final Map<String, Object?> assetConfig =
-          iconConfig[1]! as Map<String, Object?>;
+      final assetConfig = iconConfig[1]! as Map<String, Object?>;
       icon = util.GIcon()
         ..url =
             'data:image/png;base64,${base64Encode(assetConfig['byteData']! as List<int>)}';
@@ -421,10 +419,10 @@ util.GPolylineOptions _polylineOptionsFromPolyline(Polyline polyline) {
 util.GPolygonOptions _polygonOptionsFromPolygon(Polygon polygon) {
   final List<LatLng> path = polygon.points;
   final bool polygonDirection = _isPolygonClockwise(path);
-  final List<List<LatLng>> paths = <List<LatLng>>[path];
-  int holeIndex = 0;
+  final paths = <List<LatLng>>[path];
+  var holeIndex = 0;
 
-  for (int i = 0; i < polygon.holes.length; i++) {
+  for (var i = 0; i < polygon.holes.length; i++) {
     List<LatLng> holePath = polygon.holes[i];
     if (_isPolygonClockwise(holePath) == polygonDirection) {
       holePath = holePath.reversed.toList();
@@ -462,8 +460,8 @@ util.GPolygonOptions _polygonOptionsFromPolygon(Polygon polygon) {
 /// the `path` is a transformed version of [Polygon.points] or each of the
 /// [Polygon.holes], guaranteeing that `lat` and `lng` can be accessed with `!`.
 bool _isPolygonClockwise(List<LatLng> path) {
-  double direction = 0.0;
-  for (int i = 0; i < path.length; i++) {
+  var direction = 0.0;
+  for (var i = 0; i < path.length; i++) {
     direction =
         direction +
         ((path[(i + 1) % path.length].latitude - path[i].latitude) *
@@ -521,19 +519,17 @@ util.GGroundOverlayOptions? _groundOverlayOptionsFromGroundOverlay(
 }
 
 String? _imageUrlFromMapBitmap(MapBitmap bitmap) {
-  final List<Object?> iconConfig = bitmap.toJson() as List<Object?>;
+  final iconConfig = bitmap.toJson() as List<Object?>;
   if (iconConfig.isEmpty) {
     return null;
   }
   if (iconConfig[0] == 'asset' && iconConfig.length >= 2) {
-    final Map<String, Object?> assetConfig =
-        iconConfig[1]! as Map<String, Object?>;
+    final assetConfig = iconConfig[1]! as Map<String, Object?>;
     return '../${assetConfig['assetName']}';
   }
   if (iconConfig[0] == 'bytes' && iconConfig.length >= 2) {
-    final Map<String, Object?> assetConfig =
-        iconConfig[1]! as Map<String, Object?>;
-    final List<int> bytes = assetConfig['byteData']! as List<int>;
+    final assetConfig = iconConfig[1]! as Map<String, Object?>;
+    final bytes = assetConfig['byteData']! as List<int>;
     return 'data:image/png;base64,${base64Encode(bytes)}';
   }
   return null;

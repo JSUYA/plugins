@@ -166,13 +166,12 @@ class TextCaption extends Caption {
     Paint
   ) processSubtitleAttributes(List<SubtitleAttribute> subtitleAttributes) {
     TextOriginAndExtent actualTextOriginAndExtent = TextOriginAndExtent.none;
-    TextStyle actualTextStyle =
-        const TextStyle(height: 1.0, fontSize: 1 / 15.0);
+    var actualTextStyle = const TextStyle(height: 1.0, fontSize: 1 / 15.0);
     AlignmentGeometry actualTextAlign = Alignment.center;
-    Color actualWindowBgColor =
+    var actualWindowBgColor =
         const Color(0x00000000); // default transparent color.
     double actualFontSize = 1 / 15.0;
-    Paint foreground = Paint()..style = PaintingStyle.stroke;
+    var foreground = Paint()..style = PaintingStyle.stroke;
 
     if (subtitleAttributes.isEmpty) {
       return (
@@ -185,29 +184,29 @@ class TextCaption extends Caption {
       );
     }
 
-    for (final SubtitleAttribute attr in subtitleAttributes) {
+    for (final attr in subtitleAttributes) {
       switch (attr.attrType) {
         // For text origin and extent.
         case SubtitleAttrType.subAttrRegionXPos:
-          final double xPos = attr.attrValue as double;
+          final xPos = attr.attrValue as double;
           if (xPos > 0) {
             actualTextOriginAndExtent =
                 actualTextOriginAndExtent.addValue(originX: xPos);
           }
         case SubtitleAttrType.subAttrRegionYPos:
-          final double yPos = attr.attrValue as double;
+          final yPos = attr.attrValue as double;
           if (yPos > 0) {
             actualTextOriginAndExtent =
                 actualTextOriginAndExtent.addValue(originY: yPos);
           }
         case SubtitleAttrType.subAttrRegionWidth:
-          final double width = attr.attrValue as double;
+          final width = attr.attrValue as double;
           if (width > 0) {
             actualTextOriginAndExtent =
                 actualTextOriginAndExtent.addValue(extentWidth: width);
           }
         case SubtitleAttrType.subAttrRegionHeight:
-          final double height = attr.attrValue as double;
+          final height = attr.attrValue as double;
           if (height > 0) {
             actualTextOriginAndExtent =
                 actualTextOriginAndExtent.addValue(extentHeight: height);
@@ -217,7 +216,7 @@ class TextCaption extends Caption {
           actualTextStyle =
               actualTextStyle.copyWith(fontFamily: attr.attrValue as String);
         case SubtitleAttrType.subAttrFontSize:
-          final double fontSize = attr.attrValue as double;
+          final fontSize = attr.attrValue as double;
           if (fontSize > 0) {
             actualFontSize = fontSize;
           }
@@ -238,7 +237,7 @@ class TextCaption extends Caption {
                 backgroundColor: _intToColor(attr.attrValue as int));
           }
         case SubtitleAttrType.subAttrFontOpacity:
-          final double fontOpacity = attr.attrValue as double;
+          final fontOpacity = attr.attrValue as double;
           if (fontOpacity >= 0.0 && fontOpacity <= 1.0) {
             if (actualTextStyle.color == null) {
               actualTextStyle = actualTextStyle.copyWith(color: Colors.white);
@@ -247,7 +246,7 @@ class TextCaption extends Caption {
                 color: actualTextStyle.color!.withValues(alpha: fontOpacity));
           }
         case SubtitleAttrType.subAttrFontBgOpacity:
-          final double fontBgOpacity = attr.attrValue as double;
+          final fontBgOpacity = attr.attrValue as double;
           if (fontBgOpacity >= 0.0 &&
               fontBgOpacity <= 1.0 &&
               actualTextStyle.backgroundColor != null) {
@@ -266,7 +265,7 @@ class TextCaption extends Caption {
         case SubtitleAttrType.subAttrWindowBgColor:
           actualWindowBgColor = _intToColor(attr.attrValue as int);
         case SubtitleAttrType.subAttrWindowOpacity:
-          final double windowOpacity = attr.attrValue as double;
+          final windowOpacity = attr.attrValue as double;
           if (windowOpacity >= 0.0 && windowOpacity <= 1.0) {
             actualWindowBgColor =
                 actualWindowBgColor.withValues(alpha: windowOpacity);
@@ -635,15 +634,15 @@ class SubtitleAttribute {
   static List<SubtitleAttribute> fromEventSubtitleAttrList(
     List<dynamic>? eventSubtitleAttrList,
   ) {
-    final List<SubtitleAttribute> subtitleAttributes = <SubtitleAttribute>[];
+    final subtitleAttributes = <SubtitleAttribute>[];
     final List<Map<Object?, Object?>?> subtitleAttrList =
         eventSubtitleAttrList!.cast<Map<Object?, Object?>?>();
 
-    for (final Map<Object?, Object?>? attr in subtitleAttrList) {
+    for (final attr in subtitleAttrList) {
       if (attr != null && attr['attrType'] != null) {
-        final int attrTypeNum = attr['attrType']! as int;
-        final int startTime = attr['startTime']! as int;
-        final int stopTime = attr['stopTime']! as int;
+        final attrTypeNum = attr['attrType']! as int;
+        final startTime = attr['startTime']! as int;
+        final stopTime = attr['stopTime']! as int;
 
         Object attrValue;
         if (SubtitleAttrType.getValueType(attrTypeNum) ==
@@ -720,7 +719,7 @@ class Captions {
         ? Duration.zero
         : Duration(milliseconds: subtitlesInfo.textDuration!);
     if (subtitlesInfo.pictureInfo?.isNotEmpty ?? false) {
-      final PictureCaption pictureCaption = PictureCaption(
+      final pictureCaption = PictureCaption(
         number: 0,
         start: position,
         end: position + textDuration,
@@ -738,13 +737,11 @@ class Captions {
           : subtitlesInfo.textsInfo!.length;
 
       if (textLines > 0) {
-        final List<TextCaption> textCaptions = <TextCaption>[];
-        for (int i = 0; i < textLines; i++) {
-          final Map<Object?, Object?> textInfo =
-              subtitlesInfo.textsInfo![i] as Map<Object?, Object?>;
-          final String? text = textInfo['text'] as String?;
-          final List<dynamic>? subtitleAttrList =
-              textInfo['attributes'] as List<dynamic>?;
+        final textCaptions = <TextCaption>[];
+        for (var i = 0; i < textLines; i++) {
+          final textInfo = subtitlesInfo.textsInfo![i] as Map<Object?, Object?>;
+          final text = textInfo['text'] as String?;
+          final subtitleAttrList = textInfo['attributes'] as List<dynamic>?;
 
           final List<SubtitleAttribute> subtitleAttributes =
               SubtitleAttribute.fromEventSubtitleAttrList(subtitleAttrList);
@@ -766,7 +763,7 @@ class Captions {
           final double actualFontSize = subtitleAttr.$5;
           final Paint actualForeground = subtitleAttr.$6;
 
-          final TextCaption textCaption = TextCaption(
+          final textCaption = TextCaption(
               number: 0,
               start: position,
               end: position + textDuration,

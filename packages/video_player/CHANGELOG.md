@@ -1,3 +1,7 @@
+## NEXT
+
+* Omit obvious local variable types.
+
 ## 2.5.15
 
 * Update video_player to 2.14.0.

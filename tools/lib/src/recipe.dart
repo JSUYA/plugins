@@ -15,8 +15,7 @@ class Recipe {
   factory Recipe.fromYaml(YamlMap yamlMap) {
     final Map<String, YamlList> packages =
         (yamlMap['plugins'] as YamlMap).cast<String, YamlList>();
-    final Map<String, List<Profile>> profilesPerPackage =
-        <String, List<Profile>>{};
+    final profilesPerPackage = <String, List<Profile>>{};
     for (final MapEntry<String, YamlList> package in packages.entries) {
       profilesPerPackage[package.key] = package.value
           .map((dynamic profile) => Profile.fromString(profile as String))

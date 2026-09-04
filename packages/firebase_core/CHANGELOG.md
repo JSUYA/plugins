@@ -1,3 +1,7 @@
+## NEXT
+
+* Omit obvious local variable types.
+
 ## 0.2.0
 
 * Update firebase_core to 4.14.0.

@@ -198,7 +198,7 @@ class GoogleMapsJsBridge {
   /// Creates the top-level `map` JS variable using [optionsJs] (a JS object
   /// literal), plus its built-in map-level listeners.
   Future<void> createMap(String optionsJs) async {
-    final String command =
+    final command =
         '''
       map = new google.maps.Map(document.getElementById('map'), $optionsJs);
       map.addListener('bounds_changed', (event) => { BoundChanged.postMessage(''); });
@@ -270,7 +270,7 @@ class GoogleMapsJsBridge {
 
   /// Calls `ref.method(...args)` on the JS side, discarding the result.
   Future<void> callMethod(JsRef ref, String method, List<Object?> args) async {
-    final String serializedArgs = '[${args.map(_serializeArg).join(', ')}]';
+    final serializedArgs = '[${args.map(_serializeArg).join(', ')}]';
     await controller.runJavaScript(
       'JSON.stringify($ref.$method.apply($ref, $serializedArgs))',
     );
@@ -283,7 +283,7 @@ class GoogleMapsJsBridge {
     String method,
     List<Object?> args,
   ) async {
-    final String serializedArgs = '[${args.map(_serializeArg).join(', ')}]';
+    final serializedArgs = '[${args.map(_serializeArg).join(', ')}]';
     return controller.runJavaScriptReturningResult(
       'JSON.stringify($ref.$method.apply($ref, $serializedArgs))',
     );
@@ -295,7 +295,7 @@ class GoogleMapsJsBridge {
     String method,
     List<Object?> args,
   ) async {
-    final String serializedArgs = '[${args.map(_serializeArg).join(', ')}]';
+    final serializedArgs = '[${args.map(_serializeArg).join(', ')}]';
     return controller.runJavaScriptReturningResult(
       '$ref.$method.apply($ref, $serializedArgs)',
     );

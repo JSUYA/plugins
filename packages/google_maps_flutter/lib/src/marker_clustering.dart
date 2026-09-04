@@ -44,17 +44,14 @@ class ClusterManagersController extends GeometryController {
   }
 
   void _addClusterManager(ClusterManager clusterManager) {
-    final String onClusterClickHandler =
+    final onClusterClickHandler =
         '(event, cluster, map) => ClusterClick.postMessage(makeClusterEvent("${clusterManager.clusterManagerId.value}", event, cluster))';
 
-    final util.GMarkerClustererOptions options = util.GMarkerClustererOptions(
+    final options = util.GMarkerClustererOptions(
       onClusterClick: onClusterClickHandler,
     );
 
-    final util.GMarkerClusterer markerClusterer = util.GMarkerClusterer(
-      _bridge,
-      options,
-    );
+    final markerClusterer = util.GMarkerClusterer(_bridge, options);
 
     _clusterManagerIdToMarkerClusterer[clusterManager.clusterManagerId] =
         markerClusterer;
@@ -170,12 +167,12 @@ class ClusterManagersController extends GeometryController {
     ClusterManagerId clusterManagerId,
     Map<String, dynamic> markerClustererCluster,
   ) {
-    final LatLng position = LatLng(
+    final position = LatLng(
       (markerClustererCluster['position'] as dynamic)['lat'] as double,
       (markerClustererCluster['position'] as dynamic)['lng'] as double,
     );
 
-    final LatLngBounds bounds = LatLngBounds(
+    final bounds = LatLngBounds(
       southwest: LatLng(
         (markerClustererCluster['bounds'] as dynamic)['south'] as double,
         (markerClustererCluster['bounds'] as dynamic)['west'] as double,

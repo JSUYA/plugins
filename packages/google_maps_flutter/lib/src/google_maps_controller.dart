@@ -85,7 +85,7 @@ class GoogleMapsController {
   /// Returns min-max zoom levels. Test only.
   @visibleForTesting
   Future<MinMaxZoomPreference> getMinMaxZoomLevels() async {
-    final String value =
+    final value =
         await _bridge.runJavaScriptReturningResult(
               'JSON.stringify([map.minZoom, map.maxZoom])',
             )
@@ -111,7 +111,7 @@ class GoogleMapsController {
   /// Returns if zoomGestures property is enabled. Test only.
   @visibleForTesting
   Future<bool> isZoomGesturesEnabled() async {
-    final String value =
+    final value =
         await _bridge.runJavaScriptReturningResult('map.gestureHandling')
             as String;
     return value != 'none';
@@ -120,7 +120,7 @@ class GoogleMapsController {
   /// Returns if zoomControls property is enabled. Test only.
   @visibleForTesting
   Future<bool> isZoomControlsEnabled() async {
-    final String value =
+    final value =
         await _bridge.runJavaScriptReturningResult('map.zoomControl') as String;
     return value != 'false';
   }
@@ -128,7 +128,7 @@ class GoogleMapsController {
   /// Returns if scrollGestures property is enabled. Test only.
   @visibleForTesting
   Future<bool> isScrollGesturesEnabled() async {
-    final String value =
+    final value =
         await _bridge.runJavaScriptReturningResult('map.gestureHandling')
             as String;
     return value != 'none';
@@ -260,7 +260,7 @@ class GoogleMapsController {
       final dynamic event = json.decode(message);
       if (event is Map<String, dynamic>) {
         assert(event['latLng'] != null);
-        final LatLng position = LatLng(
+        final position = LatLng(
           event['latLng']['lat'] as double,
           event['latLng']['lng'] as double,
         );
@@ -276,7 +276,7 @@ class GoogleMapsController {
       final dynamic event = json.decode(message);
       if (event is Map<String, dynamic>) {
         assert(event['latLng'] != null);
-        final LatLng position = LatLng(
+        final position = LatLng(
           event['latLng']['lat'] as double,
           event['latLng']['lng'] as double,
         );
@@ -291,15 +291,14 @@ class GoogleMapsController {
     try {
       final dynamic result = json.decode(message);
 
-      final String id = result['id'] as String;
+      final id = result['id'] as String;
       final ClusterManagerId? clusterManagerId =
           _clusterManagersController?.idToClusterManagerId[id];
       if (clusterManagerId == null) {
         return;
       }
 
-      final Map<String, dynamic> markerClustererCluster =
-          result['cluster'] as Map<String, dynamic>;
+      final markerClustererCluster = result['cluster'] as Map<String, dynamic>;
 
       _clusterManagersController?.clusterClicked(
         clusterManagerId,
@@ -337,7 +336,7 @@ class GoogleMapsController {
           final MarkerController? marker =
               _markersController!._markerIdToController[markerId];
 
-          final LatLng position = LatLng(
+          final position = LatLng(
             result['event']['latLng']['lat'] as double,
             result['event']['latLng']['lng'] as double,
           );
@@ -363,7 +362,7 @@ class GoogleMapsController {
           final MarkerController? marker =
               _markersController!._markerIdToController[markerId];
 
-          final LatLng position = LatLng(
+          final position = LatLng(
             result['event']['latLng']['lat'] as double,
             result['event']['latLng']['lng'] as double,
           );
@@ -389,7 +388,7 @@ class GoogleMapsController {
           final MarkerController? marker =
               _markersController!._markerIdToController[markerId];
 
-          final LatLng position = LatLng(
+          final position = LatLng(
             result['event']['latLng']['lat'] as double,
             result['event']['latLng']['lng'] as double,
           );
@@ -599,7 +598,7 @@ class GoogleMapsController {
 
   // Attaches/detaches a Traffic Layer on the `map` if `attach` is true/false.
   Future<void> _setTrafficLayer(bool attach) async {
-    final String command =
+    final command =
         '''
       var trafficLayer;
       if ($attach == true && trafficLayer == null) {
@@ -678,7 +677,7 @@ class GoogleMapsController {
 
   // Translates a [CameraUpdate] into operations on a [Javascript].
   Future<void> _applyCameraUpdate(CameraUpdate update) async {
-    final List<dynamic> json = update.toJson() as List<dynamic>;
+    final json = update.toJson() as List<dynamic>;
     switch (json[0]) {
       case 'newCameraPosition':
         await _setMoveCamera(
@@ -701,7 +700,7 @@ class GoogleMapsController {
         await _setPanBy(json[1] as num, json[2] as num);
       case 'zoomBy':
         String? focusLatLng;
-        double zoomDelta = 0.0;
+        var zoomDelta = 0.0;
         if (json[1] != null) {
           zoomDelta = (json[1] as num) + 0.0;
         }
@@ -736,7 +735,7 @@ class GoogleMapsController {
   }
 
   Future<String> _pixelToLatLng(double x, double y) async {
-    final String command =
+    final command =
         '''
       function getPixelToLatLng() {
         var projection = map.getProjection();
@@ -755,7 +754,7 @@ class GoogleMapsController {
   }
 
   Future<String> _latLngToPoint(LatLng latLng) async {
-    final String command =
+    final command =
         '''
       function getLatLngToPixel() {
         var ne = map.getBounds().getNorthEast();

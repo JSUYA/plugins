@@ -1,3 +1,7 @@
+## NEXT
+
+* Omit obvious local variable types.
+
 ## 0.3.3
 
 * Update the repository URL to use the `main` branch.

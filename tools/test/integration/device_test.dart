@@ -47,9 +47,9 @@ Future<void> _checkSystemRequirements(String emulatorName) async {
 }
 
 String _getRandomString(int length) {
-  const String chars =
+  const chars =
       'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
-  final Random random = Random();
+  final random = Random();
   return String.fromCharCodes(List<int>.generate(
       length, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
 }
@@ -106,7 +106,7 @@ void main() {
 
   tearDown(() async {
     final List<SdbDeviceInfo> deviceInfos = tizenSdk.sdbDevices();
-    for (final SdbDeviceInfo deviceInfo in deviceInfos) {
+    for (final deviceInfo in deviceInfos) {
       if (device.name == deviceInfo.name) {
         final String? pid = findEmulatorPid(device.name);
         if (pid == null) {
@@ -121,7 +121,7 @@ void main() {
     final List<String> names = LineSplitter.split(result.stdout as String)
         .map((String token) => token.trim())
         .toList();
-    for (final String name in names) {
+    for (final name in names) {
       if (name == device.name) {
         await io.Process.run(tizenSdk.emCli.absolute.path,
             <String>['delete', '-n', device.name]);

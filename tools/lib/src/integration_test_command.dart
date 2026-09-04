@@ -122,8 +122,7 @@ class IntegrationTestCommand extends PackageLoopingCommand {
         throw ToolExit(exitCommandFoundErrors);
       }
       try {
-        final YamlMap yamlMap =
-            loadYaml(recipeFile.readAsStringSync()) as YamlMap;
+        final yamlMap = loadYaml(recipeFile.readAsStringSync()) as YamlMap;
         _recipe = Recipe.fromYaml(yamlMap);
       } on YamlException {
         print('Invalid YAML file.');
@@ -132,7 +131,7 @@ class IntegrationTestCommand extends PackageLoopingCommand {
     }
 
     late io.ProcessResult processResult;
-    for (int attempts = 0; attempts < 5; attempts++) {
+    for (var attempts = 0; attempts < 5; attempts++) {
       // This operation often fails with an exit code 128.
       processResult = await processRunner.run(
         'flutter-tizen',
@@ -164,7 +163,7 @@ class IntegrationTestCommand extends PackageLoopingCommand {
           .getTargetPackages(filterExcluded: filterExcluded)
           .toList();
 
-      for (final PackageEnumerationEntry package in packages) {
+      for (final package in packages) {
         final String packageName = package.package.displayName;
         if (!recipe.contains(packageName)) {
           continue;
@@ -180,7 +179,7 @@ class IntegrationTestCommand extends PackageLoopingCommand {
 
   @override
   Future<PackageResult> runForPackage(RepositoryPackage package) async {
-    List<Profile> profiles = <Profile>[];
+    var profiles = <Profile>[];
     if (argResults!.wasParsed(_profilesArg)) {
       profiles = getStringListArg(_profilesArg)
           .map((String profile) => Profile.fromString(profile))
@@ -216,8 +215,8 @@ class IntegrationTestCommand extends PackageLoopingCommand {
     }
 
     // Number of test = examples * profiles
-    final List<String> errors = <String>[];
-    for (final RepositoryPackage example in examples) {
+    final errors = <String>[];
+    for (final example in examples) {
       if (!example.pubspecFile.existsSync()) {
         errors.add('Missing pubspec file in ${example.path}.');
         continue;
@@ -232,7 +231,7 @@ class IntegrationTestCommand extends PackageLoopingCommand {
         continue;
       }
 
-      for (final Device device in devices) {
+      for (final device in devices) {
         String? error =
             await device.runIntegrationTest(example.directory, _timeout);
         if (error != null) {
@@ -260,8 +259,8 @@ class IntegrationTestCommand extends PackageLoopingCommand {
   }
 
   List<EmulatorDevice> _prepareNewEmulators(List<Profile> profiles) {
-    final List<EmulatorDevice> emulators = <EmulatorDevice>[];
-    for (final Profile profile in profiles) {
+    final emulators = <EmulatorDevice>[];
+    for (final profile in profiles) {
       emulators.add(
         EmulatorDevice(
           '${profile.toString().replaceAll('.', '_')}-${io.pid}',
@@ -279,9 +278,9 @@ class IntegrationTestCommand extends PackageLoopingCommand {
   ///
   /// If [profiles] is omitted or `null` is passed, returns all connected devices.
   List<Device> _findConnectedDevices([List<Profile>? profiles]) {
-    final List<Device> devices = <Device>[];
+    final devices = <Device>[];
     final List<SdbDeviceInfo> deviceInfos = _tizenSdk.sdbDevices();
-    for (final SdbDeviceInfo deviceInfo in deviceInfos) {
+    for (final deviceInfo in deviceInfos) {
       final Map<String, String> capability =
           _tizenSdk.sdbCapability(deviceInfo.serial);
       final String? deviceType = capability['profile_name'];
@@ -299,7 +298,7 @@ class IntegrationTestCommand extends PackageLoopingCommand {
       if (profiles != null && !profiles.contains(profile)) {
         continue;
       }
-      final Device device = cpuArch == 'x86'
+      final device = cpuArch == 'x86'
           ? Device.emulator(
               deviceInfo.name,
               profile,

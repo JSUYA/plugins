@@ -98,7 +98,7 @@ class _CurrentAppScreenState extends State<_CurrentAppScreen> {
       builder: (BuildContext context, AsyncSnapshot<AppInfo> snapshot) {
         if (snapshot.hasData) {
           final AppInfo appInfo = snapshot.data!;
-          final AppRunningContext appContext = AppRunningContext(
+          final appContext = AppRunningContext(
             appId: appInfo.appId,
           );
           return ListView(
@@ -151,7 +151,7 @@ class _AppListScreenState extends State<_AppListScreen>
               final AppInfo appInfo = apps[index];
               Widget appIcon = const Icon(Icons.error_outline);
               if (appInfo.iconPath != null) {
-                final File iconFile = File(appInfo.iconPath!);
+                final iconFile = File(appInfo.iconPath!);
                 if (iconFile.existsSync()) {
                   appIcon = Image.file(iconFile);
                 }
@@ -241,7 +241,7 @@ class _AppEventsScreenState extends State<_AppEventsScreen>
   }
 
   Future<void> _getDeviceInfo() async {
-    final DeviceInfoPluginTizen deviceInfo = DeviceInfoPluginTizen();
+    final deviceInfo = DeviceInfoPluginTizen();
     final TizenDeviceInfo tizenInfo = await deviceInfo.tizenInfo;
     setState(() {
       if (tizenInfo.profile == 'tv') {

@@ -72,7 +72,7 @@ class AppManager {
     final List<Map<dynamic, dynamic>>? apps = await _channel
         .invokeListMethod<Map<dynamic, dynamic>>('getInstalledApps');
 
-    final List<AppInfo> list = <AppInfo>[];
+    final list = <AppInfo>[];
     for (final Map<dynamic, dynamic> app in apps!) {
       list.add(AppInfo.fromMap(app.cast<String, dynamic>()));
     }
@@ -199,8 +199,8 @@ class AppRunningContext {
 
   /// Creates an instance of [AppRunningContext] with map.
   static AppRunningContext fromMap(Map<String, dynamic> map) {
-    final String appId = map['appId'] as String;
-    final int handle = map['handle'] as int;
+    final appId = map['appId'] as String;
+    final handle = map['handle'] as int;
     return AppRunningContext(appId: appId, handleAddress: handle);
   }
 

@@ -50,9 +50,9 @@ class MarkerController {
   LatLngCallback? dragEndEvent;
 
   Future<void> _addMarkerEvent(GoogleMapsJsBridge bridge) async {
-    final JsRef ref = JsRef(_marker!.toString());
+    final ref = JsRef(_marker!.toString());
     final int id = _marker!.id;
-    final String dragPayload = 'JSON.stringify({id:$id, event:event})';
+    final dragPayload = 'JSON.stringify({id:$id, event:event})';
     await bridge.addListener(
       ref,
       'click',

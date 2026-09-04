@@ -1,3 +1,7 @@
+## NEXT
+
+* Omit obvious local variable types.
+
 ## 2.3.2
 
 * Update code format.

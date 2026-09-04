@@ -40,8 +40,8 @@ class PolygonsController extends GeometryController {
     final util.GPolygonOptions populationOptions = _polygonOptionsFromPolygon(
       polygon,
     );
-    final util.GPolygon gPolygon = util.GPolygon(_bridge, populationOptions);
-    final PolygonController controller = PolygonController(
+    final gPolygon = util.GPolygon(_bridge, populationOptions);
+    final controller = PolygonController(
       polygon: gPolygon,
       consumeTapEvents: polygon.consumeTapEvents,
       onTap: () {

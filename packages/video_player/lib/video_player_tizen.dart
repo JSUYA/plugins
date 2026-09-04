@@ -40,7 +40,7 @@ class VideoPlayerTizen extends platform_interface.VideoPlayerPlatform {
     String? packageName;
     String? uri;
     String? formatHint;
-    Map<String, String> httpHeaders = <String, String>{};
+    var httpHeaders = <String, String>{};
     switch (dataSource.sourceType) {
       case platform_interface.DataSourceType.asset:
         asset = dataSource.asset;
@@ -54,7 +54,7 @@ class VideoPlayerTizen extends platform_interface.VideoPlayerPlatform {
       case platform_interface.DataSourceType.contentUri:
         uri = dataSource.uri;
     }
-    final CreateMessage message = CreateMessage(
+    final message = CreateMessage(
       asset: asset,
       packageName: packageName,
       uri: uri,
@@ -117,7 +117,7 @@ class VideoPlayerTizen extends platform_interface.VideoPlayerPlatform {
     return _eventChannelFor(textureId).receiveBroadcastStream().map((
       dynamic event,
     ) {
-      final Map<dynamic, dynamic> map = event as Map<dynamic, dynamic>;
+      final map = event as Map<dynamic, dynamic>;
       switch (map['event']) {
         case 'initialized':
           return platform_interface.VideoEvent(
@@ -134,7 +134,7 @@ class VideoPlayerTizen extends platform_interface.VideoPlayerPlatform {
             eventType: platform_interface.VideoEventType.completed,
           );
         case 'bufferingUpdate':
-          final List<dynamic> values = map['values'] as List<dynamic>;
+          final values = map['values'] as List<dynamic>;
 
           return platform_interface.VideoEvent(
             buffered: values
@@ -188,7 +188,7 @@ class VideoPlayerTizen extends platform_interface.VideoPlayerPlatform {
   };
 
   platform_interface.DurationRange _toDurationRange(dynamic value) {
-    final List<dynamic> pair = value as List<dynamic>;
+    final pair = value as List<dynamic>;
     return platform_interface.DurationRange(
       Duration(milliseconds: pair[0] as int),
       Duration(milliseconds: pair[1] as int),

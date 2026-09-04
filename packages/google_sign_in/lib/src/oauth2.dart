@@ -152,7 +152,7 @@ class DeviceAuthClient {
     String clientId,
     List<String> scope,
   ) async {
-    final Map<String, String> body = <String, String>{
+    final body = <String, String>{
       'client_id': clientId,
       'scope': scope.join(' '),
     };
@@ -177,7 +177,7 @@ class DeviceAuthClient {
     String clientSecret,
     String deviceCode,
   ) async {
-    final Map<String, String> body = <String, String>{
+    final body = <String, String>{
       'grant_type': 'http://oauth.net/grant_type/device/1.0',
       'client_id': clientId,
       'client_secret': clientSecret,
@@ -269,7 +269,7 @@ class DeviceAuthClient {
 
   /// Requests a revoke token request to [revokeEndPoint].
   Future<void> revokeToken(String token) async {
-    final Map<String, String> body = <String, String>{'token': token};
+    final body = <String, String>{'token': token};
 
     final http.Response response = await _httpClient.post(
       revokeEndPoint,
@@ -286,7 +286,7 @@ class DeviceAuthClient {
     required String clientSecret,
     required String refreshToken,
   }) async {
-    final Map<String, String> body = <String, String>{
+    final body = <String, String>{
       'client_id': clientId,
       'client_secret': clientSecret,
       'refresh_token': refreshToken,
@@ -312,8 +312,7 @@ class DeviceAuthClient {
     if (response.statusCode == 400 ||
         response.statusCode == 401 ||
         response.statusCode == 428) {
-      final Map<String, Object?> json =
-          convert.jsonDecode(response.body) as Map<String, Object?>;
+      final json = convert.jsonDecode(response.body) as Map<String, Object?>;
       throw AuthorizationException(
         json['error']! as String,
         json['error_description']! as String?,

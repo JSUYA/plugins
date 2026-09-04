@@ -149,7 +149,7 @@ class AppControl {
   Future<List<String>> getMatchedAppIds() async {
     await _setAppControlData();
 
-    final Map<String, dynamic> args = <String, dynamic>{'id': _id};
+    final args = <String, dynamic>{'id': _id};
     final dynamic response = await _methodChannel.invokeMethod<dynamic>(
       'getMatchedAppIds',
       args,
@@ -175,7 +175,7 @@ class AppControl {
   }) async {
     await _setAppControlData();
 
-    final Map<String, dynamic> args = <String, dynamic>{
+    final args = <String, dynamic>{
       'id': _id,
       'waitForReply': replyCallback != null,
     };
@@ -194,7 +194,7 @@ class AppControl {
       final Map<String, dynamic> replyMap =
           (responseMap['reply'] as Map<dynamic, dynamic>)
               .cast<String, dynamic>();
-      final AppControl reply = AppControl._fromMap(replyMap);
+      final reply = AppControl._fromMap(replyMap);
       await replyCallback(this, reply, result);
     }
   }
@@ -211,12 +211,12 @@ class AppControl {
   Future<void> sendTerminateRequest() async {
     await _setAppControlData();
 
-    final Map<String, dynamic> args = <String, dynamic>{'id': _id};
+    final args = <String, dynamic>{'id': _id};
     await _methodChannel.invokeMethod<void>('sendTerminateRequest', args);
   }
 
   Future<void> _setAppControlData() async {
-    final Map<String, dynamic> args = <String, dynamic>{
+    final args = <String, dynamic>{
       'id': _id,
       'appId': appId,
       'operation': operation,
@@ -239,12 +239,12 @@ class AppControl {
   static Future<void> setAutoRestart(AppControl appControl) async {
     await appControl._setAppControlData();
 
-    final Map<String, dynamic> args = <String, dynamic>{'id': appControl._id};
+    final args = <String, dynamic>{'id': appControl._id};
     final int? handleAddress = await _methodChannel.invokeMethod<int>(
       'getHandle',
       args,
     );
-    final Pointer<Void> handle = Pointer<Void>.fromAddress(handleAddress!);
+    final handle = Pointer<Void>.fromAddress(handleAddress!);
 
     final int ret = appControlSetAutoRestart(handle);
     if (ret != 0) {
@@ -289,7 +289,7 @@ class ReceivedAppControl extends AppControl {
   Future<void> reply(AppControl reply, AppControlReplyResult result) async {
     await reply._setAppControlData();
 
-    final Map<String, dynamic> args = <String, dynamic>{
+    final args = <String, dynamic>{
       'id': _id,
       'replyId': reply._id,
       'result': result.name,

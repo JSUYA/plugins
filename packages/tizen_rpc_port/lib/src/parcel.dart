@@ -127,7 +127,7 @@ class Parcel {
   Parcel.fromRaw(Uint8List rawData) {
     _handle = using((Arena arena) {
       final Pointer<Uint8> pRaw = arena(rawData.length);
-      for (int i = 0; i < rawData.length; ++i) {
+      for (var i = 0; i < rawData.length; ++i) {
         pRaw[i] = rawData[i] & _byteMax;
       }
 
@@ -453,7 +453,7 @@ class Parcel {
   void write(Uint8List bytes) {
     using((Arena arena) {
       final Pointer<UnsignedChar> pBuffer = arena(bytes.length);
-      for (int i = 0; i < bytes.length; ++i) {
+      for (var i = 0; i < bytes.length; ++i) {
         pBuffer[i] = bytes[i];
       }
       final int ret = tizen.rpc_port_parcel_burst_write(

@@ -1,3 +1,7 @@
+## NEXT
+
+* Omit obvious local variable types.
+
 ## 0.1.8
 
 * Update in_app_purchase to 3.3.0

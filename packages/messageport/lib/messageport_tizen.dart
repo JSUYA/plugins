@@ -52,9 +52,9 @@ class LocalPort {
         final Map<dynamic, dynamic> map = event;
         final dynamic message = map['message'];
         if (map.containsKey('remotePort')) {
-          final String remoteAppId = map['remoteAppId'] as String;
-          final String remotePort = map['remotePort'] as String;
-          final bool trusted = map['trusted'] as bool;
+          final remoteAppId = map['remoteAppId'] as String;
+          final remotePort = map['remotePort'] as String;
+          final trusted = map['trusted'] as bool;
           onMessage(message, RemotePort._(remoteAppId, remotePort, trusted));
         } else {
           onMessage(message);

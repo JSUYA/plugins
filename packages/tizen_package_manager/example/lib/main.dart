@@ -86,8 +86,8 @@ class _CurrentPackageScreenState extends State<_CurrentPackageScreen> {
       ]),
       builder: (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
         if (snapshot.hasData) {
-          final PackageInfo packageInfo = snapshot.data![0] as PackageInfo;
-          final PackageSizeInfo sizeInfo = snapshot.data![1] as PackageSizeInfo;
+          final packageInfo = snapshot.data![0] as PackageInfo;
+          final sizeInfo = snapshot.data![1] as PackageSizeInfo;
           return ListView(
             children: <Widget>[
               _infoTile('Package ID', packageInfo.packageId),
@@ -138,10 +138,9 @@ class _PackageListScreenState extends State<_PackageListScreen>
 
   Future<Map<String, PackageSizeInfo>> _getAllPackagesSizeInfo(
       List<PackageInfo> packages) async {
-    final Map<String, PackageSizeInfo> sizeInfoMap =
-        <String, PackageSizeInfo>{};
+    final sizeInfoMap = <String, PackageSizeInfo>{};
 
-    for (final PackageInfo package in packages) {
+    for (final package in packages) {
       try {
         final PackageSizeInfo sizeInfo =
             await PackageManager.getPackageSizeInfo(package.packageId);

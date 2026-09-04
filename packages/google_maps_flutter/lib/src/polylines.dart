@@ -40,8 +40,8 @@ class PolylinesController extends GeometryController {
     final util.GPolylineOptions polylineOptions = _polylineOptionsFromPolyline(
       polyline,
     );
-    final util.GPolyline gPolyline = util.GPolyline(_bridge, polylineOptions);
-    final PolylineController controller = PolylineController(
+    final gPolyline = util.GPolyline(_bridge, polylineOptions);
+    final controller = PolylineController(
       polyline: gPolyline,
       consumeTapEvents: polyline.consumeTapEvents,
       onTap: () {

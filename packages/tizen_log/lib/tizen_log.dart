@@ -182,7 +182,7 @@ class Log {
       final Iterable<RegExpMatch> matches = _stackTraceRegExp.allMatches(
         StackTrace.current.toString(),
       );
-      for (final RegExpMatch match in matches) {
+      for (final match in matches) {
         final List<String?> groups = match.groups(<int>[1, 2, 3, 4]);
         if (!groups.any((String? group) => group == null)) {
           final int frameIndex = int.parse(groups[0]!);

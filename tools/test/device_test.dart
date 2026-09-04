@@ -29,7 +29,7 @@ void main() {
     late Completer<int> completer;
     late TizenSdk tizenSdk;
 
-    const Duration timeoutLimit = Duration(seconds: 3);
+    const timeoutLimit = Duration(seconds: 3);
 
     setUp(() {
       processRunner = MockProcessRunner();

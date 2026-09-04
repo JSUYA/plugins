@@ -48,7 +48,7 @@ class _GoogleSignInTokenDataTizen {
 
   /// Returns `true` if [accessToken] is expired and needs to be refreshed.
   bool get isExpired {
-    const Duration minimalTimeToExpire = Duration(minutes: 1);
+    const minimalTimeToExpire = Duration(minutes: 1);
     return DateTime.now()
         .add(minimalTimeToExpire)
         .isAfter(accessTokenExpirationDate);
@@ -404,9 +404,9 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
     _ensureSetCredentials();
     _ensureNavigatorKeyAssigned();
 
-    bool expired = false;
-    bool canceled = false;
-    bool widgetShown = false;
+    var expired = false;
+    var canceled = false;
+    var widgetShown = false;
 
     try {
       final AuthorizationResponse authorizationResponse = await _authClient
@@ -509,8 +509,8 @@ class GoogleSignInTizen extends GoogleSignInPlatform {
       );
     }
 
-    final String? email = json['email'] as String?;
-    final String? id = json['sub'] as String?;
+    final email = json['email'] as String?;
+    final id = json['sub'] as String?;
     if (email == null || id == null) {
       throw const GoogleSignInException(
         code: GoogleSignInExceptionCode.providerConfigurationError,

@@ -320,7 +320,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
         final JsConfirmRequest confirmRequest = JsConfirmRequest.fromMap(
           call.arguments.cast<String, dynamic>(),
         )!;
-        bool confirmed = true;
+        var confirmed = true;
         if (webviewParams != null && webviewParams!.onJsConfirm != null) {
           final JsConfirmResponse? response = await webviewParams!.onJsConfirm!(
             _controllerFromPlatform,
@@ -369,20 +369,20 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
 
   @override
   Future<WebUri?> getUrl() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     final String? url = await channel?.invokeMethod<String?>('getUrl', args);
     return url != null ? WebUri(url) : null;
   }
 
   @override
   Future<String?> getTitle() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     return await channel?.invokeMethod<String?>('getTitle', args);
   }
 
   @override
   Future<int?> getProgress() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     return await channel?.invokeMethod<int?>('getProgress', args);
   }
 
@@ -412,7 +412,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
           iosAllowingReadAccessTo.isScheme('file'),
     );
 
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     args.putIfAbsent('urlRequest', () => urlRequest.toMap());
     args.putIfAbsent(
       'allowingReadAccessTo',
@@ -429,7 +429,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
     required Uint8List postData,
   }) async {
     assert(url.toString().isNotEmpty);
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     args.putIfAbsent('url', () => url.toString());
     args.putIfAbsent('postData', () => postData);
     await channel?.invokeMethod('postUrl', args);
@@ -455,7 +455,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
           iosAllowingReadAccessTo.isScheme('file'),
     );
 
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     args.putIfAbsent('data', () => data);
     args.putIfAbsent('mimeType', () => mimeType);
     args.putIfAbsent('encoding', () => encoding);
@@ -479,38 +479,38 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
   @override
   Future<void> loadFile({required String assetFilePath}) async {
     assert(assetFilePath.isNotEmpty);
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     args.putIfAbsent('assetFilePath', () => assetFilePath);
     await channel?.invokeMethod('loadFile', args);
   }
 
   @override
   Future<void> reload() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     await channel?.invokeMethod('reload', args);
   }
 
   @override
   Future<void> goBack() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     await channel?.invokeMethod('goBack', args);
   }
 
   @override
   Future<bool> canGoBack() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     return await channel?.invokeMethod<bool>('canGoBack', args) ?? false;
   }
 
   @override
   Future<void> goForward() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     await channel?.invokeMethod('goForward', args);
   }
 
   @override
   Future<bool> canGoForward() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     return await channel?.invokeMethod<bool>('canGoForward', args) ?? false;
   }
 
@@ -536,7 +536,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
 
   @override
   Future<void> stopLoading() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     await channel?.invokeMethod('stopLoading', args);
   }
 
@@ -545,7 +545,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
     required String source,
     ContentWorld? contentWorld,
   }) async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     args.putIfAbsent('source', () => source);
     args.putIfAbsent('contentWorld', () => contentWorld?.toMap());
     dynamic data = await channel?.invokeMethod('evaluateJavascript', args);
@@ -645,7 +645,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
 
   @override
   Future<void> setSettings({required InAppWebViewSettings settings}) async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
 
     args.putIfAbsent('settings', () => settings.toMap());
     await channel?.invokeMethod('setSettings', args);
@@ -664,7 +664,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
   @override
   @Deprecated('Use InAppWebViewController.clearAllCache instead')
   Future<void> clearCache() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     await channel?.invokeMethod('clearCache', args);
   }
 
@@ -704,7 +704,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
     required int y,
     bool animated = false,
   }) async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     args.putIfAbsent('x', () => x);
     args.putIfAbsent('y', () => y);
     args.putIfAbsent('animated', () => animated);
@@ -717,7 +717,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
     required int y,
     bool animated = false,
   }) async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     args.putIfAbsent('x', () => x);
     args.putIfAbsent('y', () => y);
     args.putIfAbsent('animated', () => animated);
@@ -757,7 +757,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
     @Deprecated('Use animated instead') bool? iosAnimated,
     bool animated = false,
   }) async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     args.putIfAbsent('zoomFactor', () => zoomFactor);
     args.putIfAbsent('animated', () => iosAnimated ?? animated);
     return await channel?.invokeMethod('zoomBy', args);
@@ -791,13 +791,13 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
 
   @override
   Future<int?> getScrollX() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     return await channel?.invokeMethod<int?>('getScrollX', args);
   }
 
   @override
   Future<int?> getScrollY() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     return await channel?.invokeMethod<int?>('getScrollY', args);
   }
 
@@ -1021,7 +1021,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
 
   @override
   Future<String> getDefaultUserAgent() async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     return await _staticChannel.invokeMethod<String>(
           'getDefaultUserAgent',
           args,
@@ -1031,7 +1031,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
 
   @override
   Future<bool> handlesURLScheme(String urlScheme) async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     args.putIfAbsent('urlScheme', () => urlScheme);
     return await _staticChannel.invokeMethod('handlesURLScheme', args);
   }
@@ -1043,7 +1043,7 @@ class TizenInAppWebViewController extends PlatformInAppWebViewController
 
   @override
   Future<void> clearAllCache({bool includeDiskFiles = true}) async {
-    final Map<String, dynamic> args = <String, dynamic>{};
+    final args = <String, dynamic>{};
     args.putIfAbsent('includeDiskFiles', () => includeDiskFiles);
     await _staticChannel.invokeMethod('clearAllCache', args);
   }

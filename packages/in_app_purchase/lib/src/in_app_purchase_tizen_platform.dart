@@ -68,15 +68,15 @@ class InAppPurchaseTizenPlatform extends InAppPurchasePlatform {
 
   /// Converts Map<Object?, Object?>? to the list of [ItemDetails].
   List<ItemDetails> _getItemDetails(ProductsListApiResult response) {
-    final List<ItemDetails> itemDetails = <ItemDetails>[];
+    final itemDetails = <ItemDetails>[];
     for (final Map<Object?, Object?>? detail in response.itemDetails) {
-      final int seq = detail!['Seq']! as int;
-      final String itemId = detail['ItemID']! as String;
-      final String itemTitle = detail['ItemTitle']! as String;
-      final String itemDesc = detail['ItemDesc']! as String;
-      final int itemType = detail['ItemType']! as int;
-      final num price = detail['Price']! as num;
-      final String currencyId = detail['CurrencyID']! as String;
+      final seq = detail!['Seq']! as int;
+      final itemId = detail['ItemID']! as String;
+      final itemTitle = detail['ItemTitle']! as String;
+      final itemDesc = detail['ItemDesc']! as String;
+      final itemType = detail['ItemType']! as int;
+      final price = detail['Price']! as num;
+      final currencyId = detail['CurrencyID']! as String;
 
       itemDetails.add(
         ItemDetails(
@@ -113,9 +113,8 @@ class InAppPurchaseTizenPlatform extends InAppPurchasePlatform {
       );
     }
 
-    List<SamsungCheckoutProductDetails> productDetailsList =
-        <SamsungCheckoutProductDetails>[];
-    final List<String> invalidMessage = <String>[];
+    var productDetailsList = <SamsungCheckoutProductDetails>[];
+    final invalidMessage = <String>[];
 
     if (response.cpStatus == '100000') {
       productDetailsList = _getItemDetails(response)
@@ -128,19 +127,18 @@ class InAppPurchaseTizenPlatform extends InAppPurchasePlatform {
       invalidMessage.add(response.encode().toString());
     }
 
-    final ProductDetailsResponse productDetailsResponse =
-        ProductDetailsResponse(
-          productDetails: productDetailsList,
-          notFoundIDs: invalidMessage,
-          error: exception == null
-              ? null
-              : IAPError(
-                  source: kIAPSource,
-                  code: exception.code,
-                  message: exception.message ?? '',
-                  details: exception.details,
-                ),
-        );
+    final productDetailsResponse = ProductDetailsResponse(
+      productDetails: productDetailsList,
+      notFoundIDs: invalidMessage,
+      error: exception == null
+          ? null
+          : IAPError(
+              source: kIAPSource,
+              code: exception.code,
+              message: exception.message ?? '',
+              details: exception.details,
+            ),
+    );
     return productDetailsResponse;
   }
 
@@ -148,22 +146,22 @@ class InAppPurchaseTizenPlatform extends InAppPurchasePlatform {
   List<InvoiceDetails> _getInvoiceDetails(
     GetUserPurchaseListAPIResult response,
   ) {
-    final List<InvoiceDetails> invoiceDetails = <InvoiceDetails>[];
+    final invoiceDetails = <InvoiceDetails>[];
     for (final Map<Object?, Object?>? detail in response.invoiceDetails) {
-      final int seq = detail!['Seq']! as int;
-      final String invoiceId = detail['InvoiceID']! as String;
-      final String itemId = detail['ItemID']! as String;
-      final String itemTitle = detail['ItemTitle']! as String;
-      final int itemType = detail['ItemType']! as int;
-      final String orderTime = detail['OrderTime']! as String;
-      final int? period = detail['Period'] as int?;
-      final num price = detail['Price']! as num;
-      final String orderCurrencyId = detail['OrderCurrencyID']! as String;
-      final bool cancelStatus = detail['CancelStatus']! as bool;
-      final bool appliedStatus = detail['AppliedStatus']! as bool;
-      final String? appliedTime = detail['AppliedTime'] as String?;
-      final String? limitEndTime = detail['LimitEndTime'] as String?;
-      final String? remainTime = detail['RemainTime'] as String?;
+      final seq = detail!['Seq']! as int;
+      final invoiceId = detail['InvoiceID']! as String;
+      final itemId = detail['ItemID']! as String;
+      final itemTitle = detail['ItemTitle']! as String;
+      final itemType = detail['ItemType']! as int;
+      final orderTime = detail['OrderTime']! as String;
+      final period = detail['Period'] as int?;
+      final price = detail['Price']! as num;
+      final orderCurrencyId = detail['OrderCurrencyID']! as String;
+      final cancelStatus = detail['CancelStatus']! as bool;
+      final appliedStatus = detail['AppliedStatus']! as bool;
+      final appliedTime = detail['AppliedTime'] as String?;
+      final limitEndTime = detail['LimitEndTime'] as String?;
+      final remainTime = detail['RemainTime'] as String?;
 
       invoiceDetails.add(
         InvoiceDetails(
@@ -204,8 +202,9 @@ class InAppPurchaseTizenPlatform extends InAppPurchasePlatform {
           }
         })
         .map((InvoiceDetails purchaseWrapper) {
-          final SamsungCheckoutPurchaseDetails purchaseDetails =
-              SamsungCheckoutPurchaseDetails.fromPurchase(purchaseWrapper);
+          final purchaseDetails = SamsungCheckoutPurchaseDetails.fromPurchase(
+            purchaseWrapper,
+          );
 
           purchaseDetails.status = PurchaseStatus.restored;
           return purchaseDetails;
@@ -231,9 +230,9 @@ class InAppPurchaseTizenPlatform extends InAppPurchasePlatform {
         billingManager
             .requestPurchases()
             .then((GetUserPurchaseListAPIResult responses) {
-              for (int i = 0; i < responses.invoiceDetails.length; i++) {
+              for (var i = 0; i < responses.invoiceDetails.length; i++) {
                 if (_getInvoiceDetails(responses)[i].invoiceId == invoiceId) {
-                  final List<PurchaseDetails> purchases = <PurchaseDetails>[];
+                  final purchases = <PurchaseDetails>[];
                   purchases.add(
                     PurchaseDetails(
                       purchaseID: _getInvoiceDetails(responses)[i].invoiceId,

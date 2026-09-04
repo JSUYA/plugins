@@ -53,13 +53,13 @@ class MarkersController extends GeometryController {
       marker,
       _markerIdToController[marker.markerId]?.marker,
     );
-    final util.GMarker gMarker = util.GMarker(_bridge, populationOptions);
+    final gMarker = util.GMarker(_bridge, populationOptions);
 
     if (marker.clusterManagerId != null) {
       _clusterManagersController.addItem(marker.clusterManagerId!, gMarker);
     }
 
-    final MarkerController markerController = MarkerController(
+    final markerController = MarkerController(
       marker: gMarker,
       clusterManagerId: marker.clusterManagerId,
       infoWindow: infoWindow,

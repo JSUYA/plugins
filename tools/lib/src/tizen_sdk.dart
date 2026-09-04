@@ -212,11 +212,11 @@ class TizenSdk {
       throw ToolExit(result.exitCode);
     }
 
-    final List<SdbDeviceInfo> deviceInfos = <SdbDeviceInfo>[];
+    final deviceInfos = <SdbDeviceInfo>[];
     final List<String> lines =
         LineSplitter.split((result.stdout as String).trim()).toList();
 
-    for (final String line in lines) {
+    for (final line in lines) {
       if (line.startsWith('List of devices')) {
         continue;
       }
@@ -245,10 +245,10 @@ class TizenSdk {
       throw ToolExit(result.exitCode);
     }
 
-    final Map<String, String> capabilities = <String, String>{};
+    final capabilities = <String, String>{};
     final List<String> lines =
         LineSplitter.split((result.stdout as String).trim()).toList();
-    for (final String line in lines) {
+    for (final line in lines) {
       final int index = line.indexOf(':');
       final String key = line.substring(0, index).trim();
       final String value =
@@ -263,7 +263,7 @@ class TizenSdk {
 ///
 /// Returns `null` if emulator [name] is not running.
 String? findEmulatorPid(String name) {
-  const ProcessRunner processRunner = ProcessRunner();
+  const processRunner = ProcessRunner();
   // TODO(HakkyuKim): Support Windows.
   final io.ProcessResult result = processRunner.runSync('ps', <String>['aux']);
 
@@ -276,7 +276,7 @@ String? findEmulatorPid(String name) {
       .map((String line) => line.trim())
       .toList();
 
-  for (final String line in lines) {
+  for (final line in lines) {
     if (line.contains('emulator-x86_64') && line.contains(name)) {
       return line.split(RegExp(r'\s+'))[1];
     }

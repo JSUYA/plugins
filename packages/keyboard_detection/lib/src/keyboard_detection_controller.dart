@@ -193,7 +193,7 @@ class KeyboardDetectionController {
 
   Future<void> _executeCallbacks(KeyboardState state) async {
     final List<KeyboardDetectionCallback> targets = _callbacks.keys.toList();
-    for (final KeyboardDetectionCallback callback in targets) {
+    for (final callback in targets) {
       if (!_callbacks.containsKey(callback)) {
         continue;
       }

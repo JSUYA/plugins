@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
   final int _notificationId = 1;
 
   Future<void> _showNotification() async {
-    final TizenNotificationDetails details = TizenNotificationDetails(
+    final details = TizenNotificationDetails(
       icons: NotificationIcons(icon: 'test.png'),
       sound: NotificationSound(type: SoundType.builtIn),
       vibration: NotificationVibration(type: VibrationType.builtIn),

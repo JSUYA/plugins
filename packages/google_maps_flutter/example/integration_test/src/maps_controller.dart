@@ -26,8 +26,7 @@ void runTests() {
     (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 600));
 
-      final Completer<GoogleMapController> mapControllerCompleter =
-          Completer<GoogleMapController>();
+      final mapControllerCompleter = Completer<GoogleMapController>();
       final Key key = GlobalKey();
       await tester.pumpWidget(
         Directionality(
@@ -81,13 +80,12 @@ void runTests() {
     'testGetVisibleRegion',
     (WidgetTester tester) async {
       final Key key = GlobalKey();
-      final LatLngBounds zeroLatLngBounds = LatLngBounds(
+      final zeroLatLngBounds = LatLngBounds(
         southwest: const LatLng(0, 0),
         northeast: const LatLng(0, 0),
       );
 
-      final Completer<GoogleMapController> mapControllerCompleter =
-          Completer<GoogleMapController>();
+      final mapControllerCompleter = Completer<GoogleMapController>();
 
       await pumpMap(
         tester,
@@ -116,15 +114,15 @@ void runTests() {
 
       // Making a new `LatLngBounds` about (10, 10) distance south west to the `firstVisibleRegion`.
       // The size of the `LatLngBounds` is 10 by 10.
-      final LatLng southWest = LatLng(
+      final southWest = LatLng(
         firstVisibleRegion.southwest.latitude - 20,
         firstVisibleRegion.southwest.longitude - 20,
       );
-      final LatLng northEast = LatLng(
+      final northEast = LatLng(
         firstVisibleRegion.southwest.latitude - 10,
         firstVisibleRegion.southwest.longitude - 10,
       );
-      final LatLng newCenter = LatLng(
+      final newCenter = LatLng(
         (northEast.latitude + southWest.latitude) / 2,
         (northEast.longitude + southWest.longitude) / 2,
       );
@@ -132,7 +130,7 @@ void runTests() {
       expect(firstVisibleRegion.contains(northEast), isFalse);
       expect(firstVisibleRegion.contains(southWest), isFalse);
 
-      final LatLngBounds latLngBounds = LatLngBounds(
+      final latLngBounds = LatLngBounds(
         southwest: southWest,
         northeast: northEast,
       );
@@ -159,8 +157,7 @@ void runTests() {
 
   testWidgets('testSetMapStyle valid Json String', (WidgetTester tester) async {
     final Key key = GlobalKey();
-    final Completer<GoogleMapController> controllerCompleter =
-        Completer<GoogleMapController>();
+    final controllerCompleter = Completer<GoogleMapController>();
 
     await pumpMap(
       tester,
@@ -174,7 +171,7 @@ void runTests() {
     );
     final GoogleMapController controller = await controllerCompleter.future;
 
-    const String mapStyle =
+    const mapStyle =
         '[{"elementType":"geometry","stylers":[{"color":"#242f3e"}]}]';
     // Intentionally testing the deprecated code path.
     // ignore: deprecated_member_use
@@ -185,8 +182,7 @@ void runTests() {
     WidgetTester tester,
   ) async {
     final Key key = GlobalKey();
-    final Completer<GoogleMapController> controllerCompleter =
-        Completer<GoogleMapController>();
+    final controllerCompleter = Completer<GoogleMapController>();
 
     await pumpMap(
       tester,
@@ -212,8 +208,7 @@ void runTests() {
 
   testWidgets('testSetMapStyle null string', (WidgetTester tester) async {
     final Key key = GlobalKey();
-    final Completer<GoogleMapController> controllerCompleter =
-        Completer<GoogleMapController>();
+    final controllerCompleter = Completer<GoogleMapController>();
 
     await pumpMap(
       tester,
@@ -234,8 +229,7 @@ void runTests() {
 
   testWidgets('testGetLatLng', (WidgetTester tester) async {
     final Key key = GlobalKey();
-    final Completer<GoogleMapController> controllerCompleter =
-        Completer<GoogleMapController>();
+    final controllerCompleter = Completer<GoogleMapController>();
 
     await pumpMap(
       tester,
@@ -259,7 +253,7 @@ void runTests() {
     final LatLng topLeft = await controller.getLatLng(
       const ScreenCoordinate(x: 0, y: 0),
     );
-    final LatLng northWest = LatLng(
+    final northWest = LatLng(
       visibleRegion.northeast.latitude,
       visibleRegion.southwest.longitude,
     );
@@ -271,8 +265,7 @@ void runTests() {
     'testGetZoomLevel',
     (WidgetTester tester) async {
       final Key key = GlobalKey();
-      final Completer<GoogleMapController> controllerCompleter =
-          Completer<GoogleMapController>();
+      final controllerCompleter = Completer<GoogleMapController>();
 
       await pumpMap(
         tester,
@@ -308,8 +301,7 @@ void runTests() {
     'testScreenCoordinate',
     (WidgetTester tester) async {
       final Key key = GlobalKey();
-      final Completer<GoogleMapController> controllerCompleter =
-          Completer<GoogleMapController>();
+      final controllerCompleter = Completer<GoogleMapController>();
 
       await pumpMap(
         tester,
@@ -330,7 +322,7 @@ void runTests() {
       await Future<void>.delayed(const Duration(seconds: 1));
 
       final LatLngBounds visibleRegion = await controller.getVisibleRegion();
-      final LatLng northWest = LatLng(
+      final northWest = LatLng(
         visibleRegion.northeast.latitude,
         visibleRegion.southwest.longitude,
       );
@@ -344,8 +336,7 @@ void runTests() {
   );
 
   testWidgets('testResizeWidget', (WidgetTester tester) async {
-    final Completer<GoogleMapController> controllerCompleter =
-        Completer<GoogleMapController>();
+    final controllerCompleter = Completer<GoogleMapController>();
 
     await pumpMap(
       tester,
@@ -385,14 +376,13 @@ void runTests() {
   });
 
   testWidgets('testToggleInfoWindow', (WidgetTester tester) async {
-    const Marker marker = Marker(
+    const marker = Marker(
       markerId: MarkerId('marker'),
       infoWindow: InfoWindow(title: 'InfoWindow'),
     );
-    final Set<Marker> markers = <Marker>{marker};
+    final markers = <Marker>{marker};
 
-    final Completer<GoogleMapController> controllerCompleter =
-        Completer<GoogleMapController>();
+    final controllerCompleter = Completer<GoogleMapController>();
 
     await pumpMap(
       tester,
@@ -437,7 +427,7 @@ void runTests() {
   });
 
   testWidgets('markerWithAssetMapBitmap', (WidgetTester tester) async {
-    final Set<Marker> markers = <Marker>{
+    final markers = <Marker>{
       Marker(
         markerId: const MarkerId('1'),
         icon: AssetMapBitmap('assets/red_square.png', imagePixelRatio: 1.0),
@@ -453,10 +443,10 @@ void runTests() {
   });
 
   testWidgets('markerWithAssetMapBitmapCreate', (WidgetTester tester) async {
-    final ImageConfiguration imageConfiguration = ImageConfiguration(
+    final imageConfiguration = ImageConfiguration(
       devicePixelRatio: tester.view.devicePixelRatio,
     );
-    final Set<Marker> markers = <Marker>{
+    final markers = <Marker>{
       Marker(
         markerId: const MarkerId('1'),
         icon: await AssetMapBitmap.create(
@@ -476,7 +466,7 @@ void runTests() {
 
   testWidgets('markerWithBytesMapBitmap', (WidgetTester tester) async {
     final Uint8List bytes = const Base64Decoder().convert(iconImageBase64);
-    final Set<Marker> markers = <Marker>{
+    final markers = <Marker>{
       Marker(
         markerId: const MarkerId('1'),
         icon: BytesMapBitmap(
@@ -496,11 +486,11 @@ void runTests() {
 
   testWidgets('markerWithLegacyAsset', (WidgetTester tester) async {
     tester.view.devicePixelRatio = 2.0;
-    final ImageConfiguration imageConfiguration = ImageConfiguration(
+    final imageConfiguration = ImageConfiguration(
       devicePixelRatio: tester.view.devicePixelRatio,
       size: const Size(100, 100),
     );
-    final Set<Marker> markers = <Marker>{
+    final markers = <Marker>{
       Marker(
         markerId: const MarkerId('1'),
         // Intentionally testing the deprecated code path.
@@ -525,7 +515,7 @@ void runTests() {
   testWidgets('markerWithLegacyBytes', (WidgetTester tester) async {
     tester.view.devicePixelRatio = 2.0;
     final Uint8List bytes = const Base64Decoder().convert(iconImageBase64);
-    final Set<Marker> markers = <Marker>{
+    final markers = <Marker>{
       Marker(
         markerId: const MarkerId('1'),
         // Intentionally testing the deprecated code path.
@@ -547,8 +537,7 @@ void runTests() {
   testWidgets(
     'testTakeSnapshot',
     (WidgetTester tester) async {
-      final Completer<GoogleMapController> controllerCompleter =
-          Completer<GoogleMapController>();
+      final controllerCompleter = Completer<GoogleMapController>();
 
       await pumpMap(
         tester,
@@ -572,7 +561,7 @@ void runTests() {
   testWidgets(
     'testCloudMapId',
     (WidgetTester tester) async {
-      final Completer<int> mapIdCompleter = Completer<int>();
+      final mapIdCompleter = Completer<int>();
       final Key key = GlobalKey();
 
       await pumpMap(
@@ -599,8 +588,7 @@ void runTests() {
     'getStyleError reports last error',
     (WidgetTester tester) async {
       final Key key = GlobalKey();
-      final Completer<GoogleMapController> controllerCompleter =
-          Completer<GoogleMapController>();
+      final controllerCompleter = Completer<GoogleMapController>();
 
       await pumpMap(
         tester,
@@ -639,7 +627,7 @@ Future<T?> waitForValueMatchingPredicate<T>(
   bool Function(T) predicate, {
   int maxTries = 100,
 }) async {
-  for (int i = 0; i < maxTries; i++) {
+  for (var i = 0; i < maxTries; i++) {
     final T value = await getValue();
     if (predicate(value)) {
       return value;

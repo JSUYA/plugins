@@ -1,3 +1,7 @@
+## NEXT
+
+* Omit obvious local variable types.
+
 ## 0.2.3
 
 * Update google_maps_flutter to 2.18.0.

@@ -95,7 +95,7 @@ abstract class ProxyBase {
       'portName': portName,
     });
 
-    final EventChannel eventChannel = EventChannel(
+    final eventChannel = EventChannel(
       'tizen/rpc_port_proxy/$portName/${_handle.address}',
     );
 
@@ -109,11 +109,11 @@ abstract class ProxyBase {
     _streamSubscription = _stream!.listen((dynamic data) async {
       final Map<String, dynamic> map =
           (data as Map<dynamic, dynamic>).cast<String, dynamic>();
-      final int handle = map['handle'] as int;
+      final handle = map['handle'] as int;
       if (handle != _handle.address) {
         return;
       }
-      final String event = map['event'] as String;
+      final event = map['event'] as String;
       if (event == 'connected') {
         _isConnected = true;
         _onDisconnected = onDisconnected;
@@ -129,7 +129,7 @@ abstract class ProxyBase {
         }
       } else if (event == 'rejected') {
         _isConnected = false;
-        final String error = map['error'] as String;
+        final error = map['error'] as String;
         await _onRejectedEvent(error);
         await _streamSubscription?.cancel();
         _streamSubscription = null;
@@ -138,8 +138,8 @@ abstract class ProxyBase {
           _stream = null;
         }
       } else if (event == 'received') {
-        final Uint8List rawData = map['rawData'] as Uint8List;
-        final Parcel parcel = Parcel.fromRaw(rawData);
+        final rawData = map['rawData'] as Uint8List;
+        final parcel = Parcel.fromRaw(rawData);
         await onReceivedEvent(parcel);
       } else {
         debugPrint('Unknown event: $event');

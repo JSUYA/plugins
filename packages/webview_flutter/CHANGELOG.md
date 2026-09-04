@@ -1,3 +1,7 @@
+## NEXT
+
+* Omit obvious local variable types.
+
 ## 0.10.4
 
 * Fix a black screen issue on Tizen 6.5 TV devices.

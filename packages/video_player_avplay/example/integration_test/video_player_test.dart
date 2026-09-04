@@ -53,8 +53,7 @@ void main() {
     });
 
     testWidgets('live stream duration != 0', (WidgetTester tester) async {
-      final VideoPlayerController networkController =
-          VideoPlayerController.network(
+      final networkController = VideoPlayerController.network(
         'https://flutter.github.io/assets-for-api-docs/assets/videos/hls/bee.m3u8',
       );
       await networkController.initialize();
@@ -208,7 +207,7 @@ void main() {
 
       // Write it to a file to use as a source.
       final String filename = _videoAssetKey.split('/').last;
-      final File file = File('$tempDir/$filename');
+      final file = File('$tempDir/$filename');
       await file.writeAsBytes(bytes.buffer.asInt8List());
 
       controller = VideoPlayerController.file(file);
@@ -241,8 +240,8 @@ void main() {
         // Mute to allow playing without DOM interaction on Web.
         // See https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
         await controller.setVolume(0);
-        final Completer<void> started = Completer<void>();
-        final Completer<void> ended = Completer<void>();
+        final started = Completer<void>();
+        final ended = Completer<void>();
         controller.addListener(() {
           if (!started.isCompleted && controller.value.isBuffering) {
             started.complete();

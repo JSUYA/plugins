@@ -267,7 +267,7 @@ class MapUiBodyState extends State<MapUiBody> {
 
   @override
   Widget build(BuildContext context) {
-    final GoogleMap googleMap = GoogleMap(
+    final googleMap = GoogleMap(
       onMapCreated: onMapCreated,
       initialCameraPosition: _kInitialPosition,
       compassEnabled: _compassEnabled,
@@ -288,7 +288,7 @@ class MapUiBodyState extends State<MapUiBody> {
       onCameraMove: _updateCameraPosition,
     );
 
-    final List<Widget> columnChildren = <Widget>[
+    final columnChildren = <Widget>[
       Padding(
         padding: const EdgeInsets.all(10.0),
         child: Center(

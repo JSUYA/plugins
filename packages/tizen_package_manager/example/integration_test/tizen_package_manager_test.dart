@@ -64,7 +64,7 @@ void main() {
     test('each PackageInfo item has valid field values', () async {
       final List<PackageInfo> infos = await PackageManager.getPackagesInfo();
       expect(infos, isNotEmpty);
-      for (final PackageInfo info in infos) {
+      for (final info in infos) {
         // Field types are already guaranteed by PackageInfo.fromMap (it casts
         // each field), so only the value-level expectations are asserted here.
         expect(info.packageId, isNotEmpty);

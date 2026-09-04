@@ -75,7 +75,7 @@ void main() {
         await request.response.close();
       }),
     );
-    final String baseUrl = 'http://${server.address.address}:${server.port}';
+    final baseUrl = 'http://${server.address.address}:${server.port}';
     firstUrl = '$baseUrl/first';
     secondUrl = '$baseUrl/second';
     blockedUrl = '$baseUrl/blocked';
@@ -88,16 +88,11 @@ void main() {
   testWidgets('load callbacks and navigation controls', (
     WidgetTester tester,
   ) async {
-    final StreamController<String> loadStops =
-        StreamController<String>.broadcast();
-    final StreamController<int> progressValues =
-        StreamController<int>.broadcast();
-    final StreamController<String> consoleMessages =
-        StreamController<String>.broadcast();
-    final StreamController<String> navigationActions =
-        StreamController<String>.broadcast();
-    final StreamController<String> visitedUrls =
-        StreamController<String>.broadcast();
+    final loadStops = StreamController<String>.broadcast();
+    final progressValues = StreamController<int>.broadcast();
+    final consoleMessages = StreamController<String>.broadcast();
+    final navigationActions = StreamController<String>.broadcast();
+    final visitedUrls = StreamController<String>.broadcast();
     addTearDown(loadStops.close);
     addTearDown(progressValues.close);
     addTearDown(consoleMessages.close);
@@ -134,7 +129,7 @@ void main() {
         }
       },
       shouldOverrideUrlLoading: (_, NavigationAction action) async {
-        final String? url = action.request.url?.toString();
+        final url = action.request.url?.toString();
         if (url != null) {
           navigationActions.add(url);
         }
@@ -221,7 +216,7 @@ void main() {
   testWidgets('JavaScript dialog callbacks control responses', (
     WidgetTester tester,
   ) async {
-    final Completer<String> alertMessage = Completer<String>();
+    final alertMessage = Completer<String>();
     final InAppWebViewController controller = await _pumpWebView(
       tester,
       onJsAlert: (_, JsAlertRequest request) async {
@@ -265,8 +260,7 @@ void main() {
   testWidgets('deleteAllCookies clears the cookie store', (
     WidgetTester tester,
   ) async {
-    final StreamController<String> loadStops =
-        StreamController<String>.broadcast();
+    final loadStops = StreamController<String>.broadcast();
     addTearDown(loadStops.close);
 
     final InAppWebViewController controller = await _pumpWebView(
@@ -302,8 +296,7 @@ document.cookie;
   testWidgets('getProgress reports 100 once the page finishes loading', (
     WidgetTester tester,
   ) async {
-    final StreamController<String> loadStops =
-        StreamController<String>.broadcast();
+    final loadStops = StreamController<String>.broadcast();
     addTearDown(loadStops.close);
 
     final InAppWebViewController controller = await _pumpWebView(
@@ -323,8 +316,7 @@ document.cookie;
   testWidgets('reload reloads the currently displayed page', (
     WidgetTester tester,
   ) async {
-    final StreamController<String> loadStops =
-        StreamController<String>.broadcast();
+    final loadStops = StreamController<String>.broadcast();
     addTearDown(loadStops.close);
 
     final InAppWebViewController controller = await _pumpWebView(
@@ -346,8 +338,7 @@ document.cookie;
   });
 
   testWidgets('loadUrl navigates to a new URL', (WidgetTester tester) async {
-    final StreamController<String> loadStops =
-        StreamController<String>.broadcast();
+    final loadStops = StreamController<String>.broadcast();
     addTearDown(loadStops.close);
 
     final InAppWebViewController controller = await _pumpWebView(
@@ -373,8 +364,7 @@ document.cookie;
   testWidgets('postUrl and loadUrl submit an HTTP POST request body', (
     WidgetTester tester,
   ) async {
-    final StreamController<String> loadStops =
-        StreamController<String>.broadcast();
+    final loadStops = StreamController<String>.broadcast();
     addTearDown(loadStops.close);
 
     final InAppWebViewController controller = await _pumpWebView(
@@ -433,8 +423,7 @@ document.cookie;
   testWidgets('loadFile loads a bundled asset file', (
     WidgetTester tester,
   ) async {
-    final StreamController<String> loadStops =
-        StreamController<String>.broadcast();
+    final loadStops = StreamController<String>.broadcast();
     addTearDown(loadStops.close);
 
     final InAppWebViewController controller = await _pumpWebView(
@@ -477,8 +466,8 @@ document.cookie;
 
     await controller.scrollTo(x: 0, y: 0);
 
-    const int scrollX = 30;
-    const int scrollY = 40;
+    const scrollX = 30;
+    const scrollY = 40;
     await controller.scrollTo(x: scrollX, y: scrollY);
     expect(await controller.getScrollX(), scrollX);
     expect(await controller.getScrollY(), scrollY);
@@ -491,7 +480,7 @@ document.cookie;
   testWidgets('onScrollChanged fires when the scroll position changes', (
     WidgetTester tester,
   ) async {
-    final Completer<void> scrollChanged = Completer<void>();
+    final scrollChanged = Completer<void>();
     final InAppWebViewController controller = await _pumpWebView(
       tester,
       onScrollChanged: (_, int x, int y) {
@@ -509,7 +498,7 @@ document.cookie;
   testWidgets('onTitleChanged fires when document.title changes', (
     WidgetTester tester,
   ) async {
-    final Completer<void> titleChanged = Completer<void>();
+    final titleChanged = Completer<void>();
     final InAppWebViewController controller = await _pumpWebView(
       tester,
       onTitleChanged: (_, String? title) {
@@ -529,8 +518,7 @@ document.cookie;
   testWidgets('stopLoading interrupts an in-flight page load', (
     WidgetTester tester,
   ) async {
-    final StreamController<String> loadStops =
-        StreamController<String>.broadcast();
+    final loadStops = StreamController<String>.broadcast();
     addTearDown(loadStops.close);
 
     await _pumpWebView(
@@ -566,7 +554,7 @@ document.cookie;
   testWidgets('zoomBy triggers onZoomScaleChanged', (
     WidgetTester tester,
   ) async {
-    final Completer<double> zoomRatio = Completer<double>();
+    final zoomRatio = Completer<double>();
     final InAppWebViewController controller = await _pumpWebView(
       tester,
       onZoomScaleChanged: (_, double oldScale, double newScale) {
@@ -584,8 +572,7 @@ document.cookie;
   testWidgets(
     'onReceivedError reports a host lookup failure for an unresolvable URL',
     (WidgetTester tester) async {
-      final Completer<WebResourceError> receivedError =
-          Completer<WebResourceError>();
+      final receivedError = Completer<WebResourceError>();
 
       await _pumpWebView(
         tester,
@@ -607,9 +594,8 @@ document.cookie;
   testWidgets('onReceivedError is not raised for a successful page load', (
     WidgetTester tester,
   ) async {
-    final StreamController<String> loadStops =
-        StreamController<String>.broadcast();
-    final Completer<void> receivedError = Completer<void>();
+    final loadStops = StreamController<String>.broadcast();
+    final receivedError = Completer<void>();
     addTearDown(loadStops.close);
 
     await _pumpWebView(
@@ -682,8 +668,7 @@ Future<InAppWebViewController> _pumpWebView(
   )?
   shouldOverrideUrlLoading,
 }) async {
-  final Completer<InAppWebViewController> controllerCompleter =
-      Completer<InAppWebViewController>();
+  final controllerCompleter = Completer<InAppWebViewController>();
 
   await tester.pumpWidget(
     MaterialApp(

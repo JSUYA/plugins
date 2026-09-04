@@ -108,7 +108,7 @@ class PackageManager {
     final List<Map<dynamic, dynamic>>? packages =
         await _channel.invokeListMethod<Map<dynamic, dynamic>>('getPackages');
 
-    final List<PackageInfo> list = <PackageInfo>[];
+    final list = <PackageInfo>[];
     for (final Map<dynamic, dynamic> package in packages!) {
       list.add(PackageInfo.fromMap(package.cast<String, dynamic>()));
     }

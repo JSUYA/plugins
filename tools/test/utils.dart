@@ -16,8 +16,8 @@ Future<List<String>> runCapturingPrint(
   Function(Error error)? errorHandler,
   Function(Exception error)? exceptionHandler,
 }) async {
-  final List<String> prints = <String>[];
-  final ZoneSpecification spec = ZoneSpecification(
+  final prints = <String>[];
+  final spec = ZoneSpecification(
     print: (_, __, ___, String message) {
       prints.add(message);
     },

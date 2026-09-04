@@ -1,3 +1,7 @@
+## NEXT
+
+* Omit obvious local variable types.
+
 ## 2.3.3
 
 * Update path_provider to 2.1.6.

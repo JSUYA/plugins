@@ -503,7 +503,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   );
 
   Future<void> _checkPlatformAndApiVersion() async {
-    final DeviceInfoPluginTizen deviceInfoPlugin = DeviceInfoPluginTizen();
+    final deviceInfoPlugin = DeviceInfoPluginTizen();
     final TizenDeviceInfo deviceInfo = await deviceInfoPlugin.tizenInfo;
 
     if ((deviceInfo.platformVersion != null &&
@@ -585,7 +585,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     _playerId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
         kUninitializedPlayerId;
     _creatingCompleter!.complete(null);
-    final Completer<void> initializingCompleter = Completer<void>();
+    final initializingCompleter = Completer<void>();
 
     void eventListener(VideoEvent event) {
       if (_isDisposed) {
@@ -678,9 +678,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     if (drmConfigs?.licenseCallback != null) {
       _channel.setMethodCallHandler((MethodCall call) async {
         if (call.method == 'requestLicense') {
-          final Map<dynamic, dynamic> argumentsMap =
-              call.arguments as Map<dynamic, dynamic>;
-          final Uint8List message = argumentsMap['message']! as Uint8List;
+          final argumentsMap = call.arguments as Map<dynamic, dynamic>;
+          final message = argumentsMap['message']! as Uint8List;
           return drmConfigs!.licenseCallback!(message);
         } else {
           throw Exception('not implemented ${call.method}');
@@ -689,7 +688,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     }
 
     void errorListener(Object obj) {
-      final PlatformException e = obj as PlatformException;
+      final e = obj as PlatformException;
       value = VideoPlayerValue.erroneous(e.message!);
       _timer?.cancel();
       _durationTimer?.cancel();
@@ -1325,7 +1324,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
     }
     // ignore: deprecated_member_use
     final double pixelRatio = WidgetsBinding.instance.window.devicePixelRatio;
-    final RenderBox renderBox = renderObject as RenderBox;
+    final renderBox = renderObject as RenderBox;
     final Offset offset = renderBox.localToGlobal(Offset.zero) * pixelRatio;
     final Size size = renderBox.size * pixelRatio * widget.scale;
     return offset & size;
@@ -1434,7 +1433,7 @@ class _VideoScrubberState extends State<_VideoScrubber> {
   @override
   Widget build(BuildContext context) {
     void seekToRelativePosition(Offset globalPosition) {
-      final RenderBox box = context.findRenderObject()! as RenderBox;
+      final box = context.findRenderObject()! as RenderBox;
       final Offset tapPos = box.globalToLocal(globalPosition);
       final double relative = tapPos.dx / box.size.width;
       final Duration position = controller.value.duration.end * relative;
@@ -1623,7 +1622,7 @@ class ClosedCaption extends StatelessWidget {
   Widget build(BuildContext context) {
     if (captions?.pictureCaption?.picture?.isNotEmpty ?? false) {
       final PictureCaption pictureCaption = captions!.pictureCaption!;
-      final Image subtitleImage = Image.memory(pictureCaption.picture!,
+      final subtitleImage = Image.memory(pictureCaption.picture!,
           width: pictureCaption.pictureWidth,
           height: pictureCaption.pictureHeight, errorBuilder:
               (BuildContext context, Object error, StackTrace? stackTrace) {
@@ -1676,8 +1675,8 @@ class ClosedCaption extends StatelessWidget {
 
             if (customTextStyle != null ||
                 textCaption?.textOriginAndExtent == null) {
-              const double bottomOffset = 24.0;
-              const double lineHeight = 43.5;
+              const bottomOffset = 24.0;
+              const lineHeight = 43.5;
               return Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(

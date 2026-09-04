@@ -32,8 +32,7 @@ void main(List<String> args) {
     }
   }
 
-  final CommandRunner<void> commandRunner = CommandRunner<void>(
-      './tools/tools_runner.sh',
+  final commandRunner = CommandRunner<void>('./tools/tools_runner.sh',
       'Productivity utils for hosting multiple plugins within one repository.')
     ..addCommand(AnalyzeCommand(packagesDir))
     ..addCommand(BuildExamplesCommand(packagesDir))
@@ -43,7 +42,7 @@ void main(List<String> args) {
     ..addCommand(PublishCommand(packagesDir));
 
   commandRunner.run(args).catchError((Object e) {
-    final ToolExit toolExit = e as ToolExit;
+    final toolExit = e as ToolExit;
     int exitCode = toolExit.exitCode;
     // This should never happen; this check is here to guarantee that a ToolExit
     // never accidentally has code 0 thus causing CI to pass.

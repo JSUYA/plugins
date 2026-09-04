@@ -121,7 +121,7 @@ class PublishCommand extends PackageLoopingCommand {
           .where((String file) => file.trim().endsWith('pubspec.yaml'))
           .toList();
 
-      for (final String pubspecPath in changedPubspecs) {
+      for (final pubspecPath in changedPubspecs) {
         // git outputs a relative, Posix-style path.
         final File pubspecFile = childFileWithSubcomponents(
             packagesDir.fileSystem.directory((await gitDir).path),
@@ -207,7 +207,7 @@ Safe to ignore if the package is deleted in this commit.
       return false;
     }
 
-    final String statusOutput = statusResult.stdout as String;
+    final statusOutput = statusResult.stdout as String;
     if (statusOutput.isNotEmpty) {
       printError(
           "There are files in the package directory that haven't been saved in git. Refusing to publish these files:\n\n"

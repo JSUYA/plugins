@@ -49,7 +49,7 @@ class MapIdBodyState extends State<MapIdBody> {
 
   @override
   Widget build(BuildContext context) {
-    final GoogleMap googleMap = GoogleMap(
+    final googleMap = GoogleMap(
       onMapCreated: _onMapCreated,
       initialCameraPosition: const CameraPosition(
         target: _kMapCenter,
@@ -59,7 +59,7 @@ class MapIdBodyState extends State<MapIdBody> {
       cloudMapId: _mapId,
     );
 
-    final List<Widget> columnChildren = <Widget>[
+    final columnChildren = <Widget>[
       Padding(
         padding: const EdgeInsets.all(10.0),
         child: Center(

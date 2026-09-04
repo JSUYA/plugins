@@ -1,3 +1,7 @@
+## NEXT
+
+* Omit obvious local variable types.
+
 ## 0.1.8
 
 * Update analysis_options.yaml for Flutter 3.47.0.

@@ -58,7 +58,7 @@ class GroundOverlayBodyState extends State<GroundOverlayBody> {
 
     _groundOverlayIndex += 1;
 
-    final GroundOverlay overlay = GroundOverlay.fromBounds(
+    final overlay = GroundOverlay.fromBounds(
       groundOverlayId: GroundOverlayId('ground_overlay_$_groundOverlayIndex'),
       image: image,
       bounds: _currentBounds,
@@ -81,9 +81,7 @@ class GroundOverlayBodyState extends State<GroundOverlayBody> {
       return;
     }
     setState(() {
-      final double transparency = _groundOverlay!.transparency == 0.0
-          ? 0.5
-          : 0.0;
+      final transparency = _groundOverlay!.transparency == 0.0 ? 0.5 : 0.0;
       _groundOverlay = _groundOverlay!.copyWith(
         transparencyParam: transparency,
       );
@@ -110,7 +108,7 @@ class GroundOverlayBodyState extends State<GroundOverlayBody> {
 
   @override
   Widget build(BuildContext context) {
-    final Set<GroundOverlay> overlays = <GroundOverlay>{
+    final overlays = <GroundOverlay>{
       if (_groundOverlay != null) _groundOverlay!,
     };
     return Column(

@@ -36,7 +36,7 @@ class InAppPurchaseTizenPlatformAddition extends InAppPurchasePlatformAddition {
     required int pageNum,
     String? securityKey,
   }) {
-    final RequestParameters requestParameters = RequestParameters();
+    final requestParameters = RequestParameters();
     requestParameters.appId = appId;
     requestParameters.pageSize = pageSize;
     requestParameters.pageNum = pageNum;

@@ -786,7 +786,7 @@ class _TestRemoteVideoState extends State<_TestRemoteVideo> {
   }
 
   DataSource restoreDataSource() {
-    final DataSource dataSource = DataSource(
+    final dataSource = DataSource(
       sourceType: DataSourceType.network,
       uri: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
     );
@@ -796,7 +796,7 @@ class _TestRemoteVideoState extends State<_TestRemoteVideo> {
   int restoreTime() {
     /// if resumeTime >= 0 , it will restore from resumeTime
     /// if resumeTime is not set or <0, it will restore from the time when suspend is called
-    const int resumeTime = 0;
+    const resumeTime = 0;
     return resumeTime;
   }
 

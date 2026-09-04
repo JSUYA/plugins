@@ -188,7 +188,7 @@ base class SharedPreferencesAsyncTizen extends SharedPreferencesAsyncPlatform {
   ) async {
     final PreferencesFilters filter = parameters.filter;
 
-    List<String> keyList = <String>[];
+    var keyList = <String>[];
     await getKeys(
       GetPreferencesParameters(filter: parameters.filter),
       options,
@@ -196,7 +196,7 @@ base class SharedPreferencesAsyncTizen extends SharedPreferencesAsyncPlatform {
       keyList = keys.toList();
     });
 
-    for (final String key in keyList) {
+    for (final key in keyList) {
       if (filter.allowList == null || filter.allowList!.contains(key)) {
         if (!(await _remove(key))) {
           return;
@@ -207,7 +207,7 @@ base class SharedPreferencesAsyncTizen extends SharedPreferencesAsyncPlatform {
 
   Future<bool> _remove(String key) async {
     return using((Arena arena) {
-      final bool ret =
+      final ret =
           tizen.preference_remove(key.toNativeChar(allocator: arena)) == 0;
       return ret;
     });

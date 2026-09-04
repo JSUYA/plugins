@@ -156,7 +156,7 @@ class ImagePickerTizen extends CameraDelegatingImagePickerPlatform {
   Future<List<XFile>> getMedia({required MediaOptions options}) async {
     final ImageOptions imageOptions = options.imageOptions;
 
-    final Map<String, dynamic> args = <String, dynamic>{
+    final args = <String, dynamic>{
       'maxImageWidth': imageOptions.maxWidth,
       'maxImageHeight': imageOptions.maxHeight,
       'imageQuality': imageOptions.imageQuality,

@@ -48,7 +48,7 @@ class CameraTizen extends CameraPlatform {
 
   StreamController<DeviceEvent> _createDeviceEventStreamController() {
     // Set up the method handler lazily.
-    const MethodChannel channel = MethodChannel(_deviceEventChannelName);
+    const channel = MethodChannel(_deviceEventChannelName);
     channel.setMethodCallHandler(_handleDeviceMethodCall);
     return StreamController<DeviceEvent>.broadcast();
   }
@@ -116,7 +116,7 @@ class CameraTizen extends CameraPlatform {
     ImageFormatGroup imageFormatGroup = ImageFormatGroup.unknown,
   }) {
     _channels.putIfAbsent(cameraId, () {
-      final MethodChannel channel = MethodChannel(
+      final channel = MethodChannel(
         'plugins.flutter.io/camera_tizen/camera$cameraId',
       );
       channel.setMethodCallHandler(
@@ -125,7 +125,7 @@ class CameraTizen extends CameraPlatform {
       return channel;
     });
 
-    final Completer<void> completer = Completer<void>();
+    final completer = Completer<void>();
 
     onCameraInitialized(cameraId).first.then((CameraInitializedEvent value) {
       completer.complete();
@@ -301,7 +301,7 @@ class CameraTizen extends CameraPlatform {
 
   Future<void> _startPlatformStream() async {
     await _channel.invokeMethod<void>('startImageStream');
-    const EventChannel cameraEventChannel = EventChannel(
+    const cameraEventChannel = EventChannel(
       'plugins.flutter.io/camera_tizen/imageStream',
     );
     _platformImageStreamSubscription =

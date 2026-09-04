@@ -25,8 +25,7 @@ const String kTizenWebViewControllerChannelName =
 extension TizenWebViewControllerExtension on WebViewController {
   /// Set to engine policy.
   set tizenEnginePolicy(bool enginePolicy) {
-    final TizenWebViewController controller =
-        platform as TizenWebViewController;
+    final controller = platform as TizenWebViewController;
     controller._enginePolicy = enginePolicy;
   }
 }
@@ -91,11 +90,10 @@ class TizenWebViewController extends PlatformWebViewController {
           final Future<void> Function(JavaScriptAlertDialogRequest)? callback =
               _onJavaScriptAlert;
           if (callback != null) {
-            final JavaScriptAlertDialogRequest request =
-                JavaScriptAlertDialogRequest(
-                  message: arguments['message']! as String,
-                  url: arguments['url']! as String,
-                );
+            final request = JavaScriptAlertDialogRequest(
+              message: arguments['message']! as String,
+              url: arguments['url']! as String,
+            );
 
             await callback.call(request);
             await _webview.javaScriptAlertReply();
@@ -105,11 +103,10 @@ class TizenWebViewController extends PlatformWebViewController {
           final Future<bool> Function(JavaScriptConfirmDialogRequest)?
           callback = _onJavaScriptConfirm;
           if (callback != null) {
-            final JavaScriptConfirmDialogRequest request =
-                JavaScriptConfirmDialogRequest(
-                  message: arguments['message']! as String,
-                  url: arguments['url']! as String,
-                );
+            final request = JavaScriptConfirmDialogRequest(
+              message: arguments['message']! as String,
+              url: arguments['url']! as String,
+            );
             final bool result = await callback.call(request);
             await _webview.javaScriptConfirmReply(result);
           }
@@ -118,12 +115,11 @@ class TizenWebViewController extends PlatformWebViewController {
           final Future<String> Function(JavaScriptTextInputDialogRequest)?
           callback = _onJavaScriptPrompt;
           if (callback != null) {
-            final JavaScriptTextInputDialogRequest request =
-                JavaScriptTextInputDialogRequest(
-                  message: arguments['message']! as String,
-                  url: arguments['url']! as String,
-                  defaultText: arguments['defaultText']! as String,
-                );
+            final request = JavaScriptTextInputDialogRequest(
+              message: arguments['message']! as String,
+              url: arguments['url']! as String,
+              defaultText: arguments['defaultText']! as String,
+            );
             final String result = await callback.call(request);
             await _webview.javaScriptPromptReply(result);
           }
@@ -370,8 +366,7 @@ class TizenWebViewWidget extends PlatformWebViewWidget {
       key: params.key,
       viewType: 'plugins.flutter.io/webview',
       onPlatformViewCreated: (int id) {
-        final TizenWebViewController controller =
-            params.controller as TizenWebViewController;
+        final controller = params.controller as TizenWebViewController;
         controller.onCreate(id);
       },
       layoutDirection: params.layoutDirection,

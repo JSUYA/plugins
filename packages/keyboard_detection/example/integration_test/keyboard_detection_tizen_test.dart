@@ -12,8 +12,8 @@ import 'package:keyboard_detection_tizen/keyboard_detection_tizen.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  const String channelName = 'tizen/internal/inputpanel';
-  const StandardMethodCodec codec = StandardMethodCodec();
+  const channelName = 'tizen/internal/inputpanel';
+  const codec = StandardMethodCodec();
 
   Future<void> emit(Map<String, Object?> payload) async {
     final ByteData data = codec.encodeSuccessEnvelope(payload);
@@ -27,16 +27,14 @@ void main() {
 
   group('state reporting', () {
     test('starts in the unknown state', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       expect(controller.state, KeyboardState.unknown);
       expect(controller.stateAsBool(), isNull);
       await controller.dispose();
     });
 
     test('reports visibling on will_show event', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       await emit(<String, Object?>{'state': 'will_show'});
       await Future<void>.delayed(Duration.zero);
       expect(controller.state, KeyboardState.visibling);
@@ -46,8 +44,7 @@ void main() {
     });
 
     test('reports visible on show event', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       await emit(<String, Object?>{'state': 'show'});
       await Future<void>.delayed(Duration.zero);
       expect(controller.state, KeyboardState.visible);
@@ -56,8 +53,7 @@ void main() {
     });
 
     test('reports hiding on will_hide event', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       await emit(<String, Object?>{'state': 'show'});
       await Future<void>.delayed(Duration.zero);
       await emit(<String, Object?>{'state': 'will_hide'});
@@ -69,8 +65,7 @@ void main() {
     });
 
     test('reports hidden on hide event', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       await emit(<String, Object?>{'state': 'show'});
       await Future<void>.delayed(Duration.zero);
       await emit(<String, Object?>{'state': 'hide'});
@@ -81,8 +76,7 @@ void main() {
     });
 
     test('falls back to unknown for an unrecognized event', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       await emit(<String, Object?>{'state': 'show'});
       await Future<void>.delayed(Duration.zero);
       await emit(<String, Object?>{'state': 'something_else'});
@@ -92,8 +86,7 @@ void main() {
     });
 
     test('ignores events without a valid state field', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       // Reach a known state first, so the assertions verify that the invalid
       // events are ignored (state preserved) rather than merely matching the
       // initial unknown state.
@@ -112,8 +105,7 @@ void main() {
 
   group('keyboard metrics', () {
     test('size, width and position are zero before any event', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       expect(controller.size, 0);
       expect(controller.width, 0);
       expect(controller.position, Offset.zero);
@@ -122,8 +114,7 @@ void main() {
     });
 
     test('updates metrics from a show event carrying dimensions', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       await emit(<String, Object?>{
         'state': 'show',
         'width': 1080.0,
@@ -140,8 +131,7 @@ void main() {
     });
 
     test('ensureSizeLoaded completes once metrics arrive', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       final Future<void> sizeLoaded = controller.ensureSizeLoaded;
       await emit(<String, Object?>{
         'state': 'show',
@@ -155,8 +145,7 @@ void main() {
     });
 
     test('resets metrics to zero on hide', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       await emit(<String, Object?>{
         'state': 'show',
         'width': 1080.0,
@@ -176,9 +165,8 @@ void main() {
 
   group('notifications', () {
     test('stream emits state changes in order', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
-      final List<KeyboardState> seen = <KeyboardState>[];
+      final controller = KeyboardDetectionController();
+      final seen = <KeyboardState>[];
       final StreamSubscription<KeyboardState> subscription =
           controller.stream.listen(seen.add);
       await emit(<String, Object?>{'state': 'will_show'});
@@ -197,9 +185,8 @@ void main() {
     });
 
     test('onChanged is invoked on every state change', () async {
-      final List<KeyboardState> seen = <KeyboardState>[];
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController(onChanged: seen.add);
+      final seen = <KeyboardState>[];
+      final controller = KeyboardDetectionController(onChanged: seen.add);
       await emit(<String, Object?>{'state': 'show'});
       await Future<void>.delayed(Duration.zero);
       await emit(<String, Object?>{'state': 'hide'});
@@ -214,9 +201,8 @@ void main() {
 
   group('registered callbacks', () {
     test('a registered callback receives state changes', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
-      final List<KeyboardState> seen = <KeyboardState>[];
+      final controller = KeyboardDetectionController();
+      final seen = <KeyboardState>[];
       controller.registerCallback((KeyboardState state) {
         seen.add(state);
         return true;
@@ -233,9 +219,8 @@ void main() {
     });
 
     test('a callback returning false unregisters itself', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
-      int calls = 0;
+      final controller = KeyboardDetectionController();
+      var calls = 0;
       controller.registerCallback((KeyboardState state) {
         calls++;
         return false;
@@ -249,9 +234,8 @@ void main() {
     });
 
     test('unregisterCallback stops further invocations', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
-      final List<KeyboardState> seen = <KeyboardState>[];
+      final controller = KeyboardDetectionController();
+      final seen = <KeyboardState>[];
       bool callback(KeyboardState state) {
         seen.add(state);
         return true;
@@ -268,10 +252,9 @@ void main() {
     });
 
     test('unregisterAllCallbacks removes every callback', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
-      int first = 0;
-      int second = 0;
+      final controller = KeyboardDetectionController();
+      var first = 0;
+      var second = 0;
       controller.registerCallback((KeyboardState state) {
         first++;
         return true;
@@ -293,8 +276,7 @@ void main() {
 
   group('lifecycle', () {
     test('does not report state changes after dispose', () async {
-      final KeyboardDetectionController controller =
-          KeyboardDetectionController();
+      final controller = KeyboardDetectionController();
       await emit(<String, Object?>{'state': 'show'});
       await Future<void>.delayed(Duration.zero);
       expect(controller.state, KeyboardState.visible);

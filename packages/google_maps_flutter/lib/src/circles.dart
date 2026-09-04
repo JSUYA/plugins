@@ -40,8 +40,8 @@ class CirclesController extends GeometryController {
     final util.GCircleOptions populationOptions = _circleOptionsFromCircle(
       circle,
     );
-    final util.GCircle gCircle = util.GCircle(_bridge, populationOptions);
-    final CircleController controller = CircleController(
+    final gCircle = util.GCircle(_bridge, populationOptions);
+    final controller = CircleController(
       circle: gCircle,
       consumeTapEvents: circle.consumeTapEvents,
       onTap: () {

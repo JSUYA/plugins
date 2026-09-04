@@ -141,7 +141,7 @@ class GInfoWindowOptions {
 
   @override
   String toString() {
-    final String pos = position != null
+    final pos = position != null
         ? '{lat:${position?.latitude}, lng:${position?.longitude}}'
         : 'null';
     final String contentJs = content != null ? jsonEncode(content) : 'null';
@@ -419,7 +419,7 @@ class GPolylineOptions {
 
   @override
   String toString() {
-    final StringBuffer paths = StringBuffer();
+    final paths = StringBuffer();
     for (final LatLng? position in path!) {
       if (position != null) {
         paths.write(
@@ -522,7 +522,7 @@ class GPolygonOptions {
 
   @override
   String toString() {
-    final StringBuffer str = StringBuffer();
+    final str = StringBuffer();
     for (final List<LatLng?>? latlng in paths!) {
       str.write('[');
       for (final LatLng? position in latlng!) {
@@ -697,12 +697,12 @@ class GMarkerClusterer {
   /// Returns the list of clusters.
   Future<List<Map<String, dynamic>>> get clusters async {
     await _ready;
-    final String value =
+    final value =
         await _bridge.runJavaScriptReturningResult(
               'JSON.stringify(${toString()}.clusters)',
             )
             as String;
-    final List<dynamic> results = json.decode(value) as List<dynamic>;
+    final results = json.decode(value) as List<dynamic>;
     return results.cast<Map<String, dynamic>>();
   }
 
@@ -751,7 +751,7 @@ class GMarkerClustererOptions {
 
   @override
   String toString() {
-    String options = '{map: map';
+    var options = '{map: map';
     if (markers != null) {
       options += ', markers: $markers';
     }

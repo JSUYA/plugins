@@ -63,7 +63,7 @@ class BillingManager {
         utf8.encode(_requestParameters.securityKey ?? ''),
       ).convert(utf8.encode((_requestParameters.appId) + countryCode)).bytes,
     );
-    final ProductMessage product = ProductMessage(
+    final product = ProductMessage(
       appId: _requestParameters.appId,
       countryCode: countryCode,
       pageSize: _requestParameters.pageSize,
@@ -95,7 +95,7 @@ class BillingManager {
           .bytes,
     );
 
-    final PurchaseMessage purchase = PurchaseMessage(
+    final purchase = PurchaseMessage(
       appId: _requestParameters.appId,
       customId: customId,
       countryCode: countryCode,
@@ -117,7 +117,7 @@ class BillingManager {
     required String orderCurrencyId,
   }) async {
     final String customId = await _hostApi.getCustomId();
-    final OrderDetails orderDetails = OrderDetails(
+    final orderDetails = OrderDetails(
       orderItemId: orderItemId,
       orderTitle: orderTitle,
       orderTotal: orderTotal,
@@ -125,7 +125,7 @@ class BillingManager {
       orderCustomId: customId,
     );
 
-    final BuyInfoMessage buyInfo = BuyInfoMessage(
+    final buyInfo = BuyInfoMessage(
       appId: _requestParameters.appId,
       payDetials: orderDetails,
     );
@@ -142,7 +142,7 @@ class BillingManager {
   }) async {
     final String customId = await _hostApi.getCustomId();
     final String countryCode = await _hostApi.getCountryCode();
-    final InvoiceMessage invoice = InvoiceMessage(
+    final invoice = InvoiceMessage(
       invoiceId: invoiceId,
       appId: _requestParameters.appId,
       customId: customId,
@@ -389,21 +389,20 @@ class SamsungCheckoutPurchaseDetails extends PurchaseDetails {
   factory SamsungCheckoutPurchaseDetails.fromPurchase(
     InvoiceDetails invoiceDetails,
   ) {
-    final SamsungCheckoutPurchaseDetails purchaseDetails =
-        SamsungCheckoutPurchaseDetails(
-          purchaseID: invoiceDetails.invoiceId,
-          productID: invoiceDetails.itemId,
-          verificationData: PurchaseVerificationData(
-            localVerificationData: invoiceDetails.invoiceId,
-            serverVerificationData: invoiceDetails.invoiceId,
-            source: kIAPSource,
-          ),
-          transactionDate: invoiceDetails.orderTime,
-          status: const PurchaseStateConverter().toPurchaseStatus(
-            invoiceDetails.cancelStatus,
-          ),
-          invoiceDetails: invoiceDetails,
-        );
+    final purchaseDetails = SamsungCheckoutPurchaseDetails(
+      purchaseID: invoiceDetails.invoiceId,
+      productID: invoiceDetails.itemId,
+      verificationData: PurchaseVerificationData(
+        localVerificationData: invoiceDetails.invoiceId,
+        serverVerificationData: invoiceDetails.invoiceId,
+        source: kIAPSource,
+      ),
+      transactionDate: invoiceDetails.orderTime,
+      status: const PurchaseStateConverter().toPurchaseStatus(
+        invoiceDetails.cancelStatus,
+      ),
+      invoiceDetails: invoiceDetails,
+    );
 
     if (purchaseDetails.status == PurchaseStatus.error) {
       purchaseDetails.error = IAPError(

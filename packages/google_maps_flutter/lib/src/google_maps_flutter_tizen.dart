@@ -387,10 +387,9 @@ class GoogleMapsPlugin extends GoogleMapsFlutterPlatform {
       return _mapById[creationId]!.webview!;
     }
 
-    final StreamController<MapEvent<Object?>> controller =
-        StreamController<MapEvent<Object?>>.broadcast();
+    final controller = StreamController<MapEvent<Object?>>.broadcast();
 
-    final GoogleMapsController mapController = GoogleMapsController(
+    final mapController = GoogleMapsController(
       initialCameraPosition: initialCameraPosition,
       mapId: creationId,
       streamController: controller,

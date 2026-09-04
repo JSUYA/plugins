@@ -1,3 +1,7 @@
+## NEXT
+
+* Omit obvious local variable types.
+
 ## 2.1.7
 
 * Add an `implements` entry to the pubspec to improve discoverability on pub.dev.

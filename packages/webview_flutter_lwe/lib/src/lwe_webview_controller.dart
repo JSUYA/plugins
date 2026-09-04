@@ -278,8 +278,7 @@ class LweWebViewWidget extends PlatformWebViewWidget {
       key: params.key,
       viewType: 'plugins.flutter.io/webview',
       onPlatformViewCreated: (int id) {
-        final LweWebViewController controller =
-            params.controller as LweWebViewController;
+        final controller = params.controller as LweWebViewController;
         controller.onCreate(id);
       },
       layoutDirection: params.layoutDirection,

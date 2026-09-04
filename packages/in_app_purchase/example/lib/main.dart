@@ -130,7 +130,7 @@ class _MyAppState extends State<_MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> stack = <Widget>[];
+    final stack = <Widget>[];
     if (_queryProductError == null) {
       stack.add(
         ListView(
@@ -181,7 +181,7 @@ class _MyAppState extends State<_MyApp> {
         'The store is ${_isAvailable ? 'available' : 'unavailable'}.',
       ),
     );
-    final List<Widget> children = <Widget>[storeHeader];
+    final children = <Widget>[storeHeader];
 
     if (!_isAvailable) {
       children.addAll(<Widget>[
@@ -212,8 +212,8 @@ class _MyAppState extends State<_MyApp> {
     if (!_isAvailable) {
       return const Card();
     }
-    const ListTile productHeader = ListTile(title: Text('Products for Sale'));
-    final List<ListTile> productList = <ListTile>[];
+    const productHeader = ListTile(title: Text('Products for Sale'));
+    final productList = <ListTile>[];
     if (_notFoundIds.isNotEmpty) {
       productList.add(
         ListTile(
@@ -239,7 +239,7 @@ class _MyAppState extends State<_MyApp> {
               foregroundColor: Colors.white,
             ),
             onPressed: () {
-              final PurchaseParam purchaseParam = PurchaseParam(
+              final purchaseParam = PurchaseParam(
                 productDetails: productDetails,
               );
 
@@ -329,7 +329,7 @@ class _MyAppState extends State<_MyApp> {
   Future<void> _listenToPurchaseUpdated(
     List<PurchaseDetails> purchaseDetailsList,
   ) async {
-    for (final PurchaseDetails purchaseDetails in purchaseDetailsList) {
+    for (final purchaseDetails in purchaseDetailsList) {
       if (purchaseDetails.status == PurchaseStatus.pending) {
         showPendingUI();
       } else {

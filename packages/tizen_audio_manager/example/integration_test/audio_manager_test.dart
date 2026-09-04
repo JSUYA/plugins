@@ -218,10 +218,9 @@ void main() {
         await AudioManager.volumeController.getLevel(AudioVolumeType.system);
     final int maxLevel =
         await AudioManager.volumeController.getMaxLevel(AudioVolumeType.system);
-    final int targetLevel = originalLevel == maxLevel ? 0 : maxLevel;
+    final targetLevel = originalLevel == maxLevel ? 0 : maxLevel;
 
-    final Completer<VolumeChangedEvent> completer =
-        Completer<VolumeChangedEvent>();
+    final completer = Completer<VolumeChangedEvent>();
     final StreamSubscription<VolumeChangedEvent> subscription = AudioManager
         .volumeController.onChanged
         .listen((VolumeChangedEvent event) {

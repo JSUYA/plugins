@@ -35,8 +35,8 @@ class TizenWebView {
       case 'javaScriptChannelMessage':
         final Map<String, Object?> arguments =
             (call.arguments as Map<Object?, Object?>).cast<String, Object?>();
-        final String channel = arguments['channel']! as String;
-        final String message = arguments['message']! as String;
+        final channel = arguments['channel']! as String;
+        final message = arguments['message']! as String;
         if (_javaScriptChannelParams.containsKey(channel)) {
           _javaScriptChannelParams[channel]?.onMessageReceived(
             JavaScriptMessage(message: message),

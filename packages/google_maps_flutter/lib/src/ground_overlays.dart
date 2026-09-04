@@ -48,11 +48,8 @@ class GroundOverlaysController extends GeometryController {
       return;
     }
 
-    final util.GGroundOverlay gGroundOverlay = util.GGroundOverlay(
-      _bridge,
-      populationOptions,
-    );
-    final GroundOverlayController controller = GroundOverlayController(
+    final gGroundOverlay = util.GGroundOverlay(_bridge, populationOptions);
+    final controller = GroundOverlayController(
       groundOverlay: gGroundOverlay,
       onTap: () {
         _onGroundOverlayTap(groundOverlay.groundOverlayId);

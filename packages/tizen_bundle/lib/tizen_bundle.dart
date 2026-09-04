@@ -40,7 +40,7 @@ class Bundle extends MapMixin<String, Object> {
 
   /// Creates a [Bundle] from the given [map].
   factory Bundle.fromMap(Map<String, Object> map) {
-    final Bundle bundle = Bundle();
+    final bundle = Bundle();
     map.forEach((String key, Object value) => bundle[key] = value);
     return bundle;
   }
@@ -65,7 +65,7 @@ class Bundle extends MapMixin<String, Object> {
   /// The keys of this.
   @override
   Iterable<String> get keys {
-    final List<String> keys = <String>[];
+    final keys = <String>[];
     _currentKeys = keys;
     tizen.bundle_foreach(
       _handle,
@@ -136,7 +136,7 @@ class Bundle extends MapMixin<String, Object> {
     }
 
     final int ret = using((Arena arena) {
-      final String keyName = key as String;
+      final keyName = key as String;
       return tizen.bundle_del(_handle, keyName.toNativeChar(allocator: arena));
     });
     if (ret != bundle_error_e.BUNDLE_ERROR_NONE &&
@@ -236,8 +236,8 @@ class Bundle extends MapMixin<String, Object> {
         _throwException(ret);
       }
 
-      final List<String> strings = <String>[];
-      for (int index = 0; index < length.value; ++index) {
+      final strings = <String>[];
+      for (var index = 0; index < length.value; ++index) {
         strings.add(stringArray[index].toDartString());
       }
       return strings;
@@ -247,7 +247,7 @@ class Bundle extends MapMixin<String, Object> {
   void _addBytes(String key, Uint8List bytes) {
     using((Arena arena) {
       final Pointer<Uint8> bytesArray = arena<Uint8>(bytes.length);
-      for (int index = 0; index < bytes.length; ++index) {
+      for (var index = 0; index < bytes.length; ++index) {
         bytesArray[index] = bytes[index] & 0xff;
       }
 
@@ -277,8 +277,8 @@ class Bundle extends MapMixin<String, Object> {
         _throwException(ret);
       }
 
-      final Uint8List byteList = Uint8List(size.value);
-      for (int index = 0; index < size.value; ++index) {
+      final byteList = Uint8List(size.value);
+      for (var index = 0; index < size.value; ++index) {
         byteList[index] = bytes.value[index];
       }
       return byteList;

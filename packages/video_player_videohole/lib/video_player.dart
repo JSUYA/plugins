@@ -433,7 +433,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     _playerId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
         kUninitializedPlayerId;
     _creatingCompleter!.complete(null);
-    final Completer<void> initializingCompleter = Completer<void>();
+    final initializingCompleter = Completer<void>();
 
     void eventListener(VideoEvent event) {
       if (_isDisposed) {
@@ -489,7 +489,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         case VideoEventType.bufferingEnd:
           value = value.copyWith(isBuffering: false);
         case VideoEventType.subtitleUpdate:
-          final Caption caption = Caption(
+          final caption = Caption(
             number: 0,
             start: value.position,
             end: value.position + (event.duration?.end ?? Duration.zero),
@@ -519,9 +519,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     if (drmConfigs?.licenseCallback != null) {
       _channel.setMethodCallHandler((MethodCall call) async {
         if (call.method == 'requestLicense') {
-          final Map<dynamic, dynamic> argumentsMap =
-              call.arguments as Map<dynamic, dynamic>;
-          final Uint8List message = argumentsMap['message']! as Uint8List;
+          final argumentsMap = call.arguments as Map<dynamic, dynamic>;
+          final message = argumentsMap['message']! as Uint8List;
           return drmConfigs!.licenseCallback!(message);
         } else {
           throw Exception('not implemented ${call.method}');
@@ -530,7 +529,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     }
 
     void errorListener(Object obj) {
-      final PlatformException e = obj as PlatformException;
+      final e = obj as PlatformException;
       value = VideoPlayerValue.erroneous(e.message!);
       if (!initializingCompleter.isCompleted) {
         initializingCompleter.completeError(obj);
@@ -1033,7 +1032,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
     }
     // ignore: deprecated_member_use
     final double pixelRatio = WidgetsBinding.instance.window.devicePixelRatio;
-    final RenderBox renderBox = renderObject as RenderBox;
+    final renderBox = renderObject as RenderBox;
     final Offset offset = renderBox.localToGlobal(Offset.zero) * pixelRatio;
     final Size size = renderBox.size * pixelRatio;
     return offset & size;
@@ -1142,7 +1141,7 @@ class _VideoScrubberState extends State<_VideoScrubber> {
   @override
   Widget build(BuildContext context) {
     void seekToRelativePosition(Offset globalPosition) {
-      final RenderBox box = context.findRenderObject()! as RenderBox;
+      final box = context.findRenderObject()! as RenderBox;
       final Offset tapPos = box.globalToLocal(globalPosition);
       final double relative = tapPos.dx / box.size.width;
       final Duration position = controller.value.duration.end * relative;
