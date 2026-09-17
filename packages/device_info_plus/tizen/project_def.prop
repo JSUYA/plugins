@@ -18,3 +18,7 @@ USER_CPP_UNDEFS =
 USER_INC_DIRS = inc src
 USER_INC_FILES =
 USER_CPP_INC_FILES =
+
+# Platform API wrapper bundled with the application.
+USER_LIB_DIRS += lib/${BUILD_ARCH}
+USER_LIBS += ftpw_device_info_plus

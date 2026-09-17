@@ -4,9 +4,6 @@
 
 #include "device_info_plus_tizen_plugin.h"
 
-#ifdef TV_PROFILE
-#include <dlfcn.h>
-#endif
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar.h>
 #include <flutter/standard_method_codec.h>
@@ -16,12 +13,16 @@
 #include <system_info.h>
 
 #include <cstdint>
+#include <cstdlib>
 #include <map>
 #include <memory>
 #include <optional>
 #include <string>
 
 #include "log.h"
+#ifdef TV_PROFILE
+#include "ftpw_device_info_plus.h"
+#endif
 
 namespace {
 
@@ -33,24 +34,7 @@ std::optional<std::string> GetDuid() {
 #ifndef TV_PROFILE
   return std::string();
 #else
-  using FuncVconfGetStr = char *(*)(const char *);
-
-  void *handle = dlopen("libvconf.so.0", RTLD_LAZY);
-  if (!handle) {
-    LOG_ERROR("Failed to open libvconf.so.0.");
-    return std::nullopt;
-  }
-
-  auto vconf_get_str =
-      reinterpret_cast<FuncVconfGetStr>(dlsym(handle, "vconf_get_str"));
-  if (!vconf_get_str) {
-    LOG_ERROR("Failed to find the vconf_get_str symbol.");
-    dlclose(handle);
-    return std::nullopt;
-  }
-
-  char *value = vconf_get_str("db/comss/duid");
-  dlclose(handle);
+  char *value = ftpw_device_info_plus_vconf_get_str("db/comss/duid");
   if (!value) {
     LOG_ERROR("Failed to read db/comss/duid.");
     return std::nullopt;
