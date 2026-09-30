@@ -4,6 +4,7 @@
 
 #include "buffer_pool.h"
 
+#include <cstdio>
 #include <mutex>
 #include <set>
 
