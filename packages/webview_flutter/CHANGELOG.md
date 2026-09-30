@@ -11,6 +11,7 @@
 * Use wrapper API.
 * Fix a build error with GCC 14.
 * Support apps using the Tizen Core main loop on the WV backend.
+* Fix a hang on app exit after flushing pending web view teardowns.
 
 ## 0.11.0
 

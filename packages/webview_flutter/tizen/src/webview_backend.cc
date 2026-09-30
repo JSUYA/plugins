@@ -62,7 +62,7 @@ void WebViewBackend::FlushPendingTeardowns() {
     {
       std::lock_guard<std::mutex> lock(g_mutex);
       if (g_pending_teardowns.empty()) {
-        return;
+        break;
       }
       if (deadline_passed) {
         snapshot = g_pending_teardowns;
@@ -79,5 +79,9 @@ void WebViewBackend::FlushPendingTeardowns() {
     if (!g_main_context_iteration(g_main_context_default(), FALSE)) {
       g_usleep(1000);
     }
+  }
+  // Let lower-priority sources skipped by the last iteration finish their
+  // check phase, e.g. to complete a pending wl_display_prepare_read().
+  while (g_main_context_iteration(g_main_context_default(), FALSE)) {
   }
 }
