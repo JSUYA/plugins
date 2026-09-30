@@ -4,6 +4,7 @@
 
 #include "wv_webview_backend.h"
 
+#include <dlfcn.h>
 #include <glib.h>
 
 #include <cmath>
@@ -70,6 +71,15 @@ wv_modifier_e ConvertModifiers(unsigned int modifiers) {
   return static_cast<wv_modifier_e>(wv_modifiers);
 }
 
+// Resolved at runtime because tizen_core_ready() is not available before
+// Tizen 9.0.
+bool IsTizenCoreReady() {
+  using TizenCoreReadyFn = bool (*)();
+  auto tizen_core_ready = reinterpret_cast<TizenCoreReadyFn>(
+      dlsym(RTLD_DEFAULT, "tizen_core_ready"));
+  return tizen_core_ready && tizen_core_ready();
+}
+
 std::mutex g_view_registry_mutex;
 std::map<void*, WvWebViewBackend*> g_view_registry;
 
@@ -86,6 +96,10 @@ bool WvWebViewBackend::GlobalInitialize(bool standalone) {
   };
   if (standalone) {
     argv.push_back("--enable-wv-standalone");
+  }
+  // Apps using the Tizen Core embedder do not run the Ecore main loop.
+  if (IsTizenCoreReady()) {
+    argv.push_back("--enable-tcore");
   }
   int result = ftpw_webview_flutter_wv_set_arguments(
       static_cast<int>(argv.size()), argv.data());

@@ -10,6 +10,7 @@
 * Reformat with a line length of 100.
 * Use wrapper API.
 * Fix a build error with GCC 14.
+* Support apps using the Tizen Core main loop on the WV backend.
 
 ## 0.11.0
 
